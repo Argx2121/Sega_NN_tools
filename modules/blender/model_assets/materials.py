@@ -12,12 +12,13 @@ class Material:  # functional, but needs a rework
         model_name_strip = self.model_name_strip
         material_in_next_block = self.material_in_next_block
 
-        if not texture_name and type(texture_name[0]) == str:
-            for m in material_list:
-                m.tex_count = 0
-        elif type(texture_name[0]) == str:
-            for m in material_list:
-                m.tex_count = 0
+        if model_format != "srpc":
+            if not texture_name and type(texture_name[0]) == str:
+                for m in material_list:
+                    m.tex_count = 0
+            elif type(texture_name[0]) == str:
+                for m in material_list:
+                    m.tex_count = 0
 
         for mat_index in range(material_count):
             # make material - first mat data stored
@@ -81,20 +82,18 @@ class Material:  # functional, but needs a rework
                 m_tex_set = m_tex.tex_setting
                 m_tex_index = m_tex.tex_index
 
-                while m_tex_index >= len(texture_name):
-                    m_tex_index = m_tex_index - len(texture_name) - 1
-
-                tex_name = texture_name[m_tex_index]
-                tex_name_str = str(tex_name)
-                if model_format == "s06":  # shortcuts
-                    if "_df." in tex_name_str:
-                        m_tex_type = "diffuse"
-                    elif "_nw." in tex_name_str:
-                        m_tex_type = "normal"
-                    elif "_sp." in tex_name_str:
-                        m_tex_type = "emission"
-                    elif "_rf." in tex_name_str:
-                        m_tex_type = "reflection"
+                if texture_name:
+                    tex_name = texture_name[m_tex_index]
+                    tex_name_str = str(tex_name)
+                    if model_format == "s06":  # shortcuts
+                        if "_df." in tex_name_str:
+                            m_tex_type = "diffuse"
+                        elif "_nw." in tex_name_str:
+                            m_tex_type = "normal"
+                        elif "_sp." in tex_name_str:
+                            m_tex_type = "emission"
+                        elif "_rf." in tex_name_str:
+                            m_tex_type = "reflection"
 
                 if m_tex_type == "diffuse":
                     if not diffuse_done:

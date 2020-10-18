@@ -21,10 +21,7 @@ class Model:
         self.model_name_strip = names.model_name
         if self.model_name_strip.endswith("no"):
             self.model_name_strip = self.model_name_strip[:-4]
-        if names.texture_names:
-            self.texture_name_list = names.texture_names
-        else:
-            self.texture_name_list = [False]
+        self.texture_name_list = names.texture_names
         self.material_list_blender = []
         self.obj_list = []
         self.material_in_next_block = []
