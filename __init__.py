@@ -13,7 +13,6 @@ bl_info = {
 
 import importlib
 
-# blender
 import bpy
 
 if "NN_import" in locals():

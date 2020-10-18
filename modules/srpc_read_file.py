@@ -99,8 +99,7 @@ class ReadFile:  # todo needs a rework tbh
                 if s_extra >= len(texture_name_list):  # fix this ?
                     s_extra = -1
                 obj_make_start = time()
-                names = self.AssetNames(
-                    model_name=s_name, texture_names=texture_name_list[s_extra], bone_names=[])
+                names = self.AssetNames(model_name=s_name, texture_names=texture_name_list[s_extra], bone_names=[])
                 self.material_in_next_block.append(
                     Model(s_data, names, self.settings).x())
                 print(" " * 49, "| Overall %f seconds" % (time() - obj_make_start))

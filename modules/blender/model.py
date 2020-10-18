@@ -1,3 +1,5 @@
+import bpy
+
 from .model_assets.armature import Armature
 from .model_assets.materials import Material
 from .model_assets.mesh import Mesh
