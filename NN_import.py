@@ -270,7 +270,7 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
             det = {"s06": s06_set, "psu": psu_set, "srpc": srpc_set, "debug": debug_set}
             det[xno_var]()
 
-        preferences = bpy.context.preferences.addons["Sega_NN_tools"].preferences
+        preferences = bpy.context.preferences.addons[__package__].preferences
         layout = self.layout
         layout.label(text="Sega NN xno importer settings:")
 
@@ -291,7 +291,7 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
             layout.row().prop(self, "clean")
 
     def execute(self, context):
-        preferences = bpy.context.preferences.addons["Sega_NN_tools"].preferences
+        preferences = bpy.context.preferences.addons[__package__].preferences
         det = {"s06": sonic06, "psu": psu, "srpc": srpc, "debug": debug}
         if not preferences.dev_mode:
             self.clean = True
