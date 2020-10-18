@@ -51,7 +51,7 @@ def sonic06(filepath, settings):
     if settings.batch_import == "Single":
         execute()
     else:
-        file_list = get_files(filepath, name_ignore=[".dds"])
+        file_list = get_files(filepath, name_require=[".xno"])
         for filepath in file_list:
             execute()
     print_line()
