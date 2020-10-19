@@ -2,11 +2,12 @@ from .modules.srpc_read_file import *
 
 
 xno_list = (
-    ("debug", "Debug", "For Reversing Vertex Block Bitflags | N/A | N/A"),
-    ("match", "Match", "Tries to match the file with a known format (Experimental!!)| N/A | N/A"),
-    ("s06", "Sonic '06", "Sonic '06 Model | ReadXbox | 14 Nov 2006"),
-    ("psu", "Phantasy Star Universe", "Phantasy Star Universe Model | PC | 31 Aug 2006"),
-    ("srpc", "Sonic Riders", "Sonic Riders Model / Archive | PC / ReadXbox | 21 Feb 2006"),
+    ("debug", "Debug", "For Reversing Vertex Block Bitflags | N/A"),
+
+    ("match", "Match", "Tries to match the file with a known format (Experimental!!) | N/A"),
+    ("s06", "Sonic '06", "Sonic '06 Model | 14 Nov 2006"),
+    ("psu", "Phantasy Star Universe", "Phantasy Star Universe Model | 31 Aug 2006"),
+    ("srpc", "Sonic Riders", "Sonic Riders Model / Archive | 21 Feb 2006"),
 )  # keep debug first!
 
 
@@ -28,6 +29,14 @@ class XnoSettings:
     texture_name_structure: str
 
 
+def finish_process(start_time):
+    print_line()
+    print("Done in %f seconds" % (time() - start_time))
+    print_line()
+    stdout.flush()
+    toggle_console()
+
+
 def match(filepath, settings):
     def execute():
         print_line()
@@ -40,7 +49,7 @@ def match(filepath, settings):
         elif first_uint == 1112496206:  # NXOB
             settings.model_format = "psu"
             psu(filepath, settings)
-        elif 0 < first_uint < 100:  # typically ~ 25
+        elif 0 < first_uint < 100:  # typically ~ 45 models in a srpc map file
             settings.model_format = "srpc"
             srpc(filepath, settings)
 
@@ -72,11 +81,7 @@ def sonic06(filepath, settings):
         file_list = get_files(filepath, name_require=[".xno"])
         for filepath in file_list:
             execute()
-    print_line()
-    print("Done in %f seconds" % (time() - start_time))
-    print_line()
-    stdout.flush()
-    toggle_console()
+    finish_process(start_time)
     return {'FINISHED'}
 
 
@@ -99,11 +104,7 @@ def psu(filepath, settings):
         file_list = get_files(filepath)
         for filepath in file_list:
             execute()
-    print_line()
-    print("Done in %f seconds" % (time() - start_time))
-    print_line()
-    stdout.flush()
-    toggle_console()
+    finish_process(start_time)
     return {'FINISHED'}
 
 
@@ -122,11 +123,7 @@ def srpc(filepath, settings):
         file_list = get_files(filepath, name_ignore=["."])
         for filepath in file_list:
             execute()
-    print_line()
-    print("Done in %f seconds" % (time() - start_time))
-    print_line()
-    stdout.flush()
-    toggle_console()
+    finish_process(start_time)
     return {'FINISHED'}
 
 
@@ -149,11 +146,7 @@ def debug(filepath, settings):
         file_list = get_files(filepath)
         for filepath in file_list:
             execute()
-    print_line()
-    print("Done in %f seconds" % (time() - start_time))
-    print_line()
-    stdout.flush()
-    toggle_console()
+    finish_process(start_time)
     return {'FINISHED'}
 
 
@@ -338,4 +331,4 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
 
 
 def menu_func_import(self, context):  # add to dynamic menu
-    self.layout.operator(ImportSegaNNXno.bl_idname, text="Sega NN xno (.xno)")
+    self.layout.operator(ImportSegaNNXno.bl_idname, text="Sega NN xbox (.xno)")
