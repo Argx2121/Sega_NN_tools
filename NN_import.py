@@ -1,6 +1,6 @@
 from .modules.srpc_read_file import *
 
-# TODO use this list instead of self defining
+
 xno_list = (
     ("debug", "Debug", "For Reversing Vertex Block Bitflags | N/A | N/A"),
     ("s06", "Sonic '06", "Sonic '06 Model | ReadXbox | 14 Nov 2006"),
@@ -27,22 +27,13 @@ class XnoSettings:
     texture_name_structure: str
 
 
-@dataclass
-class AssetNames:
-    model_name: str
-    texture_names: list
-    bone_names: list
-
-
 def sonic06(filepath, settings):
     def execute():
         print_line()
         f = open(filepath, 'rb')
-        nn_data = ReadNn(f, filepath, settings.model_format).read_file()
-        names = AssetNames(model_name=nn_data.file_name,
-                           texture_names=nn_data.texture_names, bone_names=nn_data.bone_names)
-        if nn_data.model_data:
-            Model(nn_data.model_data, names, settings).x()
+        nn = ReadNn(f, filepath, settings.model_format).read_file()
+        if nn.model_data:
+            Model(nn, settings).x()
         f.close()
 
     start_time = time()
@@ -66,11 +57,10 @@ def psu(filepath, settings):
     def execute():
         print_line()
         f = open(filepath, 'rb')
-        nn_data = ReadNn(f, filepath, settings.model_format).read_block()
-        names = AssetNames(model_name=bpy.path.basename(filepath),
-                           texture_names=nn_data.texture_names, bone_names=nn_data.bone_names)
-        if nn_data.model_data:
-            Model(nn_data.model_data, names, settings).x()
+        nn = ReadNn(f, filepath, settings.model_format).read_block()
+        nn.file_name = bpy.path.basename(filepath)
+        if nn.model_data:
+            Model(nn, settings).x()
         f.close()
 
     start_time = time()
@@ -118,10 +108,8 @@ def debug(filepath, settings):
         print_line()
         f = open(filepath, 'rb')
         nn_data = ReadNn(f, filepath, settings.model_format, True).read_file()
-        names = AssetNames(model_name=nn_data.file_name,
-                           texture_names=nn_data.texture_names, bone_names=nn_data.bone_names)
         if nn_data.model_data:
-            Model(nn_data.model_data, names, settings).x()
+            Model(nn_data, settings).x()
         f.close()
 
     settings.model_format = xno_list[0][0]
@@ -162,16 +150,16 @@ class ImportSegaNNXnoPreferences(bpy.types.AddonPreferences):
     max_len: FloatProperty(
         name="Max bone length",
         description='Max bone length, only applicable if "Keep bones one size" is false. Scales with format',
-        default=5000,
-        min=0,
-        max=100000,
+        default=250,
+        min=1,
+        max=1000,
     )
 
     def draw(self, context):
         layout = self.layout
         layout.row().prop(self, "dev_mode")
-        layout.row().prop(self, "max_len", slider=True)
-        # row = layout.row()
+        if self.dev_mode:
+            layout.row().prop(self, "max_len", slider=True)
 
 
 class ImportSegaNNXno(bpy.types.Operator, ImportHelper):

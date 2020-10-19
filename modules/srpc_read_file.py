@@ -17,12 +17,6 @@ class ReadFile:  # todo needs a rework tbh
         self.material_in_next_block = []
         self.tex_block_index = 0
 
-    @dataclass
-    class AssetNames:
-        model_name: str
-        texture_names: list
-        bone_names: list
-
     def execute(self):
         # read the files archive data
         archive = re_arc.read_archive(self.f)
@@ -67,7 +61,7 @@ class ReadFile:  # todo needs a rework tbh
             else:
                 nxtl_block = 0
             if nn_data.model_data:
-                sub_file_data.append(["NXOB", nn_data.file_name, nn_data.model_data, nxtl_block + self.tex_block_index])
+                sub_file_data.append(["NXOB", nn_data, nxtl_block + self.tex_block_index])
             else:  # animations would go here
                 pass  # sub_file_data.append([None, None, None, None])
 
@@ -94,14 +88,13 @@ class ReadFile:  # todo needs a rework tbh
         texture_name_list = self.texture_name_list
 
         for s_file in self.sub_file_data:
-            s_block, s_name, s_data, s_extra = s_file
+            s_block, s_data, s_extra = s_file
             if s_block == "NXOB":
                 if s_extra >= len(texture_name_list):  # fix this ?
                     s_extra = -1
                 obj_make_start = time()
-                names = self.AssetNames(model_name=s_name, texture_names=texture_name_list[s_extra], bone_names=[])
-                self.material_in_next_block.append(
-                    Model(s_data, names, self.settings).x())
+                s_data.texture_names = texture_name_list[s_extra]
+                self.material_in_next_block.append(Model(s_data, self.settings).x())
                 print(" " * 49, "| Overall %f seconds" % (time() - obj_make_start))
             else:  # anims here when done
                 print(" " * 49, "| Skipping unsupported block")

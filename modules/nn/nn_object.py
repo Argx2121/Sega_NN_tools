@@ -1,5 +1,6 @@
 from .object_assets import *
 from ..util import *
+from dataclasses import dataclass
 
 
 # read model
@@ -13,45 +14,50 @@ class Read:
         self.f.seek(seek)
         return console_out(text, function)
 
+    @dataclass
+    class ModelData:
+        data: Any = None
+        bones: Any = None
+        materials: Any = None
+        faces: Any = None
+        vertices: Any = None
+        mesh_info: Any = None
+        build_mesh: Any = None
+
     def _type_1(self, debug):
         f = self.f
         post_info = self.post_info
         start_nxob = f.tell() - 4
         len_nxob = read_int(f)
         stdout.write("| \n")
+        model = self.ModelData()
 
-        data, self.post_info = self._execute(
+        model.data, self.post_info = self._execute(
             read_int(f) + post_info, "Parsing Model Info...", model_data.Read(f, post_info, start_nxob).xbox)
         post_info = self.post_info
         if debug:
-            print(data)
+            print(model.data)
             print("After info (decimal, memory rips / files with broken pointers will be negative):", post_info)
 
-        bone_data = self._execute(post_info + data.bone_offset, "Parsing Bones...", bones.Read(f, data.bone_count).xbox)
+        model.bones = self._execute(post_info + model.data.bone_offset, "Parsing Bones...",
+                                    bones.Read(f, model.data.bone_count).xbox)
+        model.materials = self._execute(post_info + model.data.material_offset, "Parsing Materials...",
+                                        materials.Read(f, post_info, model.data.material_count).xbox)
+        model.faces = self._execute(post_info + model.data.face_set_offset, "Parsing Faces...",
+                                    faces.Read(f, post_info, model.data.face_set_count).xbox)
+        model.vertices, model.mesh_info = self._execute(
+            post_info + model.data.vertex_buffer_offset, "Parsing Vertices...",
+            vertices.Read(f, post_info, self.format_type, model.data.vertex_buffer_count).xbox)
 
-        material_list = self._execute(
-            post_info + data.material_offset, "Parsing Materials...",
-            materials.Read(f, post_info, data.material_count).xbox)
-
-        face_list = self._execute(
-            post_info + data.face_set_offset, "Parsing Faces...", faces.Read(f, post_info, data.face_set_count).xbox)
-
-        vertex_data, mesh_info = self._execute(
-            post_info + data.vertex_buffer_offset, "Parsing Vertices...",
-            vertices.Read(f, post_info, self.format_type, data.vertex_buffer_count).xbox)
-
-        build_mesh = console_out("Parsing Sub Mesh Data...", meshes.Read(
-            f, post_info, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).xbox)  # seeks in method
+        model.build_mesh = \
+            console_out("Parsing Sub Mesh Data...", meshes.Read(
+                f, post_info, model.data.mesh_sets_count, model.data.mesh_data_offset, model.data.mesh_data_count).xbox)
+        # seeks in method
         if debug:
-            print(build_mesh)
+            print(model.build_mesh)
+        f.seek(start_nxob + len_nxob + 8)  # seek end of block
 
-        f.seek(start_nxob + len_nxob + 8)  # seek past this n block so we can read the next block
+        return model
 
-        return_data = (
-            bone_data, data.bone_count, data.material_count,
-            material_list, build_mesh, face_list, mesh_info, vertex_data
-        )
-        return return_data
-
-    def x(self, debug) -> tuple:
+    def x(self, debug) -> ModelData:
         return self._type_1(debug)

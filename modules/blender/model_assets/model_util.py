@@ -5,10 +5,10 @@ class ModelUtil:
     def make_names(self):
         model_strip = self.model_name_strip
         if not self.bone_names:
-            self.bone_names = [model_strip + "_Bone_" + str(a) for a in list(range(self.bone_count))]
-        self.group_names = [model_strip + "_Bone_Group_" + str(a.group) for a in self.bone_data]
-        self.mat_names = [model_strip + "_Material_" + str(a) for a in list(range(self.material_count))]
-        self.mesh_names = [model_strip + "_Mesh_" + str(a) for a in list(range(len(self.build_mesh)))]
+            self.bone_names = [model_strip + "_Bone_" + str(a) for a in list(range(self.model_data.data.bone_count))]
+        self.group_names = [model_strip + "_Bone_Group_" + str(a.group) for a in self.model_data.bones]
+        self.mat_names = [model_strip + "_Material_" + str(a) for a in list(range(self.model_data.data.material_count))]
+        self.mesh_names = [model_strip + "_Mesh_" + str(a) for a in list(range(len(self.model_data.build_mesh)))]
 
     def clean_mesh(self):  # i hate using ops
         obj_list = self.obj_list

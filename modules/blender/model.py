@@ -8,20 +8,17 @@ from ..util import console_out
 
 
 class Model:
-    def __init__(self, data, names, settings):  # TODO format xbox/gamecube/etc
-        (
-            self.bone_data, self.bone_count, self.material_count,
-            self.material_list, self.build_mesh, self.face_list, self.mesh_info, self.vertex_data,
-        ) = data
+    def __init__(self, nn, settings):  # TODO format xbox/gamecube/etc
+        self.model_data = nn.model_data
         self.settings = settings
         self.format = settings.model_format
-        self.bone_groups = [bone.group for bone in self.bone_data]
-        self.bone_names = names.bone_names
-        self.model_name = names.model_name
-        self.model_name_strip = names.model_name
+        self.bone_groups = [bone.group for bone in self.model_data.bones]
+        self.bone_names = nn.bone_names
+        self.model_name = nn.file_name
+        self.model_name_strip = nn.file_name
         if self.model_name_strip.endswith("no"):
             self.model_name_strip = self.model_name_strip[:-4]
-        self.texture_name_list = names.texture_names
+        self.texture_names = nn.texture_names
         self.material_list_blender = []
         self.obj_list = []
         self.material_in_next_block = []

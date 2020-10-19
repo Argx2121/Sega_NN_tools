@@ -61,7 +61,8 @@ class Read:
     def _texture_type_1(self):
         # 11 = normals? (sonic 06)
         texture_type = {
-            1: "diffuse", 2: "diffuse", 3: "diffuse", 4: "reflection", 5: "diffuse", 6: "diffuse", 11: "normal"}
+            1: "diffuse", 2: "diffuse", 3: "diffuse", 4: "reflection", 5: "diffuse", 6: "diffuse",
+            9: "diffuse", 11: "normal"}
         f = self.f
         material_count = self.material_count
         for texture_value in range(material_count):

@@ -5,8 +5,8 @@ from mathutils import Matrix
 class Armature:
     def make_bones_type_1(self):
         model_format = self.format
-        bone_count = self.bone_count
-        bone_data = self.bone_data
+        bone_count = self.model_data.data.bone_count
+        bone_data = self.model_data.bones
         bone_names = self.bone_names
         max_len = self.settings.max_bone_length
         armature = bpy.context.object.data
@@ -31,8 +31,8 @@ class Armature:
 
     def make_bones_type_2(self):  # this needs to be updated
         model_format = self.format
-        bone_count = self.bone_count
-        bone_data = self.bone_data
+        bone_count = self.model_data.data.bone_count
+        bone_data = self.model_data.bones
         bone_names = self.bone_names
         max_len = self.settings.max_bone_length
         armature = bpy.context.object.data
@@ -69,16 +69,16 @@ class Armature:
         bpy.ops.pose.hide(unselected=False)
 
     def scale_bones(self):
-        bone_count = self.bone_count
-        bone_data = self.bone_data
+        bone_count = self.model_data.data.bone_count
+        bone_data = self.model_data.bones
         pose = bpy.context.object.pose
         for i in range(bone_count):
             bpy.context.object.data.bones[i].inherit_scale = 'NONE'
             pose.bones[i].scale = bone_data[i].scale
 
     def make_bone_groups(self):
-        bone_count = self.bone_count
-        bone_data = self.bone_data
+        bone_count = self.model_data.data.bone_count
+        bone_data = self.model_data.bones
         group_names = self.group_names
         pose = bpy.context.object.pose
         if self.model_name_strip + "_Bone_Group_" + "65535" in group_names:

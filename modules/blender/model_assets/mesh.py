@@ -6,10 +6,10 @@ class Mesh:
         bone_groups = self.bone_groups
         model_name1 = self.model_name
         model_name_strip1 = self.model_name_strip
-        build_mesh1 = self.build_mesh
-        mesh_info = self.mesh_info
-        vertex_data = self.vertex_data
-        face_list1 = self.face_list
+        build_mesh1 = self.model_data.build_mesh
+        mesh_info = self.model_data.mesh_info
+        vertex_data = self.model_data.vertices
+        face_list1 = self.model_data.faces
         format1 = self.format
         mesh_names = self.mesh_names
         obj_list = self.obj_list

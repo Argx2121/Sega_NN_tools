@@ -4,16 +4,16 @@ import bpy
 class Material:  # functional, but needs a rework
     def make_material(self):
         model_format = self.format
-        texture_name = self.texture_name_list
-        material_count = self.material_count
+        texture_name = self.texture_names
+        material_count = self.model_data.data.material_count
         mat_names = self.mat_names
         material_list_blender = self.material_list_blender
-        material_list = self.material_list
+        material_list = self.model_data.materials
         model_name_strip = self.model_name_strip
         material_in_next_block = self.material_in_next_block
 
         if model_format != "srpc":
-            if not texture_name and type(texture_name[0]) == str:
+            if not texture_name:
                 for m in material_list:
                     m.tex_count = 0
             elif type(texture_name[0]) == str:
