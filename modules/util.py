@@ -8,7 +8,7 @@ from typing import BinaryIO, Tuple, Any
 import bpy
 
 
-# large
+# large functions
 
 
 def get_files(file_path: str, name_ignore: tuple = (), name_require: tuple = ()) -> list:
@@ -65,26 +65,6 @@ def read_texture_block_info(f: BinaryIO) -> tuple:
     return tex_start, img_count, type_byte, texture_offsets, texture_names
 
 
-# misc
-
-def for_each_offset(f: BinaryIO, post_info: int, offsets: list, execute, variable) -> Any:
-    function_list = []
-    for offset in offsets:
-        f.seek(offset + post_info)
-        function_list.append(execute(variable))
-    return function_list
-
-
-def toggle_console():
-    """Toggles Blenders console"""
-    bpy.ops.wm.console_toggle()
-
-
-def print_line():
-    """Prints a line of 50 hyphens to the console"""
-    print("--------------------------------------------------")
-
-
 def console_out(text: str, execute, variable=None) -> Any:
     """Prints a string to the console with padding to 50 letters, executes a function and prints the time it took.
 
@@ -95,6 +75,9 @@ def console_out(text: str, execute, variable=None) -> Any:
 
     execute : () -> Any
         The function to execute
+
+    variable : tuple
+        The functions parameters
 
     Returns
     -------
@@ -148,6 +131,56 @@ def console_out_post(s_time: float):
 
     stdout.write("| Done in %f seconds \n" % (time() - s_time))
     stdout.flush()
+
+
+def for_each_offset(f: BinaryIO, post_info: int, offsets: list, execute, variable) -> list:
+    """Executes a function at each offset + post_info amd returns returned data.
+
+        Parameters
+        ----------
+        f : BinaryIO
+            The file read.
+
+        post_info : int
+            File position after info block
+
+        offsets : list
+            List of file offsets
+
+        execute : () -> Any
+        The function to execute
+
+        variable : tuple
+            The functions parameters
+
+        Returns
+        -------
+        tuple
+            Tuple containing each executed functions return data from the offset
+
+        """
+    function_list = []
+    for offset in offsets:
+        f.seek(offset + post_info)
+        function_list.append(execute(variable))
+    return function_list
+
+# small functions
+
+
+def toggle_console():
+    """Toggles Blenders console"""
+    bpy.ops.wm.console_toggle()
+
+
+def print_line():
+    """Prints a line of 50 hyphens to the console"""
+    print("--------------------------------------------------")
+
+
+# read / write data
+
+# alignment
 
 
 def read_aligned(file: BinaryIO, divide_by: int):
