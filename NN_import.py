@@ -2,13 +2,15 @@ from .modules.srpc_read_file import *
 
 
 xno_list = (
+    # debug first
     ("debug", "Debug", "For Reversing Vertex Block Bitflags | N/A"),
-
-    ("match", "Match", "Tries to match the file with a known format (Experimental!!) | N/A"),
+    # game formats from newest to oldest
     ("s06", "Sonic '06", "Sonic '06 Model | 14 Nov 2006"),
     ("psu", "Phantasy Star Universe", "Phantasy Star Universe Model | 31 Aug 2006"),
     ("srpc", "Sonic Riders", "Sonic Riders Model / Archive | 21 Feb 2006"),
-)  # keep debug first!
+    # extra import settings
+    ("match", "Match", "Tries to match the file with a known format (Experimental!!) | N/A"),
+)
 
 
 @dataclass
@@ -44,22 +46,35 @@ def match(filepath, settings):
         first_uint = read_int(f)  # xno is always little endian
         f.close()
         if first_uint == 1179211854:  # NXIF
+            print("Game assumed to be Sonic '06")
+            stdout.flush()
             settings.model_format = "s06"
             sonic06(filepath, settings)
         elif first_uint == 1112496206:  # NXOB
+            print("Game assumed to be Phantasy Star Universe")
+            stdout.flush()
             settings.model_format = "psu"
             psu(filepath, settings)
         elif 0 < first_uint < 100:  # typically ~ 45 models in a srpc map file
+            print("Game assumed to be Sonic Riders")
+            stdout.flush()
             settings.model_format = "srpc"
             srpc(filepath, settings)
+        else:
+            print("Couldn't match to a game")
+            stdout.flush()
 
     if settings.batch_import == "Single":
         execute()
+        print_line()
+        stdout.flush()
     else:
         file_list = get_files(filepath)
         settings.batch_import = "Single"
         for filepath in file_list:
             execute()
+            print_line()
+            stdout.flush()
     return {'FINISHED'}
 
 
@@ -74,7 +89,6 @@ def sonic06(filepath, settings):
 
     start_time = time()
     toggle_console()
-    print_line()
     if settings.batch_import == "Single":
         execute()
     else:
@@ -97,7 +111,6 @@ def psu(filepath, settings):
 
     start_time = time()
     toggle_console()
-    print_line()
     if settings.batch_import == "Single":
         execute()
     else:
@@ -110,13 +123,13 @@ def psu(filepath, settings):
 
 def srpc(filepath, settings):
     def execute():
+        print_line()
         f = open(filepath, 'rb')
         ReadFile(f, filepath, settings).execute()
         f.close()
 
     start_time = time()
     toggle_console()
-    print_line()
     if settings.batch_import == "Single":
         execute()
     else:
@@ -136,10 +149,9 @@ def debug(filepath, settings):
             Model(nn_data, settings).x()
         f.close()
 
-    settings.model_format = xno_list[0][0]
+    settings.model_format = xno_list[1][0]
     start_time = time()
     toggle_console()
-    print_line()
     if settings.batch_import == "Single":
         execute()
     else:
@@ -197,7 +209,7 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
         name="Game",
         description="Game the model is from (to get the correct xno variant)",
         items=xno_list[1:],
-        default="srpc")
+        default="match")
     xno_ver_dev: EnumProperty(
         name="Game",
         description="Game the model is from (to get the correct xno variant)",

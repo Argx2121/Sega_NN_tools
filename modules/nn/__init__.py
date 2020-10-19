@@ -87,21 +87,36 @@ class ReadNn:
     # specific
     def info_1(self):
         self.nn_file.post_info = nn_information_file.Read(self.f).type_1()
+        if self.debug:
+            message = "Post info file position: " + str(self.nn_file.post_info)
+            stdout.write("| \n" + message + " " * (50 - len(message)))
 
     def texl_1(self):
         self.nn_file.texture_names = nn_texture_library.Read(self.f, self.filepath).type_1()
+        if self.debug:
+            message = "Texture names: " + str(self.nn_file.texture_names)
+            stdout.write("| \n" + message + " " * (50 - len(message)))
 
     def texl_2(self):
         self.nn_file.texture_names = nn_texture_library.Read(self.f, self.filepath).type_2()
+        if self.debug:
+            message = "Texture names: " + str(self.nn_file.texture_names)
+            stdout.write("| \n" + message + " " * (50 - len(message)))
 
     def efct_1(self):
         nn_effects.Read(self.f).type_1()
 
     def node_1(self):
         self.nn_file.bone_names = nn_node_names.Read(self.f, self.nn_file.post_info).type_1()
+        if self.debug:
+            message = "Bone names: " + str(self.nn_file.bone_names)
+            stdout.write("| \n" + message + " " * (50 - len(message)))
 
     def node_2(self):
         self.nn_file.bone_names = nn_node_names.Read(self.f, self.nn_file.post_info).type_2()
+        if self.debug:
+            message = "Bone names: " + str(self.nn_file.bone_names)
+            stdout.write("| \n" + message + " " * (50 - len(message)))
 
     def nxob(self):
         self.nn_file.model_data = nn_object.Read(self.f, self.nn_file.post_info, self.format_type).x(self.debug)
@@ -113,6 +128,9 @@ class ReadNn:
 
     def nfn0(self):
         self.nn_file.file_name = nn_file_name.Read(self.f).generic()
+        if self.debug:
+            message = "File name: " + str(self.nn_file.file_name)
+            stdout.write("| \n" + message + " " * (50 - len(message)))
 
     def nend(self):
         nn_end.Read(self.f).generic()
