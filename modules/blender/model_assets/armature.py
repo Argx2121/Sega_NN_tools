@@ -4,25 +4,23 @@ from mathutils import Matrix
 
 class Armature:
     def make_bones_type_1(self):
-        model_format = self.format
         bone_count = self.model_data.data.bone_count
         bone_data = self.model_data.bones
         bone_names = self.bone_names
         max_len = self.settings.max_bone_length
         armature = bpy.context.object.data
-        det_format = {"srpc": 0.1, "psu": 1, "s06": 10}
-        tail_var = det_format[model_format]
+        tail_var = self.settings.format_bone_scale
         for i in range(bone_count):
             b = bone_data[i]
             bone = armature.edit_bones.new(bone_names[i])
 
             if b.parent != 65535:
                 bone.parent = armature.edit_bones[b.parent]
-            matrix = Matrix(b.position).transposed().inverted_safe()
-            bone.tail = b.relative  # is this what they actually use that var for? no
-            bone.transform(matrix)  # does it look cool? yes, so i'll be doing it
-            if not 0.0001 < bone.length < tail_var * max_len:  # len too small = bone isnt made, len too big = cant see
-                bone.length = tail_var
+            matrix = Matrix(b.position).transposed().inverted_safe()  # there are unsafe matrices
+            bone.tail = b.relative  # they store the position relative to parent bone
+            bone.transform(matrix)  # this isn't the correct usage but it looks nice!
+            if not 0.0001 < bone.length < tail_var * max_len:
+                bone.length = tail_var  # len too small = bone isn't made, len too big = can't see anything in blender
             bone.roll = 0
 
         if self.settings.all_bones_one_length:
@@ -30,14 +28,12 @@ class Armature:
                 bone.length = tail_var
 
     def make_bones_type_2(self):  # this needs to be updated
-        model_format = self.format
         bone_count = self.model_data.data.bone_count
         bone_data = self.model_data.bones
         bone_names = self.bone_names
         max_len = self.settings.max_bone_length
         armature = bpy.context.object.data
-        det_format = {"srpc": 0.1, "psu": 1, "s06": 10}
-        tail_var = det_format[model_format]
+        tail_var = self.settings.format_bone_scale
         for i in range(bone_count):
             b = bone_data[i]
             bone = armature.edit_bones.new(bone_names[i])

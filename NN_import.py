@@ -17,6 +17,7 @@ xno_list = (
 class XnoSettings:
     # generic
     model_format: str
+    format_bone_scale: int
     batch_import: str
     clean_mesh: bool
     all_bones_one_length: bool
@@ -251,11 +252,9 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
         description="How extracted texture names should be formatted",
         items=(
             ('simple', "Simple Names",
-             "Allows textures with the same name to be replace eachother "
-             "(syntax: Texture_name.dds)"),
+             "Allows textures with the same name to be replace eachother (syntax: Texture_name.dds)"),
             ('complex', "Specific Names",
-             "Prevents a texture from being replaced by one with the same name "
-             "(syntax: Name.file.subfile.index.dds)")),
+             "Prevents a texture from being replaced by one with the same name (syntax: Name.file.subfile.index.dds)")),
         default='simple')
     all_blocks: BoolProperty(
         name="Import models+",
@@ -271,7 +270,14 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
         default=True)
 
     def draw(self, context):
-        def srpc_specific(xno_var):
+        def specific(xno_var):
+            def match_set():  # match should have all settings because we haven't set a format
+                layout.label(text="All specific settings:")
+                s06_set()
+                psu_set()
+                srpc_set()
+                debug_set()
+
             def s06_set():
                 layout.label(text="Sonic '06 specific settings:")
                 layout.row().prop(self, "colour")
@@ -287,8 +293,8 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
             def debug_set():
                 pass
 
-            det = {"match": debug_set, "s06": s06_set, "psu": psu_set, "srpc": srpc_set, "debug": debug_set}
-            det[xno_var]()
+            det = {"match": match_set, "s06": s06_set, "psu": psu_set, "srpc": srpc_set, "debug": debug_set}
+            det[xno_var]()  # execute the right ui for the format
 
         preferences = bpy.context.preferences.addons[__package__].preferences
         layout = self.layout
@@ -296,10 +302,10 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
 
         if preferences.dev_mode:
             layout.row().prop(self, "xno_ver_dev")
-            srpc_specific(self.xno_ver_dev)
+            specific(self.xno_ver_dev)
         else:
             layout.row().prop(self, "xno_ver")
-            srpc_specific(self.xno_ver)
+            specific(self.xno_ver)
 
         layout.label(text="Generic settings:")
         layout.row().prop(self, "batch", expand=True)
@@ -313,10 +319,12 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
     def execute(self, context):
         preferences = bpy.context.preferences.addons[__package__].preferences
         det = {"match": match, "s06": sonic06, "psu": psu, "srpc": srpc, "debug": debug}
+        b_det = {"match": 1, "s06": 10, "psu": 1, "srpc": 0.1, "debug": 1}
         if not preferences.dev_mode:
             self.clean = True
         settings = XnoSettings(
             model_format="",
+            format_bone_scale=0,
             batch_import=self.batch,
             clean_mesh=self.clean,
             all_bones_one_length=self.length,
@@ -331,15 +339,14 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
             texture_name_structure=self.image
         )
         if preferences.dev_mode:
-            settings.model_format = self.xno_ver_dev
-            if not self.xno_ver_dev == "s06":
-                settings.use_vertex_colours = False
-            return det[self.xno_ver_dev](self.filepath, settings)
+            xno_ver = self.xno_ver_dev
         else:
-            if not self.xno_ver_dev == "s06":
-                settings.use_vertex_colours = False
-            settings.model_format = self.xno_ver
-            return det[self.xno_ver](self.filepath, settings)
+            xno_ver = self.xno_ver
+        settings.model_format = xno_ver
+        settings.format_bone_scale = b_det[xno_ver]
+        if xno_ver != "s06":
+            settings.use_vertex_colours = True
+        return det[xno_ver](self.filepath, settings)
 
 
 def menu_func_import(self, context):  # add to dynamic menu
