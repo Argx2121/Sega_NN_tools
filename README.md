@@ -6,19 +6,19 @@ A python library for blender of tools for games using Sega's NN libraries.
  - Blender 2.80 or above 
 
 ## Installation
- - Download the plugin as a zip 
- - Install the addon in blender:
-   - In the top bar: edit > preferences
-   - In Blender preferences: addons > install
-   - In Blender file view: navigate to where you downloaded the zip, select the zip and press install addon
-   - In Blender preferences: make sure the box for Sega NN tools is checked.
+ 1. [Download the plugin](https://github.com/Argx2121/Sega_NN_tools/releases)
+ 2. Install the addon in blender:
+    1. In the top bar: edit > preferences
+    2. In Blender preferences: addons > install
+    3. In Blender file view: navigate to where you downloaded the zip, select the zip and press install addon
+    4. In Blender preferences: make sure the box for Sega NN tools is checked.
    
 ## Usage
-- Open from either
-  - 3d view > sidebar (press n on your keyboard!) > Sega NN tools > import
-  - Top bar > file > import > Sega NN xno 
-- Choose the correct game format that the model originates from.
-- Importing opens the console to print data. This is done for files that may take minutes to import.
+1. Open from either
+   - 3d view > sidebar (press n on your keyboard!) > Sega NN tools > import
+   - Top bar > file > import > Sega NN xno 
+2. Choose the correct game format that the model originates from.
+3. Importing opens the console to print data. This is done for files that may take minutes to import.
   
 ## About
 ### Developers
