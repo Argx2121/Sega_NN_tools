@@ -3,6 +3,7 @@ from .modules.srpc_read_file import *
 
 xno_list = (
     ("debug", "Debug", "For Reversing Vertex Block Bitflags | N/A | N/A"),
+    ("match", "Match", "Tries to match the file with a known format (Experimental!!)| N/A | N/A"),
     ("s06", "Sonic '06", "Sonic '06 Model | ReadXbox | 14 Nov 2006"),
     ("psu", "Phantasy Star Universe", "Phantasy Star Universe Model | PC | 31 Aug 2006"),
     ("srpc", "Sonic Riders", "Sonic Riders Model / Archive | PC / ReadXbox | 21 Feb 2006"),
@@ -25,6 +26,32 @@ class XnoSettings:
     # srpc
     import_all_formats: bool
     texture_name_structure: str
+
+
+def match(filepath, settings):
+    def execute():
+        print_line()
+        f = open(filepath, 'rb')
+        first_uint = read_int(f)  # xno is always little endian
+        f.close()
+        if first_uint == 1179211854:  # NXIF
+            settings.model_format = "s06"
+            sonic06(filepath, settings)
+        elif first_uint == 1112496206:  # NXOB
+            settings.model_format = "psu"
+            psu(filepath, settings)
+        elif 0 < first_uint < 100:  # typically ~ 25
+            settings.model_format = "srpc"
+            srpc(filepath, settings)
+
+    if settings.batch_import == "Single":
+        execute()
+    else:
+        file_list = get_files(filepath)
+        settings.batch_import = "Single"
+        for filepath in file_list:
+            execute()
+    return {'FINISHED'}
 
 
 def sonic06(filepath, settings):
@@ -182,7 +209,7 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
         name="Game",
         description="Game the model is from (to get the correct xno variant)",
         items=xno_list,
-        default="srpc")
+        default="match")
     batch: EnumProperty(
         name="Batch usage",
         description="If all files in a folder (non recursive) should be used",
@@ -255,7 +282,7 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
             def debug_set():
                 pass
 
-            det = {"s06": s06_set, "psu": psu_set, "srpc": srpc_set, "debug": debug_set}
+            det = {"match": debug_set, "s06": s06_set, "psu": psu_set, "srpc": srpc_set, "debug": debug_set}
             det[xno_var]()
 
         preferences = bpy.context.preferences.addons[__package__].preferences
@@ -280,7 +307,7 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
 
     def execute(self, context):
         preferences = bpy.context.preferences.addons[__package__].preferences
-        det = {"s06": sonic06, "psu": psu, "srpc": srpc, "debug": debug}
+        det = {"match": match, "s06": sonic06, "psu": psu, "srpc": srpc, "debug": debug}
         if not preferences.dev_mode:
             self.clean = True
         settings = XnoSettings(
