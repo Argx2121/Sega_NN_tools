@@ -15,8 +15,9 @@ A python library for blender of tools for games using Sega's NN libraries.
    
 ## Usage
 - Open from either
-  - 3d view > sidebar > Sega NN tools > import
+  - 3d view > sidebar (press n on your keyboard!) > Sega NN tools > import
   - Top bar > file > import > Sega NN xno 
+- Choose the correct game format that the model originates from.
 - Importing opens the console to print data. This is done for files that may take minutes to import.
   
 ## About
