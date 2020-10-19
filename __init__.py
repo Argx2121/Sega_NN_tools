@@ -7,7 +7,8 @@ bl_info = {
     "blender": (2, 80, 0),
     "location": "3d View > Sidebar",
     "warning": "",
-    "wiki_url": " ",
+    "wiki_url": "https://github.com/Argx2121/Sega_NN_tools/wiki",
+    "tracker_url": "https://github.com/Argx2121/Sega_NN_tools/issues/new",
     "category": "Import-Export",
 }
 
