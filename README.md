@@ -21,6 +21,7 @@ A python library for blender of tools for games using Sega's NN libraries.
 3. Importing opens the console to print data. This is done for large files that may take minutes to import.
   
 ## About
+
 ### Developers
  - Arg!!
  
@@ -31,18 +32,24 @@ A python library for blender of tools for games using Sega's NN libraries.
  - Yacker
 
 ## Games
+
 ### Xno
+
 #### Sonic Riders
 - Archive files include both models and textures in them, and textures are exported out of the file so they can be used.
 - The Simple / Complex names setting should be simple when handling player models and complex when otherwise.
 - The Import Models+ setting is used when importing map files. It is experimental, but it allows you to import collision and other data.
 - Some textures may just be pink in blender - this is a known issue that doesn't otherwise influence how the addon functions.
+
 ##### Texture swapping
 1. Go to 3d view > sidebar > Sega NN tools > Sonic Riders PC Tools > Extract or Insert Textures.
 2. Extract all the textures required (if doing player models extract batch with simple names, for maps use complex names.)
 3. Replace extracted textures with your own (should have the same filename and be a dds file.)
 4. Insert textures.
-- Please note riders memory allocation is hard coded - this means if you make every texture 4k you will probably crash the game. You shouldn't stray too far from the textures original dimensions. 
+
+- Supported formats are: .dds files (dxt1, dxt3 and dxt5 aka bc1, bc1a, bc2 and bc3)
+- Texture dimensions should be a power of 2 (2, 4, 8, 16, 32, 64, 128 etc.)
+- Riders has a set amount of memory reserved for loaded files - this means files can't be too large. If you make textures 4k you *will* crash the game. To stay safe, you shouldn't stray far from the textures original dimensions. 
 - You don't have to replace every file with your own, you just need to have all textures extracted.
 
 #### Sonic (2006)

@@ -4,7 +4,7 @@ from .nn import *
 from .util import *
 
 
-class ReadFile:  # todo needs a rework tbh
+class ReadFile:
     def __init__(self, f, file_path, settings):
         self.f = f
         self.file_path = file_path
@@ -17,8 +17,7 @@ class ReadFile:  # todo needs a rework tbh
         self.tex_block_index = 0
 
     def execute(self):
-        # read the files archive data
-        archive = re_arc.read_archive(self.f)
+        archive = re_arc.read_archive(self.f)  # read the files archive data
         file_count = archive.file_count
         self.sub_file_offsets = archive.sub_file_offsets
 
@@ -85,7 +84,6 @@ class ReadFile:  # todo needs a rework tbh
 
     def make_subs(self):
         texture_name_list = self.texture_name_list
-
         for s_file in self.sub_file_data:
             s_block, s_data, s_extra = s_file
             if s_block == "NXOB":
