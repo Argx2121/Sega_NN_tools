@@ -2,14 +2,14 @@ from .modules.srpc_read_file import *
 
 
 xno_list = (
-    # debug first
+    # keep debug first!!
     ("debug", "Debug", "For Reversing Vertex Block Bitflags | N/A"),
+    # extra import functions
+    ("match", "Match", "Tries to match the file with a known format (Experimental!!) | N/A"),
     # game formats from newest to oldest
     ("s06", "Sonic '06", "Sonic '06 Model | 14 Nov 2006"),
     ("psu", "Phantasy Star Universe", "Phantasy Star Universe Model | 31 Aug 2006"),
     ("srpc", "Sonic Riders", "Sonic Riders Model / Archive | 21 Feb 2006"),
-    # extra import settings
-    ("match", "Match", "Tries to match the file with a known format (Experimental!!) | N/A"),
 )
 
 

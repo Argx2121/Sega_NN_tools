@@ -3,14 +3,14 @@
 A python library for blender of tools for games using Sega's NN libraries.
 
 ## Requirements
- - Blender 2.80 or above 
+ - Blender 2.80 or above.
 
 ## Installation
  1. [Download the plugin](https://github.com/Argx2121/Sega_NN_tools/releases)
  2. Install the addon in blender:
     1. In the top bar: edit > preferences
     2. In Blender preferences: addons > install
-    3. In Blender file view: navigate to where you downloaded the zip, select the zip and press install addon
+    3. In Blender file view: navigate to where you downloaded the zip, select the zip and press install addon.
     4. In Blender preferences: make sure the box for Sega NN tools is checked.
    
 ## Usage
@@ -18,7 +18,7 @@ A python library for blender of tools for games using Sega's NN libraries.
    - 3d view > sidebar (press n on your keyboard!) > Sega NN tools > import
    - Top bar > file > import > Sega NN xno 
 2. Choose the correct game format that the model originates from.
-3. Importing opens the console to print data. This is done for files that may take minutes to import.
+3. Importing opens the console to print data. This is done for large files that may take minutes to import.
   
 ## About
 ### Developers
@@ -29,3 +29,27 @@ A python library for blender of tools for games using Sega's NN libraries.
  - Sewer56
  - Shadowth117
  - Yacker
+
+## Games
+### Xno
+#### Sonic Riders
+- Archive files include both models and textures in them, and textures are exported out of the file so they can be used.
+- The Simple / Complex names setting should be simple when handling player models and complex when otherwise.
+- The Import Models+ setting is used when importing map files. It is experimental, but it allows you to import collision and other data.
+- Some textures may just be pink in blender - this is a known issue that doesn't otherwise influence how the addon functions.
+##### Texture swapping
+1. Go to 3d view > sidebar > Sega NN tools > Sonic Riders PC Tools > Extract or Insert Textures.
+2. Extract all the textures required (if doing player models extract batch with simple names, for maps use complex names.)
+3. Replace extracted textures with your own (should have the same filename and be a dds file.)
+4. Insert textures.
+- Please note riders memory allocation is hard coded - this means if you make every texture 4k you will probably crash the game. You shouldn't stray too far from the textures original dimensions. 
+- You don't have to replace every file with your own, you just need to have all textures extracted.
+
+#### Sonic (2006)
+- Character model vertex colours are not suggested to import as they seem to be unused and distort the models appearance.
+- The files are expected to be individualised, that is to say model.xno and texture.dds.
+- If there is another way they're usually stored, please let me know!!
+
+#### Phantasy Star Universe
+- The importer will only read models if the file starts with "NXOB".
+- Some model files may start with a different name which won't be read.

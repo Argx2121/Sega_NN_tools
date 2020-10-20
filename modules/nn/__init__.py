@@ -33,24 +33,24 @@ class ReadNn:
         self.nn_file = self.NnFile()
         self.det_n = {
             # specific
-            "NCIF": self.info_1, "NGIF": self.info_1, "NLIF": self.info_1, "NSIF": self.info_1, "NXIF": self.info_1,
-            "NZIF": self.info_1,
+            "NCIF": self.info_1, "NEIF": self.info_1, "NGIF": self.info_1,
+            "NLIF": self.info_1, "NSIF": self.info_1, "NXIF": self.info_1, "NZIF": self.info_1,
 
-            "NCTL": self.texl_2, "NGTL": self.texl_2, "NLTL": self.texl_1, "NSTL": self.texl_1, "NXTL": self.texl_1,
-            "NZTL": self.texl_1,
+            "NCTL": self.texl_2, "NETL": self.texl_2, "NGTL": self.texl_2,
+            "NLTL": self.texl_1, "NSTL": self.texl_1, "NXTL": self.texl_1, "NZTL": self.texl_1,
 
             # all but NXEF are assumed to exist. (Data isn't applicable)
-            "NCEF": self.efct_1, "NGEF": self.efct_1, "NLEF": self.efct_1, "NSEF": self.efct_1, "NXEF": self.efct_1,
-            "NZEF": self.efct_1,
+            "NCEF": self.efct_1, "NEEF": self.efct_1, "NGEF": self.efct_1,
+            "NLEF": self.efct_1, "NSEF": self.efct_1, "NXEF": self.efct_1, "NZEF": self.efct_1,
 
             # all but NXNN are assumed to exist
-            "NCNN": self.node_2, "NGNN": self.node_2, "NLNN": self.node_1, "NSNN": self.node_1, "NXNN": self.node_1,
-            "NZNN": self.node_1,
+            "NCNN": self.node_2, "NENN": self.node_2, "NGNN": self.node_2,
+            "NLNN": self.node_1, "NSNN": self.node_1, "NXNN": self.node_1, "NZNN": self.node_1,
 
             "NXOB": self.nxob,
             # generic
             "NOF0": self.nof0, "NFN0": self.nfn0, "NEND": self.nend
-        }  # all supported blocks
+        }  # supported blocks
 
     # all possible nn data
     @dataclass
