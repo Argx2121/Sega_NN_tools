@@ -150,7 +150,7 @@ def debug(filepath, settings):
             Model(nn_data, settings).x()
         f.close()
 
-    settings.model_format = xno_list[1][0]
+    settings.model_format = "s06"
     start_time = time()
     toggle_console()
     if settings.batch_import == "Single":
@@ -323,20 +323,13 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
         if not preferences.dev_mode:
             self.clean = True
         settings = XnoSettings(
-            model_format="",
-            format_bone_scale=0,
-            batch_import=self.batch,
-            clean_mesh=self.clean,
-            all_bones_one_length=self.length,
-            max_bone_length=preferences.max_len,
-            ignore_bone_scale=self.pose,
-            hide_null_bones=self.bone,
+            "", 0,
+            self.batch, self.clean, self.length, preferences.max_len, self.pose, self.bone,
             # s06
-            use_vertex_colours=self.colour,
+            self.colour,
             # psu
             # srpc
-            import_all_formats=self.all_blocks,
-            texture_name_structure=self.image
+            self.all_blocks, self.image
         )
         if preferences.dev_mode:
             xno_ver = self.xno_ver_dev

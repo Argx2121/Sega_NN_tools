@@ -9,7 +9,6 @@ class ReadFile:  # todo needs a rework tbh
         self.f = f
         self.file_path = file_path
         self.settings = settings
-        self.file_count = None
         self.sub_file_offsets = None
         self.sub_file_data = []
         self.texture_name_list = [False]
@@ -20,13 +19,13 @@ class ReadFile:  # todo needs a rework tbh
     def execute(self):
         # read the files archive data
         archive = re_arc.read_archive(self.f)
-        self.file_count = archive.file_count
+        file_count = archive.file_count
         self.sub_file_offsets = archive.sub_file_offsets
 
         cur_count = 0
-        for file_index in range(self.file_count):
+        for file_index in range(file_count):
             print("Reading a file------------------------------------")
-            print(" " * 49, "| Reading file", file_index + 1, "of", self.file_count)
+            print(" " * 49, "| Reading file", file_index + 1, "of", file_count)
             for _ in range(archive.sub_file_counts[file_index]):
                 print("Reading a sub file--------------------------------")
                 if self.sub_file_offsets[cur_count]:  # seek 0 happens sometimes
@@ -36,7 +35,7 @@ class ReadFile:  # todo needs a rework tbh
                     print("Skipping Null Block (File offset is 0)")
                 cur_count += 1
             print("Making sub files in blender-----------------------")
-            print(" " * 49, "| Making file", file_index + 1, "of", self.file_count)
+            print(" " * 49, "| Making file", file_index + 1, "of", file_count)
             self.make_subs()
             self.sub_file_data = []
             if self.image_block_14 and self.material_in_next_block:

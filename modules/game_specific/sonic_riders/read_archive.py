@@ -11,7 +11,7 @@ class ArchiveInfo:
     sub_file_offsets: Tuple[int, ...]
 
 
-def read_archive(f: BinaryIO) -> ArchiveInfo:  # TODO make as class
+def read_archive(f: BinaryIO) -> ArchiveInfo:
     """Reads the Archive data in Riders files.
 
     Game : Sonic Riders.
