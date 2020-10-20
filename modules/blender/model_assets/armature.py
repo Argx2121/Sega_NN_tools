@@ -10,10 +10,10 @@ class Armature:
         max_len = self.settings.max_bone_length
         armature = bpy.context.object.data
         tail_var = self.settings.format_bone_scale
+
         for i in range(bone_count):
             b = bone_data[i]
             bone = armature.edit_bones.new(bone_names[i])
-
             if b.parent != 65535:
                 bone.parent = armature.edit_bones[b.parent]
             matrix = Matrix(b.position).transposed().inverted_safe()  # there are unsafe matrices
@@ -34,16 +34,16 @@ class Armature:
         max_len = self.settings.max_bone_length
         armature = bpy.context.object.data
         tail_var = self.settings.format_bone_scale
+
         for i in range(bone_count):
             b = bone_data[i]
             bone = armature.edit_bones.new(bone_names[i])
-
             if b.parent != 65535:
                 bone.parent = armature.edit_bones[b.parent]
             matrix = Matrix(b.position).transposed().inverted_safe()
-            bone.tail = b.relative  # is this what they actually use that var for? no
-            bone.transform(matrix)  # does it look cool? yes, so i'll be doing it
-            if not 0.0001 < bone.length < tail_var * max_len:  # len too small = bone isnt made, len too big = cant see
+            bone.tail = b.relative
+            bone.transform(matrix)
+            if not 0.0001 < bone.length < tail_var * max_len:
                 bone.length = tail_var
             bone.roll = 0
 
@@ -60,9 +60,10 @@ class Armature:
     @staticmethod
     def hide_null_bones():  # in riders these have no weights - 06 has unweighted but they don't have the group
         pose = bpy.context.object.pose
-        pose.bone_groups.active = pose.bone_groups[0]  # group is always made and index 0
-        bpy.ops.pose.group_select()
-        bpy.ops.pose.hide(unselected=False)
+        if "Null_Bone_Group" in pose.bone_groups:
+            pose.bone_groups.active = pose.bone_groups["Null_Bone_Group"]
+            bpy.ops.pose.group_select()
+            bpy.ops.pose.hide(unselected=False)
 
     def scale_bones(self):
         bone_count = self.model_data.data.bone_count
