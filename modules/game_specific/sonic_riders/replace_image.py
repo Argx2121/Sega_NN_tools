@@ -2,7 +2,7 @@ from . import *
 
 
 class ReplaceImage:  # main
-    def __init__(self, f, file_path, file_count, sub_file_offsets, naming_style):
+    def __init__(self, f: BinaryIO, file_path: str, file_count: int, sub_file_offsets: list, naming_style: str):
         self.f = f
         self.file_path = file_path
         self.file_count = file_count

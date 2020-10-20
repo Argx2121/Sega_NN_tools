@@ -3,7 +3,7 @@ from ...util import *
 
 # read + make textures
 class ExtractImage:
-    def __init__(self, f, filepath, naming_style: str, file_index):
+    def __init__(self, f: BinaryIO, filepath: str, naming_style: str, file_index: int):
         self.f = f
         self.filepath = filepath
         self.image_naming = naming_style
@@ -22,7 +22,6 @@ class ExtractImage:
     def execute(self):
         self.texture_start, self.image_count, self.type_byte, self.texture_offsets, self.texture_names = \
             read_texture_block_info(self.f)
-        # print("Texture names are:", self.texture_names)
         self.make_image()
         self.texture_files = [bpy.data.images.load(tex) for tex in self.texture_files]
         return self.texture_files, self.texture_path, self.texture_names, self.type_byte

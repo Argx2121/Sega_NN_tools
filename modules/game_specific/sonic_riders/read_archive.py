@@ -14,8 +14,6 @@ class ArchiveInfo:
 def read_archive(f: BinaryIO) -> ArchiveInfo:
     """Reads the Archive data in Riders files.
 
-    Game : Sonic Riders.
-
     Usage : Required.
 
     Function : Listing sub file information in a riders archive.
