@@ -21,7 +21,7 @@ class Model:
         self.texture_names = nn.texture_names
         self.material_list_blender = []
         self.obj_list = []
-        self.material_in_next_block = []
+        self.material_in_next_block = []  # for srpc
         self.group_names = []
         self.mat_names = []
         self.mesh_names = []

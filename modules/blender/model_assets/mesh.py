@@ -4,20 +4,17 @@ import bpy
 class Mesh:
     def make_mesh(self):
         bone_groups = self.bone_groups
-        model_name1 = self.model_name
-        model_name_strip1 = self.model_name_strip
+        model_name = self.model_name
+        model_name_strip = self.model_name_strip
         build_mesh1 = self.model_data.build_mesh
         mesh_info = self.model_data.mesh_info
         vertex_data = self.model_data.vertices
         face_list1 = self.model_data.faces
-        format1 = self.format
         mesh_names = self.mesh_names
         obj_list = self.obj_list
         material_list_blender = self.material_list_blender
         bone_names = self.bone_names
         b_group = bone_groups
-        model_name = model_name1
-        model_name_strip = model_name_strip1
         collection = bpy.context.collection
 
         def build_mesh():
@@ -65,12 +62,12 @@ class Mesh:
                     for vertex_index in range(vertex_count):  # for each vert
                         b_count = m_info.bone_count_complex
                         if v_data.bone_list_indices:
-                            b_ind = v_data.bone_list_indices[vertex_index]
-                            for var in range(len(b_ind)):  # for all the bones
-                                b_complex_index = b_ind[var]
-                                weight = weights_main[vertex_index][var]
-                                obj.vertex_groups[b_complex_index].add([vertex_index], weight, "ADD")  # keep as add
-                        else:  # non 06
+                            w_ind = weights_main[vertex_index]
+                            for var in range(len(w_ind)):  # for all the bones
+                                b_complex_index = v_data.bone_list_indices[vertex_index][var]
+                                weight = w_ind[var]
+                                obj.vertex_groups[b_complex_index].add([vertex_index], weight, "REPLACE")
+                        else:  # bone indices arent stored in the vertex block
                             for b_complex_index in range(b_count):  # for all the bones
                                 weight = weights_main[vertex_index][b_complex_index]
                                 obj.vertex_groups[b_complex_index].add([vertex_index], weight, "REPLACE")
@@ -111,10 +108,10 @@ class Mesh:
 
             build_mesh()
 
-            if format1 == "s06":
-                if v_data.normals2:
-                    norm_short_hand = v_data.normals2
-                    build_mesh()
+            if v_data.normals2:
+                norm_short_hand = v_data.normals2
+                build_mesh()
+                if v_data.normals3:
                     norm_short_hand = v_data.normals3
                     build_mesh()
         return obj_list

@@ -54,11 +54,13 @@ def match(filepath, settings):
         elif first_uint == 1112496206:  # NXOB
             print("Game assumed to be Phantasy Star Universe")
             stdout.flush()
+            settings.use_vertex_colours = True
             settings.model_format = "psu"
             psu(filepath, settings)
         elif 0 < first_uint < 100:  # typically ~ 45 models in a srpc map file
             print("Game assumed to be Sonic Riders")
             stdout.flush()
+            settings.use_vertex_colours = True
             settings.model_format = "srpc"
             srpc(filepath, settings)
         else:
@@ -337,7 +339,7 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
             xno_ver = self.xno_ver
         settings.model_format = xno_ver
         settings.format_bone_scale = b_det[xno_ver]
-        if xno_ver != "s06":
+        if xno_ver != "s06" and xno_ver != "match":
             settings.use_vertex_colours = True
         return det[xno_ver](self.filepath, settings)
 
