@@ -1,7 +1,7 @@
-import importlib
 if "util" in locals():
+    import importlib
     importlib.reload(util)
     importlib.reload(srpc_read_file)
 else:
     from . import util
-    from . import srpc_read_file
+    from .game_specific import srpc_read_file

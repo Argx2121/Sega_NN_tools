@@ -1,7 +1,8 @@
-from .blender.model import *
-from .game_specific.sonic_riders import *
-from .nn import *
-from .util import *
+from Sega_NN_tools.modules.blender.model import *
+from Sega_NN_tools.modules.game_specific.sonic_riders import *
+from Sega_NN_tools.modules.game_specific.sonic_riders.block_type_check import BlockTypeCheck
+from Sega_NN_tools.modules.nn.nn import ReadNn
+from Sega_NN_tools.modules.util import *
 
 
 class ReadFile:

@@ -1,5 +1,5 @@
-from Sega_NN_tools.modules.srpc_read_file import *
-
+from Sega_NN_tools.modules.game_specific.srpc_read_file import *
+from Sega_NN_tools.modules.nn.nn import ReadNn
 
 determine_bone = {
     "Match__": 1, "Debug__": 1,

@@ -1,4 +1,4 @@
-from . import *
+from .block_type_check import BlockTypeCheck
 
 
 class ReplaceImage:  # main

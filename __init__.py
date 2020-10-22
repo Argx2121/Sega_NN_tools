@@ -1,4 +1,3 @@
-# info
 import Sega_NN_tools.io.import_sega_nn
 import Sega_NN_tools.ui.preferences
 
@@ -16,13 +15,14 @@ bl_info = {
 }
 
 import importlib
-
 import bpy
 
 if "NN_import" in locals():
     importlib.reload(NN_import)
-    importlib.reload(NN_ui)
+    importlib.reload(import_sega_nn)
+    importlib.reload(NN)
     importlib.reload(SRPC)
+    importlib.reload(preferences)
 else:
     from .io import NN_import, import_sega_nn
     from .ui import NN, SRPC, preferences
