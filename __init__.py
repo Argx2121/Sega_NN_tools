@@ -1,4 +1,7 @@
 # info
+import Sega_NN_tools.io.import_sega_nn
+import Sega_NN_tools.ui.preferences
+
 bl_info = {
     "name": "Sega NN tools",
     "description": "Tools to import models using the NN libraries and some",
@@ -21,17 +24,16 @@ if "NN_import" in locals():
     importlib.reload(NN_ui)
     importlib.reload(SRPC)
 else:
-    from . import NN_import
-    from . import NN_ui
-    from . import SRPC
+    from .io import NN_import, import_sega_nn
+    from .ui import NN, SRPC, preferences
 
 # classes
 classes = (
-    NN_import.ImportSegaNN, NN_import.ImportSegaNNPreferences,
+    import_sega_nn.ImportSegaNN, preferences.ImportSegaNN,
     SRPC.SonicRPCTextureTools, SRPC.OpenTextureFolder,
-    NN_ui.ModelExport, NN_ui.DiscordServerJoin, NN_ui.NN_PT_ModelPanel,
-    NN_ui.SRPC_PT_Panel, NN_ui.SRPC_PT_Texture, NN_ui.SRPC_PT_Guide, NN_ui.SRPC_PT_Server,
-    NN_ui.NN_PT_Credits
+    NN.ModelExport, NN.DiscordServerJoin, NN.NN_PT_ModelPanel,
+    NN.SRPC_PT_Panel, NN.SRPC_PT_Texture, NN.SRPC_PT_Guide, NN.SRPC_PT_Server,
+    NN.NN_PT_Credits
 )
 
 
@@ -39,10 +41,10 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    bpy.types.TOPBAR_MT_file_import.append(NN_import.menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.append(Sega_NN_tools.io.import_sega_nn.menu_func_import)
 
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
-    bpy.types.TOPBAR_MT_file_import.remove(NN_import.menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.remove(Sega_NN_tools.io.import_sega_nn.menu_func_import)

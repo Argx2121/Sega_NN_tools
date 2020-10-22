@@ -1,7 +1,7 @@
 import bpy
 
-from .modules.game_specific import sonic_riders as riders
-from .modules.game_specific.sonic_riders import replace_image as re_img
+from Sega_NN_tools.modules.game_specific import sonic_riders as riders
+from Sega_NN_tools.modules.game_specific.sonic_riders import replace_image as re_img
 
 
 def file_loc(file_path: str):  # is there a better way to do this?
