@@ -1,22 +1,37 @@
 from .modules.srpc_read_file import *
 
 
-xno_list = (
+model_list = (
     # keep debug first!!
-    ("debug", "Debug", "For Reversing Vertex Block Bitflags | N/A"),
+    ("Debug__", "Debug", "For Developer testing and otherwise | N/A | N/A"),
     # extra import functions
-    ("match", "Match", "Tries to match the file with a known format (Experimental!!) | N/A"),
+    ("Match__", "Match", "Tries to match the file with a known format (Experimental!!) | N/A | N/A"),
     # game formats from newest to oldest
-    ("s06", "Sonic '06", "Sonic '06 Model | 14 Nov 2006"),
-    ("psu", "Phantasy Star Universe", "Phantasy Star Universe Model | 31 Aug 2006"),
-    ("srpc", "Sonic Riders", "Sonic Riders Model / Archive | 21 Feb 2006"),
+    ("Sonic4Episode1_Z", "Sonic 4 Ep 1", "Sonic 4 Episode 1 Model | PC | 7 Oct 2010"),
+    ("Sonic2006_X", "Sonic 2006", "Sonic '06 Model | XBOX | 14 Nov 2006"),
+    ("PhantasyStarUniverse_X", "Phantasy Star Universe", "Phantasy Star Universe Model | PC / XBOX | 31 Aug 2006"),
+    ("SonicRiders_X", "Sonic Riders", "Sonic Riders Model / Archive | PC / XBOX | 21 Feb 2006"),
+    # syntax plays a role in importing so follow this arrangement:
+    # [game (caramel caps) + _ + nn indicator (_ for non game)], [game], [game + file | platform | release date]
+    # therefore sonic riders (xbox) released 21st February 2006 becomes:
+    # [SonicRiders_X], [Sonic Riders], [Sonic Riders Model / Archive | PC / XBOX | 21 Feb 2006]
+    # please don't shorten names, _ is used in non games as the variable is reassigned
 )
+
+determine_bone = {
+    "Match__": 1, "Debug__": 1,
+    "Sonic2006_X": 10, "PhantasyStarUniverse_X": 1, "SonicRiders_X": 0.1,
+    "Sonic4Episode1_Z": 1
+}
+
+# the other relevant tuples / dictionaries are:
+# determine_draw and determine_function
 
 
 @dataclass
-class XnoSettings:
+class Settings:
     # generic
-    model_format: str
+    format: str
     format_bone_scale: int
     batch_import: str
     clean_mesh: bool
@@ -49,20 +64,38 @@ def match(filepath, settings):
         if first_uint == 1179211854:  # NXIF
             print("Game assumed to be Sonic '06")
             stdout.flush()
-            settings.model_format = "s06"
-            sonic06(filepath, settings)
+            settings.format = "Sonic2006_X"
+            settings.format_bone_scale = determine_bone[settings.format]
+
+            sonic_2006_x(filepath, settings)
+
         elif first_uint == 1112496206:  # NXOB
             print("Game assumed to be Phantasy Star Universe")
             stdout.flush()
+            settings.format = "PhantasyStarUniverse_X"
+            settings.format_bone_scale = determine_bone[settings.format]
             settings.use_vertex_colours = True
-            settings.model_format = "psu"
-            psu(filepath, settings)
+
+            phantasy_star_universe_x(filepath, settings)
+
+        elif first_uint == 1112359203:  # #AMB
+            print("Game assumed to be Sonic 4 Episode 1")
+            stdout.flush()
+            settings.format = "Sonic4Episode1_Z"
+            settings.format_bone_scale = determine_bone[settings.format]
+            settings.use_vertex_colours = True
+
+            sonic_4_episode_1_z(filepath, settings)
+
         elif 0 < first_uint < 100:  # typically ~ 45 models in a srpc map file
             print("Game assumed to be Sonic Riders")
             stdout.flush()
+            settings.format = "SonicRiders_X"
+            settings.format_bone_scale = determine_bone[settings.format]
             settings.use_vertex_colours = True
-            settings.model_format = "srpc"
-            srpc(filepath, settings)
+
+            sonic_riders_x(filepath, settings)
+
         else:
             print("Couldn't match to a game")
             stdout.flush()
@@ -81,11 +114,32 @@ def match(filepath, settings):
     return {'FINISHED'}
 
 
-def sonic06(filepath, settings):
+def debug(filepath, settings):  # todo remove debug and use as variable instead + tie printing to it
     def execute():
         print_line()
         f = open(filepath, 'rb')
-        nn = ReadNn(f, filepath, settings.model_format).read_file()
+        nn_data = ReadNn(f, filepath, settings.format, True).read_file()
+        if nn_data.model_data:
+            Model(nn_data, settings).x()
+        f.close()
+
+    start_time = time()
+    toggle_console()
+    if settings.batch_import == "Single":
+        execute()
+    else:
+        file_list = get_files(filepath)
+        for filepath in file_list:
+            execute()
+    finish_process(start_time)
+    return {'FINISHED'}
+
+
+def sonic_2006_x(filepath, settings):
+    def execute():
+        print_line()
+        f = open(filepath, 'rb')
+        nn = ReadNn(f, filepath, settings.format).read_file()
         if nn.model_data:
             Model(nn, settings).x()
         f.close()
@@ -102,11 +156,11 @@ def sonic06(filepath, settings):
     return {'FINISHED'}
 
 
-def psu(filepath, settings):
+def phantasy_star_universe_x(filepath, settings):
     def execute():
         print_line()
         f = open(filepath, 'rb')
-        nn = ReadNn(f, filepath, settings.model_format).read_block()
+        nn = ReadNn(f, filepath, settings.format).read_block()
         nn.file_name = bpy.path.basename(filepath)
         if nn.model_data:
             Model(nn, settings).x()
@@ -124,7 +178,7 @@ def psu(filepath, settings):
     return {'FINISHED'}
 
 
-def srpc(filepath, settings):
+def sonic_riders_x(filepath, settings):
     def execute():
         print_line()
         f = open(filepath, 'rb')
@@ -143,26 +197,26 @@ def srpc(filepath, settings):
     return {'FINISHED'}
 
 
-def debug(filepath, settings):
+def sonic_4_episode_1_z(filepath, settings):
+    """
     def execute():
         print_line()
         f = open(filepath, 'rb')
-        nn_data = ReadNn(f, filepath, settings.model_format, True).read_file()
-        if nn_data.model_data:
-            Model(nn_data, settings).x()
+        ReadFile(f, filepath, settings).execute()
         f.close()
 
-    settings.model_format = "s06"
     start_time = time()
     toggle_console()
     if settings.batch_import == "Single":
         execute()
     else:
-        file_list = get_files(filepath)
+        file_list = get_files(filepath, name_ignore=["."])
         for filepath in file_list:
             execute()
     finish_process(start_time)
     return {'FINISHED'}
+    """
+    pass
 
 
 # ImportHelper is a helper class, defines filename and
@@ -171,10 +225,7 @@ from bpy_extras.io_utils import ImportHelper
 from bpy.props import *
 
 
-# from bpy.types import Operator
-
-
-class ImportSegaNNXnoPreferences(bpy.types.AddonPreferences):
+class ImportSegaNNPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
     dev_mode: BoolProperty(
@@ -197,10 +248,10 @@ class ImportSegaNNXnoPreferences(bpy.types.AddonPreferences):
             layout.row().prop(self, "max_len", slider=True)
 
 
-class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
-    """Import a Sega Xno Model (not necessarily an *.xno file)"""
-    bl_idname = "import_sega_nn.xno"  # important since its how bpy.ops.import_test.some_data is constructed
-    bl_label = "Import Xno"
+class ImportSegaNN(bpy.types.Operator, ImportHelper):
+    """Import a Sega NN file (not necessarily an *.xno, *.zno etc file)"""
+    bl_idname = "import.sega_nn"  # important since its how bpy.ops.import_test.some_data is constructed
+    bl_label = "Import Sega NN Model"
     filename_ext = ""  # ImportHelper mixin class uses this
     filter_glob: StringProperty(
         default="*",
@@ -208,16 +259,16 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
         maxlen=255)  # Max internal buffer length, longer would be clamped.
 
     # generic
-    xno_ver: EnumProperty(
+    no_ver: EnumProperty(
         name="Game",
-        description="Game the model is from (to get the correct xno variant)",
-        items=xno_list[1:],
-        default="match")
-    xno_ver_dev: EnumProperty(
+        description="Game the model is from (to get the correct *no variant)",
+        items=model_list[1:],
+        default="Match__")
+    no_ver_dev: EnumProperty(
         name="Game",
-        description="Game the model is from (to get the correct xno variant)",
-        items=xno_list,
-        default="match")
+        description="Game the model is from (to get the correct *no variant)",
+        items=model_list,
+        default="Match__")
     batch: EnumProperty(
         name="Batch usage",
         description="If all files in a folder (non recursive) should be used",
@@ -272,42 +323,41 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
         default=True)
 
     def draw(self, context):
-        def specific(xno_var):
+        def specific(no_var):
             def match_set():  # match should have all settings because we haven't set a format
                 layout.label(text="All specific settings:")
                 s06_set()
-                psu_set()
                 srpc_set()
-                debug_set()
 
             def s06_set():
                 layout.label(text="Sonic '06 specific settings:")
                 layout.row().prop(self, "colour")
-
-            def psu_set():
-                pass
 
             def srpc_set():
                 layout.label(text="Riders specific settings:")
                 layout.row().prop(self, "image", expand=True)
                 layout.row().prop(self, "all_blocks")
 
-            def debug_set():
+            def empty_set():
                 pass
 
-            det = {"match": match_set, "s06": s06_set, "psu": psu_set, "srpc": srpc_set, "debug": debug_set}
-            det[xno_var]()  # execute the right ui for the format
+            determine_draw = {
+                "Match__": match_set, "Debug__": empty_set,
+                "Sonic2006_X": s06_set, "PhantasyStarUniverse_X": empty_set, "SonicRiders_X": srpc_set,
+                "Sonic4Episode1_Z": empty_set
+            }
+            determine_draw[no_var]()  # execute the right ui for the format
 
         preferences = bpy.context.preferences.addons[__package__].preferences
         layout = self.layout
-        layout.label(text="Sega NN xno importer settings:")
+        layout.label(text="Sega NN importer settings:")
 
         if preferences.dev_mode:
-            layout.row().prop(self, "xno_ver_dev")
-            specific(self.xno_ver_dev)
+            layout.row().prop(self, "no_ver_dev")
+            specific(self.no_ver_dev)
         else:
-            layout.row().prop(self, "xno_ver")
-            specific(self.xno_ver)
+            layout.row().prop(self, "no_ver")
+            specific(self.no_ver)
 
         layout.label(text="Generic settings:")
         layout.row().prop(self, "batch", expand=True)
@@ -320,11 +370,15 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
 
     def execute(self, context):
         preferences = bpy.context.preferences.addons[__package__].preferences
-        det = {"match": match, "s06": sonic06, "psu": psu, "srpc": srpc, "debug": debug}
-        b_det = {"match": 1, "s06": 10, "psu": 1, "srpc": 0.1, "debug": 1}
+        determine_function = {
+            "Match__": match, "Debug__": debug,
+            "Sonic2006_X": sonic_2006_x, "PhantasyStarUniverse_X": phantasy_star_universe_x,
+            "SonicRiders_X": sonic_riders_x,
+            "Sonic4Episode1_Z": sonic_4_episode_1_z
+        }
         if not preferences.dev_mode:
             self.clean = True
-        settings = XnoSettings(
+        settings = Settings(
             "", 0,
             self.batch, self.clean, self.length, preferences.max_len, self.pose, self.bone,
             # s06
@@ -334,15 +388,15 @@ class ImportSegaNNXno(bpy.types.Operator, ImportHelper):
             self.all_blocks, self.image
         )
         if preferences.dev_mode:
-            xno_ver = self.xno_ver_dev
+            no_ver = self.no_ver_dev
         else:
-            xno_ver = self.xno_ver
-        settings.model_format = xno_ver
-        settings.format_bone_scale = b_det[xno_ver]
-        if xno_ver != "s06" and xno_ver != "match":
+            no_ver = self.no_ver
+        settings.format = no_ver
+        settings.format_bone_scale = determine_bone[no_ver]
+        if no_ver not in ["Sonic2006_X", "Match__"]:
             settings.use_vertex_colours = True
-        return det[xno_ver](self.filepath, settings)
+        return determine_function[no_ver](self.filepath, settings)
 
 
 def menu_func_import(self, context):  # add to dynamic menu
-    self.layout.operator(ImportSegaNNXno.bl_idname, text="Sega NN xbox (.xno)")
+    self.layout.operator(ImportSegaNN.bl_idname, text="Sega NN (.xno, .zno, etc.)")

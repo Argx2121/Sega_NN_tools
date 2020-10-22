@@ -16,7 +16,7 @@ class Read:
         scale: tuple
         position: tuple
 
-    def _bones_type_1(self):
+    def type_1(self):
         f = self.f
         bone_data = []
         for _ in range(self.bone_count):
@@ -31,7 +31,7 @@ class Read:
             bone_data.append(self.Bone(group, parent, rel, scale, pos))
         return bone_data
 
-    def _bones_type_2(self):
+    def type_2(self):
         f = self.f
         bone_data = []
         for _ in range(self.bone_count):
@@ -45,9 +45,3 @@ class Read:
             f.seek(32, 1)  # skip some more
             bone_data.append(self.Bone(group, parent, rel, scale, pos))
         return bone_data
-
-    def xbox(self):
-        return self._bones_type_1()
-
-    def gamecube(self):
-        return self._bones_type_2()

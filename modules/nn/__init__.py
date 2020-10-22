@@ -47,7 +47,8 @@ class ReadNn:
             "NCNN": self.node_2, "NENN": self.node_2, "NGNN": self.node_2,
             "NLNN": self.node_1, "NSNN": self.node_1, "NXNN": self.node_1, "NZNN": self.node_1,
 
-            "NXOB": self.nxob,
+            "NXOB": self.obje_1, "NZOB": self.obje_1,
+
             # generic
             "NOF0": self.nof0, "NFN0": self.nfn0, "NEND": self.nend
         }  # supported blocks
@@ -68,6 +69,8 @@ class ReadNn:
         det_n = self.det_n
         block_name = read_str(f, 4)
         if block_name in det_n:
+            if self.format_type[-1] == "_":
+                self.format_type = block_name[1]
             start_time = console_out_pre("Reading %s..." % block_name)
             det_n[block_name]()
             console_out_post(start_time)
@@ -82,6 +85,22 @@ class ReadNn:
         while not self.nn_file.file_end:
             self._read_block()
         return self.nn_file
+
+    def read_file_special(self):
+        nn_file_list = []
+        while self.f.tell() < os.path.getsize(self.filepath) - 4:  # just in case file len isn't divisible by 4
+            block_name = read_str(self.f, 4)
+            if block_name in self.det_n:
+                start_time = console_out_pre("Reading %s..." % block_name)
+                self.det_n[block_name]()
+                if self.format_type[-1] == "_":
+                    self.format_type = block_name[1]
+                console_out_post(start_time)
+                if self.nn_file.file_end:
+                    nn_file_list.append(self.nn_file)
+                    print_line()
+                    self.nn_file = self.NnFile()
+        return nn_file_list
 
     # block definitions
     # specific
@@ -118,8 +137,8 @@ class ReadNn:
             message = "Bone names: " + str(self.nn_file.bone_names)
             stdout.write("| \n" + message + " " * (50 - len(message)))
 
-    def nxob(self):
-        self.nn_file.model_data = nn_object.Read(self.f, self.nn_file.post_info, self.format_type).x(self.debug)
+    def obje_1(self):
+        self.nn_file.model_data = nn_object.Read(self.f, self.nn_file.post_info, self.format_type).type_1(self.debug)
         console_out_pre("")
 
     # generic

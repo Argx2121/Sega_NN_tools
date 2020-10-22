@@ -125,17 +125,24 @@ class Read:
             # "0M00C0NP 0WWW0I02 0000000U 00000000  0C0NW0P0 000W000U 00000000 00000000" 06
             #  M = 2 extra normal sets, I = bone indices
 
-            if self.format_type == "srpc":
+            # latest goes first and should be of the latest games format
+            def latest_x():
+                sonic_2006_x()
+
+            def latest_z():
+                sonic_4_episode_1_z()
+
+            def sonic_riders_x():
                 for _ in range(vertex_count):
                     pos(BitFlags.position)
-                    if BitFlags.srpc_unknown:  # unknown float
+                    if block_type >> 17 & 1:  # unknown float
                         f.seek(4, 1)
                     wei(BitFlags.weights, BitFlags.weight_indices)
                     norm(BitFlags.normal)
                     col(BitFlags.colour_short, BitFlags.colour_byte)
                     uv_wx(False, BitFlags.uv)
 
-            elif self.format_type == "psu":
+            def phantasy_star_universe_x():
                 for _ in range(vertex_count):
                     pos(BitFlags.position)
                     wei(BitFlags.weights, BitFlags.weight_indices)
@@ -143,14 +150,40 @@ class Read:
                     col(BitFlags.colour_short, BitFlags.colour_byte)
                     uv_wx(BitFlags.wx, BitFlags.uv)
 
-            elif self.format_type == "s06":
+            def sonic_2006_x():
                 for _ in range(vertex_count):
                     pos(BitFlags.position)
                     wei(BitFlags.weights, BitFlags.weight_indices)
                     norm(BitFlags.normal)
                     col(BitFlags.colour_short, BitFlags.colour_byte)  # colours assumed to exist
                     uv_wx(BitFlags.wx, BitFlags.uv)  # wx assumed to exist
-                    extra_norms(BitFlags.s06_extra_normals)
+                    extra_norms(BitFlags.extra_normals)
+
+            def sonic_4_episode_1_z():
+                for _ in range(vertex_count):
+                    pos(BitFlags.position)
+                    wei(BitFlags.weights, BitFlags.weight_indices)
+                    norm(BitFlags.normal)
+                    col(BitFlags.colour_short, BitFlags.colour_byte)
+                    uv_wx(BitFlags.wx, BitFlags.uv)
+                    extra_norms(BitFlags.extra_normals)
+
+            dict_x = {
+                "SonicRiders_X": sonic_riders_x,"PhantasyStarUniverse_X": phantasy_star_universe_x,
+                "Sonic2006_X": sonic_2006_x}
+            dict_z = {
+                "Sonic4Episode1_Z": sonic_4_episode_1_z}
+            format_type = self.format_type
+            if format_type[-1] == "X":
+                if format_type in dict_x:
+                    dict_x[format_type]()
+                else:
+                    latest_x()
+            elif format_type[-1] == "Z":
+                if format_type in dict_z:
+                    dict_z[format_type]()
+                else:
+                    latest_z()
 
         for var in range(self.vertex_buffer_count):  # for all sub meshes
             v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
@@ -172,9 +205,8 @@ class Read:
                 weights = block_type >> 27 & 1
                 weight_indices = block_type >> 50 & 1
                 wx = block_type >> 17 & 1
-                # specific
-                srpc_unknown = block_type >> 17 & 1
-                s06_extra_normals = block_type >> 48 & 1
+                extra_normals = block_type >> 48 & 1
+                # keep generic values here
 
             vert_block()
             vertex_data.append(

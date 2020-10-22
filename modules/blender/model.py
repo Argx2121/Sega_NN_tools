@@ -11,7 +11,7 @@ class Model:
     def __init__(self, nn, settings):  # TODO format xbox/gamecube/etc
         self.model_data = nn.model_data
         self.settings = settings
-        self.format = settings.model_format
+        self.format = settings.format
         self.bone_groups = [bone.group for bone in self.model_data.bones]
         self.bone_names = nn.bone_names
         self.model_name = nn.file_name

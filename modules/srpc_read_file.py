@@ -53,7 +53,7 @@ class ReadFile:
 
         if block_name == 'NXIF':  # determine if file or image
             f.seek(-4, 1)
-            nn_data = ReadNn(f, self.file_path, "srpc").read_file()
+            nn_data = ReadNn(f, self.file_path, self.settings.format).read_file()
             if nn_data.texture_names:
                 nxtl_block = 1
             else:

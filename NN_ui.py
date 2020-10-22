@@ -36,7 +36,7 @@ class NN_PT_ModelPanel(GENERIC_panel, bpy.types.Panel):
         layout.label(text="Can also use File > Import / Export")
         box = layout.box()
         row = box.row()
-        row.operator("import_sega_nn.xno")
+        row.operator("import.sega_nn")
         row.operator("srpc_tools.model_export")
 
 
@@ -95,4 +95,7 @@ class NN_PT_Credits(GENERIC_panel, bpy.types.Panel):
         layout = self.layout
         layout.label(text="NN tools by Arg!!")
         layout.label(text="Special thanks:")
-        layout.label(text="firegodjr, Sewer56, Shadowth117 and Yacker")
+        layout.label(text="firegodjr")
+        layout.label(text="Sewer56")
+        layout.label(text="Shadowth117")
+        layout.label(text="Yacker")

@@ -27,7 +27,7 @@ else:
 
 # classes
 classes = (
-    NN_import.ImportSegaNNXno, NN_import.ImportSegaNNXnoPreferences,
+    NN_import.ImportSegaNN, NN_import.ImportSegaNNPreferences,
     SRPC.SonicRPCTextureTools, SRPC.OpenTextureFolder,
     NN_ui.ModelExport, NN_ui.DiscordServerJoin, NN_ui.NN_PT_ModelPanel,
     NN_ui.SRPC_PT_Panel, NN_ui.SRPC_PT_Texture, NN_ui.SRPC_PT_Guide, NN_ui.SRPC_PT_Server,
