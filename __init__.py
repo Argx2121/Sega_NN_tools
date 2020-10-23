@@ -1,4 +1,3 @@
-
 bl_info = {
     "name": "Sega NN tools",
     "description": "Tools to import models using the NN libraries and some",
@@ -11,20 +10,27 @@ bl_info = {
     "tracker_url": "https://github.com/Argx2121/Sega_NN_tools/issues/new",
     "category": "Import-Export",
 }
+# import all and reload all if loaded
+import glob
+import importlib
+import os
+import sys
+
+# get all .py files in this addon recursively, remove __init__ files and convert those files from absolute to relative
+# (to this package), make them use dot notation and remove file extension
+files = [__package__ + file.split(__package__)[1].replace("\\", ".")[:-3] for file in
+         glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/**/*.py', recursive=True) if "__init__" not in file]
+
+if __package__ + ".io" in sys.modules:  # this package is loaded already so we can use it - try with sub file instead
+    for name in files:
+        importlib.reload(sys.modules[name])
+
+[importlib.import_module(file) for file in files]  # import all modules
 
 import bpy
 
-if "NN_import" not in locals():
-    from .io import NN_import, import_sega_nn
-    from .ui import panels, SRPC, preferences, S4E1
-else:
-    import importlib
-    importlib.reload(NN_import)
-    importlib.reload(import_sega_nn)
-    importlib.reload(panels)
-    importlib.reload(SRPC)
-    importlib.reload(preferences)
-    importlib.reload(S4E1)
+from .io import NN_import, import_sega_nn
+from .ui import panels, SRPC, preferences, S4E1
 
 # classes
 classes = (

@@ -1,6 +1,7 @@
 from Sega_NN_tools.modules.blender.model import *
-from Sega_NN_tools.modules.game_specific.srpc import *
 from Sega_NN_tools.modules.game_specific.srpc.block_type_check import BlockTypeCheck
+from Sega_NN_tools.modules.game_specific.srpc.extract_image import ExtractImage
+from Sega_NN_tools.modules.game_specific.srpc.read_archive import read_archive
 from Sega_NN_tools.modules.nn.nn import ReadNn
 from Sega_NN_tools.modules.nn_util import *
 
@@ -18,7 +19,7 @@ class ReadSRPC:
         self.tex_block_index = 0
 
     def execute(self):
-        archive = re_arc.read_archive(self.f)  # read the files archive data
+        archive = read_archive(self.f)  # read the files archive data
         file_count = archive.file_count
         self.sub_file_offsets = archive.sub_file_offsets
 
@@ -76,7 +77,7 @@ class ReadSRPC:
             if block_type:  # returns true if textures
                 time_s = console_out_pre("Extracting textures...")
                 texture_name_list, _, _,  type_byte = \
-                    ex_img.ExtractImage(f, self.file_path, self.settings.texture_name_structure, cur_count).execute()
+                    ExtractImage(f, self.file_path, self.settings.texture_name_structure, cur_count).execute()
                 if type_byte == 20:
                     self.image_block_14 = texture_name_list
                 self.texture_name_list.append(texture_name_list)

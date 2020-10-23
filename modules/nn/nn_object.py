@@ -1,4 +1,4 @@
-from .object_assets import *
+from .object_assets import model_data, materials, faces, vertices, bones, meshes
 from ..nn_util import *
 from dataclasses import dataclass
 
