@@ -1,5 +1,5 @@
 from .block_type_check import BlockTypeCheck
-from ...util import *
+from ...nn_util import *
 
 
 class ReplaceImage:  # main

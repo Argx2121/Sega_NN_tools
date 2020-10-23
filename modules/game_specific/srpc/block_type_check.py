@@ -4,7 +4,7 @@ import bpy
 
 from Sega_NN_tools.modules.game_specific.srpc import read_pathfinding as re_path, read_paths as re_paths, \
     read_collision as re_col, read_instance_models as re_inst
-from Sega_NN_tools.modules.util import read_int, read_str, read_byte, read_float, read_float_tuple
+from Sega_NN_tools.modules.nn_util import read_int, read_str, read_byte, read_float, read_float_tuple
 
 
 class BlockTypeCheck:

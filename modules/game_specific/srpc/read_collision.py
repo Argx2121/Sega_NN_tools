@@ -1,4 +1,4 @@
-from ...util import *
+from ...nn_util import *
 
 
 class ReadCollision:

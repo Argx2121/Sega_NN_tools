@@ -3,7 +3,7 @@ from Sega_NN_tools.modules.nn.nn import ReadNn
 from dataclasses import dataclass
 
 from ..modules.blender.model import Model
-from ..modules.util import *
+from ..modules.nn_util import *
 
 determine_bone = {
     "Match__": 1, "Debug__": 1,

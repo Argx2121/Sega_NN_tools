@@ -1,7 +1,7 @@
 import os
 import bpy
 
-from Sega_NN_tools.modules.util import read_int, read_multi_ints, read_str_nulls, get_files
+from Sega_NN_tools.modules.nn_util import read_int, read_multi_ints, read_str_nulls, get_files
 
 
 class ExtractS4E1:

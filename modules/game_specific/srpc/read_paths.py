@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ...util import *
+from ...nn_util import *
 
 
 class ReadPaths:

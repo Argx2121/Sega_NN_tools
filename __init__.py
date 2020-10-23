@@ -1,5 +1,3 @@
-import Sega_NN_tools.io.import_sega_nn
-import Sega_NN_tools.ui.preferences
 
 bl_info = {
     "name": "Sega NN tools",
@@ -14,19 +12,19 @@ bl_info = {
     "category": "Import-Export",
 }
 
-import importlib
 import bpy
 
-if "NN_import" in locals():
+if "NN_import" not in locals():
+    from .io import NN_import, import_sega_nn
+    from .ui import panels, SRPC, preferences, S4E1
+else:
+    import importlib
     importlib.reload(NN_import)
     importlib.reload(import_sega_nn)
-    importlib.reload(NN)
+    importlib.reload(panels)
     importlib.reload(SRPC)
     importlib.reload(preferences)
     importlib.reload(S4E1)
-else:
-    from .io import NN_import, import_sega_nn
-    from .ui import panels, SRPC, preferences, S4E1
 
 # classes
 classes = (
@@ -43,10 +41,10 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    bpy.types.TOPBAR_MT_file_import.append(Sega_NN_tools.io.import_sega_nn.menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.append(import_sega_nn.menu_func_import)
 
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
-    bpy.types.TOPBAR_MT_file_import.remove(Sega_NN_tools.io.import_sega_nn.menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.remove(import_sega_nn.menu_func_import)

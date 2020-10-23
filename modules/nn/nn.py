@@ -4,7 +4,7 @@ from sys import stdout
 
 from Sega_NN_tools.modules.nn import nn_unknown, nn_information_file, nn_texture_library, nn_effects, nn_node_names, \
     nn_object, nn_offset_file, nn_file_name, nn_end
-from Sega_NN_tools.modules.util import read_str, console_out_pre, console_out_post, print_line
+from Sega_NN_tools.modules.nn_util import read_str, console_out_pre, console_out_post, print_line
 
 
 class ReadNn:

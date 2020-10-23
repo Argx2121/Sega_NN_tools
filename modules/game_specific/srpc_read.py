@@ -2,7 +2,7 @@ from Sega_NN_tools.modules.blender.model import *
 from Sega_NN_tools.modules.game_specific.srpc import *
 from Sega_NN_tools.modules.game_specific.srpc.block_type_check import BlockTypeCheck
 from Sega_NN_tools.modules.nn.nn import ReadNn
-from Sega_NN_tools.modules.util import *
+from Sega_NN_tools.modules.nn_util import *
 
 
 class ReadSRPC:

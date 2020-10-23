@@ -4,7 +4,7 @@ from .model_assets.armature import Armature
 from .model_assets.materials import Material
 from .model_assets.mesh import Mesh
 from .model_assets.model_util import ModelUtil
-from ..util import console_out
+from ..nn_util import console_out
 
 
 class Model:

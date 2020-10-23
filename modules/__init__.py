@@ -1,5 +1,5 @@
-if "util" in locals():
-    import importlib
-    importlib.reload(util)
+if "nn_util" not in locals():
+    from . import nn_util
 else:
-    from . import util
+    import importlib
+    importlib.reload(nn_util)

@@ -1,5 +1,5 @@
 from .object_assets import *
-from ..util import *
+from ..nn_util import *
 from dataclasses import dataclass
 
 

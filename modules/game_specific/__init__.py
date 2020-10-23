@@ -1,5 +1,5 @@
-import importlib
-if "srpc_read" in locals():
-    importlib.reload(srpc_read)
-else:
+if "srpc_read" not in locals():
     from . import srpc_read
+else:
+    import importlib
+    importlib.reload(srpc_read)

@@ -1,5 +1,5 @@
-if "model" in locals():
+if "model" not in locals():
+    from . import model
+else:
     import importlib
     importlib.reload(model)
-else:
-    from . import model
