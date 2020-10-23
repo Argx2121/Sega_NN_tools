@@ -1,8 +1,8 @@
-from Sega_NN_tools.modules.game_specific import *
 from Sega_NN_tools.modules.nn.nn import ReadNn
 from dataclasses import dataclass
 
 from ..modules.blender.model import Model
+from ..modules.game_specific.srpc_read import ReadSRPC
 from ..modules.nn_util import *
 
 determine_bone = {
@@ -35,7 +35,6 @@ class Settings:
 def finish_process(start_time):
     print_line()
     print("Done in %f seconds" % (time() - start_time))
-    print_line()
     stdout.flush()
     toggle_console()
 
@@ -171,7 +170,7 @@ def sonic_riders_x(filepath, settings):
     def execute():
         print_line()
         f = open(filepath, 'rb')
-        srpc_read.ReadSRPC(f, filepath, settings).execute()
+        ReadSRPC(f, filepath, settings).execute()
         f.close()
 
     start_time = time()

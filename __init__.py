@@ -12,19 +12,29 @@ bl_info = {
     "category": "Import-Export",
 }
 
+import glob
+import importlib
+import os
+import sys
+
 import bpy
 
-if "NN_import" not in locals():
-    from .io import NN_import, import_sega_nn
-    from .ui import panels, SRPC, preferences, S4E1
-else:
-    import importlib
-    importlib.reload(NN_import)
-    importlib.reload(import_sega_nn)
-    importlib.reload(panels)
-    importlib.reload(SRPC)
-    importlib.reload(preferences)
-    importlib.reload(S4E1)
+files = glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/**/*.py', recursive=True)
+files = [file for file in files if "__init__" not in file]
+file_list = []
+for file in files:
+    file_list.append(__package__ + file.split(__package__)[1].replace("\\", ".")[:-3])
+
+if __package__ + ".io" in sys.modules:
+    for name in file_list:
+        importlib.reload(sys.modules[name])
+
+[importlib.import_module(file) for file in file_list]
+
+
+from .io import NN_import, import_sega_nn
+from .ui import panels, SRPC, preferences, S4E1
+
 
 # classes
 classes = (
