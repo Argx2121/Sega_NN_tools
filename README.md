@@ -60,3 +60,10 @@ A python library for blender of tools for games using Sega's NN libraries.
 #### Phantasy Star Universe
 - The importer will only read models if the file starts with "NXOB".
 - Some model files may start with a different name which won't be read.
+
+### Zno
+
+#### Sonic 4 Episode 1
+- Files have to be extracted from AMBs before they can be used.
+- An extractor for that is included for convenience - you may have to run it multiple times as often there are AMBs stored in AMB files. Other external extractors can be used.
+- Batch import doesn't use the file extension to determine if it should be read - Unnamed AMB files can be models.
