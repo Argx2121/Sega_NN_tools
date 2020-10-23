@@ -56,6 +56,7 @@ class Armature:
         obj = bpy.context.object
         obj.name = obj.data.name = self.model_name  # Object name, Armature name
         obj.rotation_euler[0] = 1.5708  # rotate to stand up
+        self.armature = obj
 
     @staticmethod
     def hide_null_bones():  # in riders these have no weights - 06 has unweighted but they don't have the group

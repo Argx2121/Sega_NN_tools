@@ -19,6 +19,7 @@ class Settings:
     format_bone_scale: int
     batch_import: str
     clean_mesh: bool
+    simple_materials: bool
     all_bones_one_length: bool
     max_bone_length: float
     ignore_bone_scale: bool

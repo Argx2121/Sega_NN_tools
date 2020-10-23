@@ -56,6 +56,10 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
             ('Single', "Single", "Only opens selected file"),
             ('Batch', "Batch", "Opens all of the folders files")),
         default='Single')
+    simple_mat: BoolProperty(
+        name="Simple materials (for export)",
+        description="Keep materials simple for exporting to other formats, meaning not all material data is imported",
+        default=False)
 
     # bones
     length: BoolProperty(
@@ -141,6 +145,7 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
 
         layout.label(text="Generic settings:")
         layout.row().prop(self, "batch", expand=True)
+        layout.row().prop(self, "simple_mat")
         layout.row().prop(self, "bone")
         layout.row().prop(self, "length")
         layout.row().prop(self, "pose")
@@ -160,7 +165,7 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
             self.clean = True
         settings = Settings(
             "", 0,
-            self.batch, self.clean, self.length, preferences.max_len, self.pose, self.bone,
+            self.batch, self.clean, self.simple_mat, self.length, preferences.max_len, self.pose, self.bone,
             # s06
             self.colour,
             # psu

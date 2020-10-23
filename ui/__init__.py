@@ -3,5 +3,6 @@ if "NN" in locals():
     importlib.reload(panels)
     importlib.reload(preferences)
     importlib.reload(SRPC)
+    importlib.reload(S4E1)
 else:
-    from . import panels, preferences, SRPC
+    from . import panels, preferences, SRPC, S4E1

@@ -19,6 +19,7 @@ class Model:
         if self.model_name_strip.endswith("no"):
             self.model_name_strip = self.model_name_strip[:-4]
         self.texture_names = nn.texture_names
+        self.armature = None
         self.material_list_blender = []
         self.obj_list = []
         self.material_in_next_block = []  # for srpc
@@ -43,7 +44,11 @@ class Model:
             console_out("Hiding Unweighted Bones...", Armature.hide_null_bones)
 
         bpy.ops.object.mode_set(mode="OBJECT")  # return to normal
-        console_out("Making Materials...", Material.make_material, self)
+        if self.settings.simple_materials:
+            console_out("Making Simple Materials...", Material.make_material_simple, self)
+        else:
+            console_out("Making Accurate Materials...", Material.make_material_complex, self)
+
         self.obj_list = console_out("Making Meshes...", Mesh.make_mesh, self)
 
         if self.settings.clean_mesh:

@@ -2,7 +2,7 @@ import bpy
 
 
 class Material:  # functional, but needs a rework
-    def make_material(self):
+    def make_material_complex(self):
         model_format = self.format
         texture_name = self.texture_names
         material_count = self.model_data.data.material_count
@@ -188,3 +188,93 @@ class Material:  # functional, but needs a rework
                         n_tree.links.new(final.inputs[0], end_node.outputs[0])
                 else:  # unsupported textures
                     pass
+
+    def make_material_simple(self):  # for exporting to fbx etc, so keep it simple.
+        model_format = self.format
+        texture_name = self.texture_names
+        material_count = self.model_data.data.material_count
+        mat_names = self.mat_names
+        material_list_blender = self.material_list_blender
+        material_list = self.model_data.materials
+        material_in_next_block = self.material_in_next_block
+
+        if model_format != "SonicRiders_X":
+            if not texture_name:
+                for m in material_list:
+                    m.tex_count = 0
+            elif type(texture_name[0]) == str:
+                for m in material_list:
+                    m.tex_count = 0
+
+        for mat_index in range(material_count):
+            # make material - first mat data stored
+            material = bpy.data.materials.new(mat_names[mat_index])
+            material_list_blender.append(material)
+            m = material_list[mat_index]
+            m_texture_count = m.tex_count
+            material.use_nodes = True
+            n_tree = material.node_tree
+
+            # generic stuff
+            final = n_tree.nodes["Material Output"]
+            final.location = 850, 150
+
+            diffuse = n_tree.nodes["Principled BSDF"]
+            diffuse.name = "diffuse"
+            diffuse.location = 100, 520
+
+            n_tree.links.new(final.inputs[0], diffuse.outputs[0])
+
+            # specialized
+            diffuse_done = False
+            normal_done = False
+            for t_index in range(m_texture_count):
+                m_tex = m.texture[t_index]
+                m_tex_type = m_tex.tex_type
+                m_tex_set = m_tex.tex_setting
+                m_tex_index = m_tex.tex_index
+
+                if texture_name:
+                    tex_name = texture_name[m_tex_index]
+                    tex_name_str = str(tex_name)
+                    if model_format == "Sonic2006_X":  # shortcuts
+                        if "_df." in tex_name_str:
+                            m_tex_type = "diffuse"
+                        elif "_nw." in tex_name_str:
+                            m_tex_type = "normal"
+                        elif "_sp." in tex_name_str:
+                            m_tex_type = "emission"
+                        elif "_rf." in tex_name_str:
+                            m_tex_type = "reflection"
+
+                if m_tex_type == "diffuse":
+                    if not diffuse_done:
+                        diffuse_done = True
+                        tex_node = n_tree.nodes.new(type="ShaderNodeTexImage")
+                        tex_node.location = - 580, 300
+                        if m_tex_set == 3:
+                            tex_node.extension = "EXTEND"
+                        material.blend_method = "CLIP"
+                        if texture_name:
+                            tex_node.image = tex_name
+                            n_tree.links.new(diffuse.inputs[0], tex_node.outputs[0])
+                        else:
+                            material_in_next_block.append(
+                                [m_tex_index, tex_node, diffuse.inputs[0], tex_node.outputs[0], n_tree])
+                elif m_tex_type == "normal":
+                    if not normal_done:
+                        normal_done = True
+                        tex_node = n_tree.nodes.new(type="ShaderNodeTexImage")
+                        tex_node.location = - 580, 20
+                        tex_node.image = tex_name
+                        tex_node.image.colorspace_settings.name = 'Non-Color'
+
+                        norm_node = n_tree.nodes.new(type="ShaderNodeNormalMap")
+                        norm_node.location = - 200, 20
+                        norm_node.space = 'WORLD'
+
+                        n_tree.links.new(norm_node.inputs[1], tex_node.outputs[0])
+                        n_tree.links.new(diffuse.inputs[-3], norm_node.outputs[0])
+                else:  # unsupported textures
+                    pass
+

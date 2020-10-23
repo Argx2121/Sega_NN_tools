@@ -14,6 +14,7 @@ class Mesh:
         obj_list = self.obj_list
         material_list_blender = self.material_list_blender
         bone_names = self.bone_names
+        armature = self.armature
         b_group = bone_groups
         collection = bpy.context.collection
 
@@ -88,8 +89,7 @@ class Mesh:
             make_colours()
             make_normals()
             make_weights()
-            armature = bpy.data.objects[model_name]  # add mesh to armature
-            obj.modifiers.new(name=model_name, type='ARMATURE').object = obj.parent = armature
+            obj.modifiers.new(name=model_name, type='ARMATURE').object = obj.parent = armature  # add mesh to armature
 
         for i in range(len(build_mesh1)):  # for each sub mesh
             sm = build_mesh1[i]
