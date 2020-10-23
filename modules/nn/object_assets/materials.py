@@ -43,12 +43,28 @@ class Read:
             self.texture_count.append(read_int(f) & 15)  # stored: 00010001 (17), is: 0000001 (1) (texture count)
             self.info_offset.append(read_int(f))
 
+    def _info_offsets_type_2(self):
+        f = self.f
+        material_count = self.material_count
+        for _ in range(material_count):
+            self.texture_count.append(read_int(f, ">") >> 4)
+            self.info_offset.append(read_int(f))
+
     def _info_type_1(self):
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.post_nxif + 8)
             var1, _, var2 = read_multi_ints(f, 3)
             self.colour_offset.append(var1)
+            self.texture_offset.append(var2)
+
+    def _info_type_2(self):
+        f = self.f
+        for offset in self.info_offset:
+            f.seek(offset + self.post_nxif)
+            _, _, var1, _, _, var3, var2 = read_multi_ints(f, 7)
+            self.colour_offset.append(var1 + 4)
+            self.texture_count.append(var3)
             self.texture_offset.append(var2)
 
     def _colour_type_1(self):
@@ -76,19 +92,29 @@ class Read:
                     f.seek(40, 1)
             self.texture_list.append(texture_list)
 
+    def _texture_type_2(self):
+        # 11 = normals? (sonic 06)
+        texture_type = {
+            1: "diffuse", 2: "diffuse", 3: "diffuse", 4: "reflection", 5: "diffuse", 6: "diffuse",
+            9: "diffuse", 11: "normal"}
+        f = self.f
+        material_count = self.material_count
+        for texture_value in range(material_count):
+            texture_list = []
+            texture_offset = self.texture_offset[texture_value]
+            if texture_offset:
+                f.seek(texture_offset + self.post_nxif)
+                for _ in range(self.texture_count[texture_value]):
+                    tex_type, _, tex_set, _ = read_multi_bytes(f, 4)
+                    texture_list.append(self.Texture(texture_type[tex_type], tex_type, tex_set, read_int(f)))
+                    f.seek(56, 1)
+            self.texture_list.append(texture_list)
+
     def _return_data_type_1(self):
         material_list = []
         for i in range(self.material_count):
             material_list.append(self.Material(self.texture_count[i], self.colour_list[i], self.texture_list[i]))
         return material_list
-
-    def _info_offsets_type_2(self):
-        f = self.f
-        material_count = self.material_count
-        for _ in range(material_count):
-            self.texture_count.append(len(bin(read_short(f, ">"))) - 2)  # 0b1 = 1 tex, 0b11 = 2, 0b111 = 3 etc
-            f.seek(2, 1)
-            self.colour_offset.append(read_int(f, ">"))
 
     def _colour_texture_type_1(self):
         f = self.f  # TODO see texture types
@@ -104,14 +130,22 @@ class Read:
                     _, tex_set, _, tex_type = read_multi_bytes(f, 4)
                     tex_index = read_int(f, ">")
                     f.seek(12, 1)
-                    texture_list.append(self.Texture(texture_type[tex_type], tex_set, tex_index))
+                    texture_list.append(self.Texture(texture_type[tex_type], tex_type, tex_set, tex_index))
             self.texture_list.append(texture_list)
 
-    def xbox(self):  # [two offsets] all colour blocks, all texture blocks
+    def type_1(self):  # [two offsets] all colour blocks, all texture blocks
         self._info_offsets_type_1()
         self._info_type_1()
         self._colour_type_1()
         self._texture_type_1()
+        return self._return_data_type_1()
+
+    def type_2(self):  # [two offsets] all colour blocks, all texture blocks
+        self._info_offsets_type_2()
+        self._info_type_2()
+        for _ in self.colour_offset:
+            self.colour_list.append(self.Colour())
+        self._texture_type_2()
         return self._return_data_type_1()
 
     def gamecube(self):  # [one offset] colour block, texture block

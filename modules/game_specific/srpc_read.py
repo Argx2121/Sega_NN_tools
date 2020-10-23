@@ -1,11 +1,11 @@
 from Sega_NN_tools.modules.blender.model import *
-from Sega_NN_tools.modules.game_specific.sonic_riders import *
-from Sega_NN_tools.modules.game_specific.sonic_riders.block_type_check import BlockTypeCheck
+from Sega_NN_tools.modules.game_specific.srpc import *
+from Sega_NN_tools.modules.game_specific.srpc.block_type_check import BlockTypeCheck
 from Sega_NN_tools.modules.nn.nn import ReadNn
 from Sega_NN_tools.modules.util import *
 
 
-class ReadFile:
+class ReadSRPC:
     def __init__(self, f, file_path, settings):
         self.f = f
         self.file_path = file_path

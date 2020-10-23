@@ -11,17 +11,17 @@ import bpy
 # large functions
 
 
-def get_files(file_path: str, name_ignore: tuple = (), name_require: tuple = ()) -> list:
+def get_files(file_path: str, name_ignore: str = False, name_require: str = False) -> list:
     """Returns a list of file names in the current folder with optional restrictions on name.
 
     Parameters
     ----------
     file_path : str
         Path to the folder - can have a files name included and be relative.
-    name_ignore : tuple
-        Strings that files should not have in their name.
-    name_require : tuple
-        Strings that files should have in their name.
+    name_ignore : str
+        String that files should not have in their name.
+    name_require : str
+        String that files should have in their name.
 
     Returns
     -------
@@ -31,10 +31,10 @@ def get_files(file_path: str, name_ignore: tuple = (), name_require: tuple = ())
     """
     file_path = bpy.path.abspath(file_path).rstrip(bpy.path.basename(file_path))
     file_list = [file for file in os.listdir(file_path) if os.path.isfile(file_path + file)]
-    for name in name_ignore:
-        file_list = [file for file in file_list if name not in file]
-    for name in name_require:
-        file_list = [file for file in file_list if name in file]
+    if name_require:
+        file_list = [file for file in file_list if name_require in file]
+    if name_ignore:
+        file_list = [file for file in file_list if name_ignore not in file]
     return [file_path + file for file in file_list]
 
 

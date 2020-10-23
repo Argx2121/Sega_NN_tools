@@ -12,7 +12,7 @@ class Material:  # functional, but needs a rework
         model_name_strip = self.model_name_strip
         material_in_next_block = self.material_in_next_block
 
-        if model_format != "srpc":
+        if model_format != "SonicRiders_X":
             if not texture_name:
                 for m in material_list:
                     m.tex_count = 0
@@ -85,7 +85,7 @@ class Material:  # functional, but needs a rework
                 if texture_name:
                     tex_name = texture_name[m_tex_index]
                     tex_name_str = str(tex_name)
-                    if model_format == "s06":  # shortcuts
+                    if model_format == "Sonic2006_X":  # shortcuts
                         if "_df." in tex_name_str:
                             m_tex_type = "diffuse"
                         elif "_nw." in tex_name_str:

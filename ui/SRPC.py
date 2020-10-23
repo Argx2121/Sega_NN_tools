@@ -1,8 +1,8 @@
 import bpy
 
-import Sega_NN_tools.modules.game_specific.sonic_riders.block_type_check
-from Sega_NN_tools.modules.game_specific import sonic_riders as riders
-from Sega_NN_tools.modules.game_specific.sonic_riders import replace_image as re_img
+import Sega_NN_tools.modules.game_specific.srpc.block_type_check
+from Sega_NN_tools.modules.game_specific import srpc as riders
+from Sega_NN_tools.modules.game_specific.srpc import replace_image as re_img
 
 
 def file_loc(file_path: str):  # is there a better way to do this?
@@ -40,7 +40,7 @@ class Tools:
     def extract(self, sub_file_offsets, f):
         for i in range(len(sub_file_offsets)):
             f.seek(sub_file_offsets[i] + 4)
-            if Sega_NN_tools.modules.game_specific.sonic_riders.block_type_check.BlockTypeCheck(f, self.file_path, 0).check_image():
+            if Sega_NN_tools.modules.game_specific.srpc.block_type_check.BlockTypeCheck(f, self.file_path, 0).check_image():
                 riders.ex_img.ExtractImage(f, self.file_path, self.image_setting, i).execute()
 
     def insert(self, file_count, sub_file_offsets, f):

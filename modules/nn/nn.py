@@ -22,15 +22,14 @@ class ReadNn:
             "NCTL": self.texl_2, "NETL": self.texl_2, "NGTL": self.texl_2,
             "NLTL": self.texl_1, "NSTL": self.texl_1, "NXTL": self.texl_1, "NZTL": self.texl_1,
 
-            # all but NXEF are assumed to exist. (Data isn't applicable)
+            # Data isn't applicable
             "NCEF": self.efct_1, "NEEF": self.efct_1, "NGEF": self.efct_1,
             "NLEF": self.efct_1, "NSEF": self.efct_1, "NXEF": self.efct_1, "NZEF": self.efct_1,
 
-            # all but NXNN are assumed to exist
             "NCNN": self.node_2, "NENN": self.node_2, "NGNN": self.node_2,
             "NLNN": self.node_1, "NSNN": self.node_1, "NXNN": self.node_1, "NZNN": self.node_1,
 
-            "NXOB": self.obje_1, "NZOB": self.obje_1,
+            "NXOB": self.obje_1, "NZOB": self.obje_2,
 
             # generic
             "NOF0": self.nof0, "NFN0": self.nfn0, "NEND": self.nend
@@ -122,6 +121,10 @@ class ReadNn:
 
     def obje_1(self):
         self.nn_file.model_data = nn_object.Read(self.f, self.nn_file.post_info, self.format_type).type_1(self.debug)
+        console_out_pre("")
+
+    def obje_2(self):
+        self.nn_file.model_data = nn_object.Read(self.f, self.nn_file.post_info, self.format_type).type_2(self.debug)
         console_out_pre("")
 
     # generic

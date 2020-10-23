@@ -119,11 +119,13 @@ class Read:
                     return
                 v_cols_list.append([cols[2] / div_by, cols[1] / div_by, cols[0] / div_by, cols[3] / div_by])
 
-            # "000KC0NP 0WWW0000 000000QU 00000000  KC0NW0P0 000000QU 00000000 00000000" SR PC
+            # 000KC0NP 0WWW0000 000000QU 00000000  KC0NW0P0 000000QU 00000000 00000000 SR PC
             #  K = colours as shorts, not bytes Q = unknown, in psu Q is wx but srpc has only one float
             #  block order: POS Q WEIGH NORM COL UV SR PC
-            # "0M00C0NP 0WWW0I02 0000000U 00000000  0C0NW0P0 000W000U 00000000 00000000" 06
+            # 0M00C0NP 0WWW0I02 0000000U 00000000  0C0NW0P0 000W000U 00000000 00000000 06
             #  M = 2 extra normal sets, I = bone indices
+            # 00000001 00000000 00000011 00000000 00000010 00000011 00000000 00000000 s4e1
+            # p, uw,
 
             # latest goes first and should be of the latest games format
             def latest_x():
@@ -165,11 +167,13 @@ class Read:
                     wei(BitFlags.weights, BitFlags.weight_indices)
                     norm(BitFlags.normal)
                     col(BitFlags.colour_short, BitFlags.colour_byte)
-                    uv_wx(BitFlags.wx, BitFlags.uv)
+                    uv_wx(None, BitFlags.uv)
+                    if BitFlags.wx:
+                        f.seek(16, 1)
                     extra_norms(BitFlags.extra_normals)
 
             dict_x = {
-                "SonicRiders_X": sonic_riders_x,"PhantasyStarUniverse_X": phantasy_star_universe_x,
+                "SonicRiders_X": sonic_riders_x, "PhantasyStarUniverse_X": phantasy_star_universe_x,
                 "Sonic2006_X": sonic_2006_x}
             dict_z = {
                 "Sonic4Episode1_Z": sonic_4_episode_1_z}

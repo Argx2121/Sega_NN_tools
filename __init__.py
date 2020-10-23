@@ -23,17 +23,19 @@ if "NN_import" in locals():
     importlib.reload(NN)
     importlib.reload(SRPC)
     importlib.reload(preferences)
+    importlib.reload(S4E1)
 else:
     from .io import NN_import, import_sega_nn
-    from .ui import NN, SRPC, preferences
+    from .ui import panels, SRPC, preferences, S4E1
 
 # classes
 classes = (
     import_sega_nn.ImportSegaNN, preferences.ImportSegaNN,
-    SRPC.SonicRPCTextureTools, SRPC.OpenTextureFolder,
-    NN.ModelExport, NN.DiscordServerJoin, NN.NN_PT_ModelPanel,
-    NN.SRPC_PT_Panel, NN.SRPC_PT_Texture, NN.SRPC_PT_Guide, NN.SRPC_PT_Server,
-    NN.NN_PT_Credits
+    SRPC.SonicRPCTextureTools, SRPC.OpenTextureFolder, S4E1.Sonic4E1Tools,
+    panels.ModelExport, panels.DiscordServerJoin, panels.NN_PT_ModelPanel,
+    panels.SRPC_PT_Panel, panels.SRPC_PT_Texture, panels.SRPC_PT_Guide, panels.SRPC_PT_Server,
+    panels.S4E1_PT_Panel,
+    panels.NN_PT_Credits
 )
 
 

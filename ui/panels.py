@@ -87,6 +87,17 @@ class SRPC_PT_Server(GENERIC_panel, bpy.types.Panel):
         box.operator("srpc_tools.discord_server_join")
 
 
+class S4E1_PT_Panel(GENERIC_panel, bpy.types.Panel):
+    bl_idname = "S4E1_PT_Panel"
+    bl_label = "Sonic 4 Episode 1 PC Tools"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    def draw(self, context):
+        layout = self.layout
+        box = layout.box()
+        box.operator("s4e1.extract")
+
+
 class NN_PT_Credits(GENERIC_panel, bpy.types.Panel):
     bl_label = "About / Credits"
     bl_idname = "NN_PT_Credits"

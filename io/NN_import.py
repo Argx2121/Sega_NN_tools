@@ -1,6 +1,9 @@
-from Sega_NN_tools.modules.game_specific.srpc_read_file import *
+from Sega_NN_tools.modules.game_specific import *
 from Sega_NN_tools.modules.nn.nn import ReadNn
 from dataclasses import dataclass
+
+from ..modules.blender.model import Model
+from ..modules.util import *
 
 determine_bone = {
     "Match__": 1, "Debug__": 1,
@@ -59,7 +62,7 @@ def match(filepath, settings):
 
             phantasy_star_universe_x(filepath, settings)
 
-        elif first_uint == 1112359203:  # #AMB
+        elif first_uint == 1179212366:  # NZIF
             print("Game assumed to be Sonic 4 Episode 1")
             stdout.flush()
             settings.format = "Sonic4Episode1_Z"
@@ -99,9 +102,10 @@ def debug(filepath, settings):  # todo remove debug and use as variable instead 
     def execute():
         print_line()
         f = open(filepath, 'rb')
-        nn_data = ReadNn(f, filepath, settings.format, True).read_file()
-        if nn_data.model_data:
-            Model(nn_data, settings).x()
+        nn_data = ReadNn(f, filepath, settings.format, True).read_file_special()
+        for nn in nn_data:
+            if nn.model_data:
+                Model(nn, settings).x()
         f.close()
 
     start_time = time()
@@ -118,11 +122,14 @@ def debug(filepath, settings):  # todo remove debug and use as variable instead 
 
 def sonic_2006_x(filepath, settings):
     def execute():
-        print_line()
         f = open(filepath, 'rb')
-        nn = ReadNn(f, filepath, settings.format).read_file()
-        if nn.model_data:
-            Model(nn, settings).x()
+        block = read_str_nulls(f, 4)[0]
+        f.seek(0)
+        if block == "NXIF":
+            print_line()
+            nn = ReadNn(f, filepath, settings.format).read_file()
+            if nn.model_data:
+                Model(nn, settings).x()
         f.close()
 
     start_time = time()
@@ -163,7 +170,7 @@ def sonic_riders_x(filepath, settings):
     def execute():
         print_line()
         f = open(filepath, 'rb')
-        ReadFile(f, filepath, settings).execute()
+        srpc_read.ReadSRPC(f, filepath, settings).execute()
         f.close()
 
     start_time = time()
@@ -179,11 +186,15 @@ def sonic_riders_x(filepath, settings):
 
 
 def sonic_4_episode_1_z(filepath, settings):
-    """
     def execute():
-        print_line()
         f = open(filepath, 'rb')
-        ReadFile(f, filepath, settings).execute()
+        block = read_str_nulls(f, 4)[0]
+        f.seek(0)
+        if block == "NZIF":
+            print_line()
+            nn = ReadNn(f, filepath, settings.format).read_file()
+            if nn.model_data:
+                Model(nn, settings).x()
         f.close()
 
     start_time = time()
@@ -191,10 +202,8 @@ def sonic_4_episode_1_z(filepath, settings):
     if settings.batch_import == "Single":
         execute()
     else:
-        file_list = get_files(filepath, name_ignore=["."])
+        file_list = get_files(filepath)
         for filepath in file_list:
             execute()
     finish_process(start_time)
     return {'FINISHED'}
-    """
-    pass

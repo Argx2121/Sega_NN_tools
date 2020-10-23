@@ -1,7 +1,7 @@
 if "NN" in locals():
     import importlib
-    importlib.reload(NN)
+    importlib.reload(panels)
     importlib.reload(preferences)
     importlib.reload(SRPC)
 else:
-    from . import NN, preferences, SRPC
+    from . import panels, preferences, SRPC

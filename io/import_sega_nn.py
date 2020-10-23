@@ -131,9 +131,6 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
         layout = self.layout
         preferences = bpy.context.preferences.addons[__package__.partition(".")[0]].preferences
         layout.label(text="Sega NN importer settings:")
-        for addon in bpy.context.preferences.addons:
-            print(addon)
-        stdout.flush()
 
         if preferences.dev_mode:
             layout.row().prop(self, "no_ver_dev")
