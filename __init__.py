@@ -21,7 +21,7 @@ import sys
 files = [__package__ + file.split(__package__)[1].replace("\\", ".")[:-3] for file in
          glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/**/*.py', recursive=True) if "__init__" not in file]
 
-if __package__ + ".io" in sys.modules:  # this package is loaded already so we can use it - try with sub file instead
+if __package__ + ".io" in sys.modules:  # this package is loaded already so we can't use it - try with sub file instead
     for name in files:
         importlib.reload(sys.modules[name])
 
