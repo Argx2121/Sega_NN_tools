@@ -27,12 +27,12 @@ if __package__ + ".io" in sys.modules:  # this package is loaded already so we c
 import bpy
 
 from .io import nn_import, nn_import_settings
-from .ui import panels, SRPC, preferences, S4E1
+from .ui import panels, srpc, preferences, s4e1
 
 # classes
 classes = (
     nn_import_settings.ImportSegaNN, preferences.ImportSegaNN,
-    SRPC.SonicRPCTextureTools, SRPC.OpenTextureFolder, S4E1.Sonic4E1Tools,
+    srpc.SonicRPCTextureTools, srpc.OpenTextureFolder, s4e1.Sonic4E1Tools,
     panels.ModelExport, panels.DiscordServerJoin, panels.NN_PT_ModelPanel,
     panels.SRPC_PT_Panel, panels.SRPC_PT_Texture, panels.SRPC_PT_Guide, panels.SRPC_PT_Server,
     panels.S4E1_PT_Panel,
