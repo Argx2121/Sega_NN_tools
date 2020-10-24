@@ -93,7 +93,7 @@ from bpy.types import Operator
 class OpenTextureFolder(bpy.types.Operator):
     """Open Folder where textures were extracted"""
     bl_idname = "srpc_image_tools.open_texture_folder"
-    bl_label = "Open Folder"
+    bl_label = "Open Texture Folder"
 
     def execute(self, context):
         print("Opening texture location")

@@ -31,7 +31,7 @@ model_list = (
 class ImportSegaNN(bpy.types.Operator, ImportHelper):
     """Import a Sega NN file (not necessarily an *.xno, *.zno etc file)"""
     bl_idname = "import.sega_nn"  # important since its how bpy.ops.import_test.some_data is constructed
-    bl_label = "Import Sega NN Model"
+    bl_label = "Import *no Model"
     filename_ext = ""  # ImportHelper mixin class uses this
     filter_glob: StringProperty(
         default="*",
