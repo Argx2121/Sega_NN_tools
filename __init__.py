@@ -22,19 +22,16 @@ files = [__package__ + file.split(__package__)[1].replace("\\", ".")[:-3] for fi
          glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/**/*.py', recursive=True) if "__init__" not in file]
 
 if __package__ + ".io" in sys.modules:  # this package is loaded already so we can't use it - check a sub file instead
-    for name in files:
-        importlib.reload(sys.modules[name])
-
-[importlib.import_module(file) for file in files]  # import all modules
+    [importlib.reload(sys.modules[name]) for name in files if name in sys.modules]  # refresh all loaded modules
 
 import bpy
 
-from .io import NN_import, import_sega_nn
+from .io import nn_import, nn_import_settings
 from .ui import panels, SRPC, preferences, S4E1
 
 # classes
 classes = (
-    import_sega_nn.ImportSegaNN, preferences.ImportSegaNN,
+    nn_import_settings.ImportSegaNN, preferences.ImportSegaNN,
     SRPC.SonicRPCTextureTools, SRPC.OpenTextureFolder, S4E1.Sonic4E1Tools,
     panels.ModelExport, panels.DiscordServerJoin, panels.NN_PT_ModelPanel,
     panels.SRPC_PT_Panel, panels.SRPC_PT_Texture, panels.SRPC_PT_Guide, panels.SRPC_PT_Server,
@@ -47,10 +44,10 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    bpy.types.TOPBAR_MT_file_import.append(import_sega_nn.menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.append(nn_import_settings.menu_func_import)
 
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
-    bpy.types.TOPBAR_MT_file_import.remove(import_sega_nn.menu_func_import)
+    bpy.types.TOPBAR_MT_file_import.remove(nn_import_settings.menu_func_import)

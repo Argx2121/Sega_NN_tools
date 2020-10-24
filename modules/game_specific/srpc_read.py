@@ -19,9 +19,13 @@ class ReadSRPC:
         self.tex_block_index = 0
 
     def execute(self):
+        def toggle():
+            if self.settings.batch_import == "Single" and file_count > 10:
+                toggle_console()
         archive = read_archive(self.f)  # read the files archive data
         file_count = archive.file_count
         self.sub_file_offsets = archive.sub_file_offsets
+        toggle()
 
         cur_count = 0
         for file_index in range(file_count):
@@ -46,6 +50,7 @@ class ReadSRPC:
                         new_node.image = self.image_block_14[mat_tex_index]
                         n_tree.links.new(inp, oup)
                 self.material_in_next_block = []
+        toggle()
 
     def read_sub(self, cur_count):
         f = self.f

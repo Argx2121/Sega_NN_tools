@@ -36,7 +36,6 @@ def finish_process(start_time):
     print_line()
     print("Done in %f seconds" % (time() - start_time))
     stdout.flush()
-    toggle_console()
 
 
 def match(filepath, settings):
@@ -89,12 +88,14 @@ def match(filepath, settings):
         print_line()
         stdout.flush()
     else:
+        toggle_console()
         file_list = get_files(filepath)
         settings.batch_import = "Single"
         for filepath in file_list:
             execute()
             print_line()
             stdout.flush()
+        toggle_console()
     return {'FINISHED'}
 
 
@@ -117,6 +118,7 @@ def debug(filepath, settings):  # todo remove debug and use as variable instead 
         for filepath in file_list:
             execute()
     finish_process(start_time)
+    toggle_console()
     return {'FINISHED'}
 
 
@@ -133,13 +135,14 @@ def sonic_2006_x(filepath, settings):
         f.close()
 
     start_time = time()
-    toggle_console()
     if settings.batch_import == "Single":
         execute()
     else:
+        toggle_console()
         file_list = get_files(filepath, name_require=[".xno"])
         for filepath in file_list:
             execute()
+        toggle_console()
     finish_process(start_time)
     return {'FINISHED'}
 
@@ -155,13 +158,14 @@ def phantasy_star_universe_x(filepath, settings):
         f.close()
 
     start_time = time()
-    toggle_console()
     if settings.batch_import == "Single":
         execute()
     else:
+        toggle_console()
         file_list = get_files(filepath)
         for filepath in file_list:
             execute()
+        toggle_console()
     finish_process(start_time)
     return {'FINISHED'}
 
@@ -174,13 +178,14 @@ def sonic_riders_x(filepath, settings):
         f.close()
 
     start_time = time()
-    toggle_console()
     if settings.batch_import == "Single":
         execute()
     else:
+        toggle_console()
         file_list = get_files(filepath, name_ignore=["."])
         for filepath in file_list:
             execute()
+        toggle_console()
     finish_process(start_time)
     return {'FINISHED'}
 
@@ -198,12 +203,13 @@ def sonic_4_episode_1_z(filepath, settings):
         f.close()
 
     start_time = time()
-    toggle_console()
     if settings.batch_import == "Single":
         execute()
     else:
+        toggle_console()
         file_list = get_files(filepath)
         for filepath in file_list:
             execute()
+        toggle_console()
     finish_process(start_time)
     return {'FINISHED'}

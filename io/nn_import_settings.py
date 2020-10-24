@@ -1,7 +1,7 @@
 from bpy.props import StringProperty, EnumProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 
-from Sega_NN_tools.io.NN_import import *
+from Sega_NN_tools.io.nn_import import *
 
 model_list = (
     # keep debug first!!
