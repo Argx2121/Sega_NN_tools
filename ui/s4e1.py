@@ -110,8 +110,9 @@ class Sonic4E1Tools(Operator, ImportHelper):
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="Sonic 4 Episode 1 Extractor Settings:")
-        layout.row().prop(self, "set_batch", expand=True)
+        box = layout.box()
+        box.label(text="Sonic 4 Episode 1 Extractor Settings:", icon="KEYFRAME_HLT")
+        box.row().prop(self, "set_batch", expand=True)
 
     def execute(self, context):
         return ExtractS4E1(context, self.filepath, self.set_batch).execute()

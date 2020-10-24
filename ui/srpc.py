@@ -147,10 +147,11 @@ class SonicRPCTextureTools(Operator, ImportHelper):
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="Sonic Riders PC Texture settings:")
-        layout.row().prop(self, "in_out", expand=True)
-        layout.row().prop(self, "set_batch", expand=True)
-        layout.row().prop(self, "image", expand=True)
+        box = layout.box()
+        box.label(text="Sonic Riders PC Texture settings:", icon="KEYFRAME_HLT")
+        box.row().prop(self, "in_out", expand=True)
+        box.row().prop(self, "set_batch", expand=True)
+        box.row().prop(self, "image", expand=True)
 
     def execute(self, context):
         return texture_tools(context, self.filepath, self.in_out, self.set_batch, self.image)
