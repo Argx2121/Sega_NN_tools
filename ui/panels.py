@@ -73,6 +73,7 @@ class SRPC_PT_Guide(GENERIC_panel, bpy.types.Panel):
         box.label(text="2) Replace folders textures with your own")
         box.label(text="3) Insert images")
         box = layout.box()
+        box.label(text="Keep textures similar sizes to the original!!")
         box.label(text="Max dimensions: 4K")
         box.label(text="Format spec: .dds file (Dxt1, 3 or 5)")
 
