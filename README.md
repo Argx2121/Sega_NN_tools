@@ -12,7 +12,8 @@ A python library for blender of tools for games using Sega's NN libraries.
     2. In Blender preferences: addons > install
     3. In Blender file view: navigate to where you downloaded the zip, select the zip and press install addon.
     4. In Blender preferences: make sure the box for Sega NN tools is checked.
-   
+- On updating you should reload scripts by pressing f8 (or spacebar if you've set the search key as it) and searching reload to find the option "Reload scripts"
+
 ## Usage
 1. Open from either
    - 3d view > sidebar (press n on your keyboard!) > Sega NN tools > import
