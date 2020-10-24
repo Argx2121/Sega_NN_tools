@@ -92,7 +92,7 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
              "Allows textures with the same name to be replace eachother (syntax: Texture_name.dds)"),
             ('complex', "Specific Names",
              "Prevents a texture from being replaced by one with the same name (syntax: Name.file.subfile.index.dds)")),
-        default='simple')
+        default='complex')
     all_blocks: BoolProperty(
         name="Import models+",
         description="Imports models, collision, pathfinding, etc. instead of just models",
