@@ -97,7 +97,7 @@ class ReplaceImage:  # main
             for tex_index in range(self.image_count):
                 image_offset.append(f.tell() - self.texture_start)
                 tex_name_base = self.texture_path + self.texture_names[tex_index]
-                if self.image_naming == "complex":
+                if self.image_naming == "Complex":
                     ft = open(tex_name_base + "." + bpy.path.basename(self.file_path) + "." +
                               str(sub_index) + "." + str(tex_index) + ".dds", "rb")
                 else:

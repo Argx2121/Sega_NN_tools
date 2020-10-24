@@ -88,11 +88,11 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
         name="Image naming conventions",
         description="How extracted texture names should be formatted",
         items=(
-            ('simple', "Simple Names",
-             "Allows textures with the same name to be replace eachother (syntax: Texture_name.dds)"),
-            ('complex', "Specific Names",
+            ('Simple', "Simple Names",
+             "Allows textures with the same name to be replace each other (syntax: Texture_name.dds)"),
+            ('Complex', "Specific Names",
              "Prevents a texture from being replaced by one with the same name (syntax: Name.file.subfile.index.dds)")),
-        default='complex')
+        default='Complex')
     all_blocks: BoolProperty(
         name="Import models+",
         description="Imports models, collision, pathfinding, etc. instead of just models",

@@ -32,7 +32,7 @@ class ExtractImage:
 
         def dxt(dxt_type, tex_mip=1):
             tex_name_base = tex_path + self.texture_names[texture_index]
-            if self.image_naming == "complex":
+            if self.image_naming == "Complex":
                 file_name = tex_name_base + "." + bpy.path.basename(self.filepath) + \
                             "." + str(self.file_index) + "." + str(texture_index) + ".dds"
             else:
