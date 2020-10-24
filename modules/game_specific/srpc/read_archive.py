@@ -1,6 +1,6 @@
 import dataclasses
 
-from ...nn_util import *
+from ...util import *
 
 
 @dataclasses.dataclass

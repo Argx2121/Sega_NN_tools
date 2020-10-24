@@ -1,4 +1,4 @@
-from ...nn_util import *
+from ...util import *
 
 
 # read + make textures

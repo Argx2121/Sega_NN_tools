@@ -109,18 +109,20 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
     def draw(self, context):
         def specific(no_var):
             def match_set():  # match should have all settings because we haven't set a format
-                layout.label(text="All specific settings:")
                 s06_set()
                 srpc_set()
 
             def s06_set():
-                layout.label(text="Sonic '06 specific settings:")
-                layout.row().prop(self, "colour")
+                this_box = layout.box()
+                this_box.label(text="Sonic '06 specific settings:", icon="KEYFRAME")
+
+                this_box.row().prop(self, "colour")
 
             def srpc_set():
-                layout.label(text="Riders specific settings:")
-                layout.row().prop(self, "image", expand=True)
-                layout.row().prop(self, "all_blocks")
+                this_box = layout.box()
+                this_box.label(text="Riders specific settings:", icon="KEYFRAME")
+                this_box.row().prop(self, "image", expand=True)
+                this_box.row().prop(self, "all_blocks")
 
             def empty_set():
                 pass
@@ -134,7 +136,7 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
 
         layout = self.layout
         preferences = bpy.context.preferences.addons[__package__.partition(".")[0]].preferences
-        layout.label(text="Sega NN importer settings:")
+        layout.label(text="Sega NN importer settings:", icon="KEYFRAME_HLT")
 
         if preferences.dev_mode:
             layout.row().prop(self, "no_ver_dev")
@@ -143,15 +145,17 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
             layout.row().prop(self, "no_ver")
             specific(self.no_ver)
 
-        layout.label(text="Generic settings:")
-        layout.row().prop(self, "batch", expand=True)
-        layout.row().prop(self, "simple_mat")
-        layout.row().prop(self, "bone")
-        layout.row().prop(self, "length")
-        layout.row().prop(self, "pose")
+        box = layout.box()
+        box.label(text="Generic settings:", icon="KEYFRAME_HLT")
+        box.row().prop(self, "batch", expand=True)
+        box.row().prop(self, "simple_mat")
+        box.row().prop(self, "bone")
+        box.row().prop(self, "length")
+        box.row().prop(self, "pose")
         if preferences.dev_mode:
-            layout.label(text="Dev settings:")
-            layout.row().prop(self, "clean")
+            box = layout.box()
+            box.label(text="Dev settings:", icon="KEYFRAME_HLT")
+            box.row().prop(self, "clean")
 
     def execute(self, context):
         preferences = bpy.context.preferences.addons[__package__.partition(".")[0]].preferences

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ...nn_util import *
+from ...util import *
 
 
 class Read:

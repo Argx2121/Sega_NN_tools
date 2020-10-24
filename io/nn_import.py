@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from ..modules.blender.model import Model
 from ..modules.game_specific.srpc_read import ReadSRPC
-from ..modules.nn_util import *
+from ..modules.util import *
 
 determine_bone = {
     "Match__": 1, "Debug__": 1,

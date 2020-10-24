@@ -3,7 +3,7 @@ from Sega_NN_tools.modules.game_specific.srpc.block_type_check import BlockTypeC
 from Sega_NN_tools.modules.game_specific.srpc.extract_image import ExtractImage
 from Sega_NN_tools.modules.game_specific.srpc.read_archive import read_archive
 from Sega_NN_tools.modules.nn.nn import ReadNn
-from Sega_NN_tools.modules.nn_util import *
+from Sega_NN_tools.modules.util import *
 
 
 class ReadSRPC:

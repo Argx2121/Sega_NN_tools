@@ -1,4 +1,4 @@
-from ..nn_util import *
+from ..util import *
 
 
 class Read:
@@ -32,12 +32,10 @@ class Read:
         for tex in texture_names:
             if not os.path.exists(self.filepath + tex[:-4] + ".png"):
                 has_png = False
-            if not has_png:
                 break
         for tex in texture_names:
             if not os.path.exists(self.filepath + tex[:-4] + ".dds"):
                 has_dds = False
-            if not has_dds:
                 break
         if has_png:
             return [bpy.data.images.load(self.filepath + tex[:-4] + ".png") for tex in texture_names]
