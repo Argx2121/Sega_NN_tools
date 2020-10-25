@@ -5,10 +5,11 @@ from dataclasses import dataclass
 
 # read model
 class Read:
-    def __init__(self, f, post_info, format_type):
+    def __init__(self, f, post_info, format_type, debug):
         self.f = f
         self.post_info = post_info
         self.format_type = format_type
+        self.debug = debug
 
     def _execute(self, seek, text, function):
         self.f.seek(seek)
@@ -24,7 +25,7 @@ class Read:
         mesh_info: Any = None
         build_mesh: Any = None
 
-    def type_1(self, debug) -> ModelData:
+    def type_1(self) -> ModelData:
         f = self.f
         start_block = f.tell() - 4
         len_block = read_int(f)
@@ -35,7 +36,7 @@ class Read:
             read_int(f) + self.post_info, "Parsing Model Info...", model_data.Read(f, self.post_info, start_block).xbox)
         model.data = data
         post_info = self.post_info
-        if debug:
+        if self.debug:
             print(data)
             print("After info offset (decimal, memory rips / files with broken pointers will be negative):", post_info)
 
@@ -53,12 +54,12 @@ class Read:
             console_out("Parsing Sub Mesh Data...", meshes.Read(
                 f, post_info, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).xbox)
         # seeks in method
-        if debug:
+        if self.debug:
             print(model.build_mesh)
         f.seek(start_block + len_block + 8)  # seek end of block
         return model
 
-    def type_2(self, debug) -> ModelData:
+    def type_2(self) -> ModelData:
         f = self.f
         start_block = f.tell() - 4
         len_block = read_int(f)
@@ -69,7 +70,7 @@ class Read:
             read_int(f) + self.post_info, "Parsing Model Info...", model_data.Read(f, self.post_info, start_block).xbox)
         model.data = data
         post_info = self.post_info
-        if debug:
+        if self.debug:
             print(data)
             print("After info offset (decimal, memory rips / files with broken pointers will be negative):", post_info)
 
@@ -87,7 +88,7 @@ class Read:
             console_out("Parsing Sub Mesh Data...", meshes.Read(
                 f, post_info, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).xbox)
         # seeks in method
-        if debug:
+        if self.debug:
             print(model.build_mesh)
         f.seek(start_block + len_block + 8)  # seek end of block
         return model

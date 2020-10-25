@@ -120,11 +120,11 @@ class ReadNn:
             stdout.write("| \n" + message + " " * (50 - len(message)))
 
     def obje_1(self):
-        self.nn_file.model_data = nn_object.Read(self.f, self.nn_file.post_info, self.format_type).type_1(self.debug)
+        self.nn_file.model_data = nn_object.Read(self.f, self.nn_file.post_info, self.format_type, self.debug).type_1()
         console_out_pre("")
 
     def obje_2(self):
-        self.nn_file.model_data = nn_object.Read(self.f, self.nn_file.post_info, self.format_type).type_2(self.debug)
+        self.nn_file.model_data = nn_object.Read(self.f, self.nn_file.post_info, self.format_type, self.debug).type_2()
         console_out_pre("")
 
     # generic
