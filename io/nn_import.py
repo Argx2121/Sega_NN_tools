@@ -139,7 +139,7 @@ def sonic_2006_x(filepath, settings):
         execute()
     else:
         toggle_console()
-        file_list = get_files(filepath, name_require=[".xno"])
+        file_list = get_files(filepath, name_require=".xno")
         for filepath in file_list:
             execute()
         toggle_console()
@@ -182,7 +182,7 @@ def sonic_riders_x(filepath, settings):
         execute()
     else:
         toggle_console()
-        file_list = get_files(filepath, name_ignore=["."])
+        file_list = get_files(filepath, name_ignore=".")
         for filepath in file_list:
             execute()
         toggle_console()
