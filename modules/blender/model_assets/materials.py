@@ -146,7 +146,7 @@ class Material:  # functional, but needs a rework
                         end_node.location = 600, 140
                         n_tree.nodes["end_node"].inputs[0].default_value = 0.5
 
-                        if model_format == "s06":
+                        if model_format == "Sonic2006_X":
                             material.blend_method = "BLEND"
                             n_tree.nodes["diffuse"].inputs[18].default_value = 0
 
@@ -277,4 +277,3 @@ class Material:  # functional, but needs a rework
                         n_tree.links.new(diffuse.inputs[-3], norm_node.outputs[0])
                 else:  # unsupported textures
                     pass
-
