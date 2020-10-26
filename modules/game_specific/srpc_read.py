@@ -64,11 +64,8 @@ class ReadSRPC:
             if nn_data.texture_names:
                 nxtl_block = 1
             else:
-                nxtl_block = 0
-            if nn_data.model_data:
-                sub_file_data.append(["NXOB", nn_data, nxtl_block + self.tex_block_index])
-            else:  # animations would go here
-                pass  # sub_file_data.append([None, None, None, None])
+                nxtl_block = - self.tex_block_index
+            sub_file_data.append([nn_data, nxtl_block + self.tex_block_index])
 
         else:  # check and extract textures
             if len(self.sub_file_offsets) > cur_count + 1:
@@ -92,8 +89,8 @@ class ReadSRPC:
     def make_subs(self):
         texture_name_list = self.texture_name_list
         for s_file in self.sub_file_data:
-            s_block, s_data, s_extra = s_file
-            if s_block == "NXOB":
+            s_data, s_extra = s_file
+            if s_data.model_data:
                 if s_extra >= len(texture_name_list):  # fix this ?
                     s_extra = -1
                 obj_make_start = time()
