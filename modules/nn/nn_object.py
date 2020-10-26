@@ -40,7 +40,7 @@ class Read:
         model = self.ModelData()
         post = self.post_info
 
-        data, self.post_info = self._execute(read_int(f) + post, 0, model_data.Read(f, post, start_block).xbox)
+        data, self.post_info = self._execute(read_int(f), 0, model_data.Read(f, post, start_block).type_1)
         model.data = data
         post = self.post_info
         if self.debug:
@@ -51,13 +51,13 @@ class Read:
 
         model.materials = self._execute(data.material_offset, 2, materials.Read(f, post, data.material_count).type_1)
 
-        model.faces = self._execute(data.face_set_offset, 3, faces.Read(f, post, data.face_set_count).xbox)
+        model.faces = self._execute(data.face_set_offset, 3, faces.Read(f, post, data.face_set_count).type_1)
 
         model.vertices, model.mesh_info = self._execute(
-            data.vertex_buffer_offset, 4, vertices.Read(f, post, self.format_type, data.vertex_buffer_count).xbox)
+            data.vertex_buffer_offset, 4, vertices.Read(f, post, self.format_type, data.vertex_buffer_count).type_1)
 
         model.build_mesh = console_out("Parsing Sub Mesh Data...", meshes.Read(
-            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).xbox)  # seeks in method
+            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).type_1)  # seeks in method
 
         if self.debug:
             print(model.build_mesh)
@@ -70,7 +70,7 @@ class Read:
         model = self.ModelData()
         post = self.post_info
 
-        data, self.post_info = self._execute(read_int(f) + post, 0, model_data.Read(f, post, start_block).xbox)
+        data, self.post_info = self._execute(read_int(f), 0, model_data.Read(f, post, start_block).type_1)
         model.data = data
         post = self.post_info
         if self.debug:
@@ -81,13 +81,13 @@ class Read:
 
         model.materials = self._execute(data.material_offset, 2, materials.Read(f, post, data.material_count).type_2)
 
-        model.faces = self._execute(data.face_set_offset, 3, faces.Read(f, post, data.face_set_count).xbox)
+        model.faces = self._execute(data.face_set_offset, 3, faces.Read(f, post, data.face_set_count).type_1)
 
         model.vertices, model.mesh_info = self._execute(
-            data.vertex_buffer_offset, 4, vertices.Read(f, post, self.format_type, data.vertex_buffer_count).xbox)
+            data.vertex_buffer_offset, 4, vertices.Read(f, post, self.format_type, data.vertex_buffer_count).type_1)
 
         model.build_mesh = console_out("Parsing Sub Mesh Data...", meshes.Read(
-            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).xbox)  # seeks in method
+            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).type_1)  # seeks in method
 
         if self.debug:
             print(model.build_mesh)

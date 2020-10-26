@@ -74,7 +74,7 @@ class Read:
             mat_count, mat_offset, m_01_count, m_01_offset, f_01_count, f_01_offset, b_count, b_offset,
             b_used_count, m_sets_count, m_data_count, m_data_offset)
 
-    def xbox(self):
+    def type_1(self):
         return self._data_type_1(), self.post_nxif
 
     def gamecube(self):

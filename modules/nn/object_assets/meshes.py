@@ -34,5 +34,5 @@ class Read:
                 build_mesh.append(self.BuildMesh(pos, scale, vis, bone, mat, mesh, face, index))
         return build_mesh
 
-    def xbox(self):
+    def type_1(self):
         return self._build_mesh_type_1()

@@ -220,7 +220,7 @@ class Read:
                     v_norms2_list, v_norms3_list))
         return vertex_data, self.mesh_info
 
-    def xbox(self):
+    def type_1(self):
         self._info_offsets_type_1()
         self._info_type_1()
         return self._vertices_type_1()

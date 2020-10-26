@@ -61,7 +61,7 @@ class Read:
     def _info_offsets_type_2(self):  # 1, offset, 1, offset, ...
         self.face_info_offset = read_multi_ints(self.f, self.face_set_count * 2, ">")[1::2]
 
-    def xbox(self):
+    def type_1(self):
         self._info_offsets_type_1()
         self._info_type_1()
         self._strip_info_type_1()
