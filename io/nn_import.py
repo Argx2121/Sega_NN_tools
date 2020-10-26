@@ -1,15 +1,10 @@
 from Sega_NN_tools.modules.nn.nn import ReadNn
 from dataclasses import dataclass
 
+from .nn_import_data import determine_bone
 from ..modules.blender.model import Model
 from ..modules.game_specific.srpc_read import ReadSRPC
 from ..modules.util import *
-
-determine_bone = {
-    "Match__": 1, "Debug__": 1,
-    "Sonic2006_X": 10, "PhantasyStarUniverse_X": 1, "SonicRiders_X": 0.1,
-    "Sonic4Episode1_Z": 1
-}
 
 
 @dataclass
@@ -139,7 +134,32 @@ def sonic_2006_x(filepath, settings):
         execute()
     else:
         toggle_console()
-        file_list = get_files(filepath, name_require=".xno")
+        file_list = get_files(filepath)
+        for filepath in file_list:
+            execute()
+        toggle_console()
+    finish_process(start_time)
+    return {'FINISHED'}
+
+
+def generic_import(filepath, settings):
+    def execute():
+        f = open(filepath, 'rb')
+        block = read_str_nulls(f, 4)[0]
+        f.seek(0)
+        if block[0] == "N" and block[2] == "I" and block[3] == "F":  # block[1] can be x, z, etc (nn format variable)
+            print_line()
+            nn = ReadNn(f, filepath, settings.format).read_file()
+            if nn.model_data:
+                Model(nn, settings).x()
+        f.close()
+
+    start_time = time()
+    if settings.batch_import == "Single":
+        execute()
+    else:
+        toggle_console()
+        file_list = get_files(filepath)
         for filepath in file_list:
             execute()
         toggle_console()
