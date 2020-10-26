@@ -137,13 +137,13 @@ class SonicRPCTextureTools(Operator, ImportHelper):
         name="Image naming conventions",
         description="How extracted texture names should be formatted",
         items=(
-            ('simple', "Simple Names",
+            ('Simple', "Simple Names",
              "Allows textures with the same name to be replace eachother "
              "(syntax: Texture_name.dds)"),
-            ('complex', "Specific Names",
+            ('Complex', "Specific Names",
              "Prevents a texture from being replaced by one with the same name "
              "(syntax: Name.file.subfile.index.dds)")),
-        default='simple')
+        default='Complex')
 
     def draw(self, context):
         layout = self.layout
