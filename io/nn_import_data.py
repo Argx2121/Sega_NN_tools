@@ -1,3 +1,6 @@
+# lists lists
+# determine_function is in nn_import_settings
+
 no_list = (
     # keep debug first!!
     ("Debug__", "Debug", "For Developer testing and otherwise"),
