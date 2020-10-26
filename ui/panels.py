@@ -1,27 +1,6 @@
 import bpy
 
 
-class ModelExport(bpy.types.Operator):
-    """Not supported yet!"""
-    bl_idname = "srpc_tools.model_export"
-    bl_label = "Not Available"  # "Export"
-
-    def execute(self, context):
-        print("Exporting not supported yet!")
-        return {'FINISHED'}
-
-
-class DiscordServerJoin(bpy.types.Operator):
-    """Open the Sonic Riders Discord Server"""
-    bl_idname = "srpc_tools.discord_server_join"
-    bl_label = "Sonic Riders TE Discord Server"
-
-    def execute(self, context):
-        print("Opening hyperlink")
-        bpy.ops.wm.url_open(url="https://discord.gg/GPgZdKq")
-        return {'FINISHED'}
-
-
 class GENERIC_panel:
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -33,10 +12,10 @@ class NN_PT_ModelPanel(GENERIC_panel, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="Can also use File > Import / Export")
+        layout.label(text="Can also use File > Import")  # / Export")
         row = layout.row()
         row.operator("import.sega_nn")
-        row.operator("srpc_tools.model_export")
+        # row.operator("export.sega_nn")
 
 
 class SRPC_PT_Panel(GENERIC_panel, bpy.types.Panel):
@@ -45,47 +24,23 @@ class SRPC_PT_Panel(GENERIC_panel, bpy.types.Panel):
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
-        pass
-
-
-class SRPC_PT_Texture(GENERIC_panel, bpy.types.Panel):
-    bl_parent_id = "SRPC_PT_Panel"
-    bl_idname = "SRPC_PT_Texture"
-    bl_label = "Texture swapping"
-
-    def draw(self, context):
         layout = self.layout
-        layout.label(text="Change player textures - see Guide.")
         layout.operator("srpc_image_tools.open_texture_folder")
         layout.operator("srpc_image_tools.texture_tools")
-
-
-class SRPC_PT_Guide(GENERIC_panel, bpy.types.Panel):
-    bl_parent_id = "SRPC_PT_Panel"
-    bl_label = "Texture swapping Guide"
-
-    def draw(self, context):
-        layout = self.layout
         layout.operator("wm.url_open", text="Link to proper guide").url = \
             "https://github.com/Argx2121/Sega_NN_tools/tree/master#texture-swapping"
+        layout.label(text="Quick Guide:")
         box = layout.box()
-        box.label(text="1) Extract images - complex names for maps!")
-        box.label(text="2) Replace folders textures with your own")
-        box.label(text="3) Insert images")
+        box.label(text="Extract images")
+        box.label(text="Replace with custom textures")
+        box.label(text="Insert images")
+        layout.label(text="Reminders:")
         box = layout.box()
-        box.label(text="Keep textures similar sizes to the original!!")
+        box.label(text="Keep images the same size")
+        box.label(text="Complex names for maps")
+        box.label(text="Simple for player models")
         box.label(text="Max dimensions: 4K")
-        box.label(text="Format spec: .dds file (Dxt1, 3 or 5)")
-
-
-class SRPC_PT_Server(GENERIC_panel, bpy.types.Panel):
-    bl_parent_id = "SRPC_PT_Panel"
-    bl_label = "Discord Server"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.label(text="Join the Riders server!")
-        layout.operator("srpc_tools.discord_server_join")
+        box.label(text="Image format: .dds (Dxt1, 3 or 5)")
 
 
 class S4E1_PT_Panel(GENERIC_panel, bpy.types.Panel):
@@ -111,3 +66,5 @@ class NN_PT_Credits(GENERIC_panel, bpy.types.Panel):
         box.label(text="Sewer56")
         box.label(text="Shadowth117")
         box.label(text="Yacker")
+        layout.operator("wm.url_open", text="Discord Link").url = "https://discord.gg/CURRBfq"
+        layout.operator("wm.url_open", text="GitHub Link").url = "https://github.com/Argx2121/Sega_NN_tools/"
