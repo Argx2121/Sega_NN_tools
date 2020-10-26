@@ -1,4 +1,14 @@
 import bpy
+import addon_utils
+import requests
+
+l_ver = requests.get("https://github.com/Argx2121/test/releases/latest").url.rsplit("/")[-1]
+if "." in l_ver:
+    l_ver = tuple(int(a) for a in l_ver.split("."))
+else:
+    l_ver = "No Releases"
+u_ver = [addon.bl_info.get('version') for addon in addon_utils.modules() if addon.bl_info['name'] == 'Sega NN tools'][0]
+
 
 
 class GENERIC_panel:
@@ -53,12 +63,17 @@ class S4E1_PT_Panel(GENERIC_panel, bpy.types.Panel):
         layout.operator("s4e1.extract")
 
 
-class NN_PT_Credits(GENERIC_panel, bpy.types.Panel):
-    bl_label = "About / Credits"
-    bl_idname = "NN_PT_Credits"
+class NN_PT_About(GENERIC_panel, bpy.types.Panel):
+    bl_label = "About"
 
     def draw(self, context):
         layout = self.layout
+        layout.label(text="Version: " + str(u_ver))
+        if l_ver == u_ver:
+            layout.label(text="You are on the latest version")
+        else:
+            layout.label(text="You are not on latest release!", icon="ERROR")
+            layout.label(text="Latest: " + str(l_ver))
         layout.label(text="NN tools by Arg!!")
         box = layout.box()
         box.label(text="Special thanks:")

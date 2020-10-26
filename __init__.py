@@ -36,7 +36,7 @@ classes = (
     panels.NN_PT_ModelPanel,
     panels.SRPC_PT_Panel,
     panels.S4E1_PT_Panel,
-    panels.NN_PT_Credits
+    panels.NN_PT_About
 )
 
 
