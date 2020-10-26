@@ -70,10 +70,11 @@ class NN_PT_About(GENERIC_panel, bpy.types.Panel):
         layout = self.layout
         layout.label(text="Version: " + str(u_ver))
         if l_ver == u_ver:
-            layout.label(text="You are on the latest version")
+            layout.label(text="You're on the latest version")
         else:
-            layout.label(text="You are not on latest release!", icon="ERROR")
-            layout.label(text="Latest: " + str(l_ver))
+            layout.label(text="You're not on the latest version!", icon="ERROR")
+            layout.operator("wm.url_open", text="Link to Latest Release").url = \
+                "https://github.com/Argx2121/Sega_NN_tools/releases/latest"
         layout.label(text="NN tools by Arg!!")
         box = layout.box()
         box.label(text="Special thanks:")
