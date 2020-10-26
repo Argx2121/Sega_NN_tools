@@ -2,13 +2,18 @@ import bpy
 import addon_utils
 import requests
 
-l_ver = requests.get("https://github.com/Argx2121/test/releases/latest").url.rsplit("/")[-1]
-if "." in l_ver:
-    l_ver = tuple(int(a) for a in l_ver.split("."))
-else:
-    l_ver = "No Releases"
+
 u_ver = [addon.bl_info.get('version') for addon in addon_utils.modules() if addon.bl_info['name'] == 'Sega NN tools'][0]
 
+try:
+    l_ver = requests.get("https://github.com/Argx2121/test/releases/latest", timeout=5).url.rsplit("/")[-1]
+
+    if "." in l_ver:
+        l_ver = tuple(int(a) for a in l_ver.split("."))
+    else:
+        l_ver = "No Releases"
+except (requests.ConnectionError, requests.Timeout) as exception:
+    l_ver = u_ver
 
 
 class GENERIC_panel:
@@ -37,7 +42,7 @@ class SRPC_PT_Panel(GENERIC_panel, bpy.types.Panel):
         layout = self.layout
         layout.operator("srpc_image_tools.open_texture_folder")
         layout.operator("srpc_image_tools.texture_tools")
-        layout.operator("wm.url_open", text="Link to proper guide").url = \
+        layout.operator("wm.url_open", text="Guide Link").url = \
             "https://github.com/Argx2121/Sega_NN_tools/tree/master#texture-swapping"
         layout.label(text="Quick Guide:")
         box = layout.box()
@@ -70,10 +75,10 @@ class NN_PT_About(GENERIC_panel, bpy.types.Panel):
         layout = self.layout
         layout.label(text="Version: " + str(u_ver))
         if l_ver == u_ver:
-            layout.label(text="You're on the latest version")
+            layout.label(text="You're on the latest version.")
         else:
             layout.label(text="You're not on the latest version!", icon="ERROR")
-            layout.operator("wm.url_open", text="Link to Latest Release").url = \
+            layout.operator("wm.url_open", text="Latest Release Link: " + str(l_ver)).url = \
                 "https://github.com/Argx2121/Sega_NN_tools/releases/latest"
         layout.label(text="NN tools by Arg!!")
         box = layout.box()
