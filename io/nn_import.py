@@ -233,3 +233,10 @@ def sonic_4_episode_1_z(filepath, settings):
         toggle_console()
     finish_process(start_time)
     return {'FINISHED'}
+
+
+determine_function = {  # only for formats that need their own importer function
+    "Match__": match, "Debug__": debug,
+    "PhantasyStarUniverse_X": phantasy_star_universe_x,
+    "SonicRiders_X": sonic_riders_x,
+}

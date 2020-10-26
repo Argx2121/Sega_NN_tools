@@ -3,7 +3,8 @@ from bpy_extras.io_utils import ImportHelper
 
 from Sega_NN_tools.io.nn_import import *
 from Sega_NN_tools.io.nn_import_data import no_list, xno_list, zno_list, determine_format_no, determine_bone, \
-    determine_function, specific
+    specific
+from Sega_NN_tools.io.nn_import import determine_function
 
 
 # ImportHelper is a helper class, defines filename and
@@ -141,15 +142,22 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
             self.all_blocks, self.image
         )
         if preferences.dev_mode:
-            no_ver = self.no_format_dev
+            no_nn_format = self.no_format_dev
         else:
-            no_ver = self.no_format
-        settings.format = no_ver
-        settings.format_bone_scale = determine_bone[no_ver]
-        if no_ver not in ["Sonic2006_X", "Match__"]:
+            no_nn_format = self.no_format
+        if no_nn_format == "X":
+            no_format = self.xno_format
+        elif no_nn_format == "Z":
+            no_format = self.zno_format
+        else:
+            no_format = no_nn_format
+        settings.format = no_format
+        settings.format_bone_scale = determine_bone[no_format]
+
+        if no_format not in ["Sonic2006_X", "Match__"]:
             settings.use_vertex_colours = True
-        if no_ver in determine_function:
-            return determine_function[no_ver](self.filepath, settings)
+        if no_format in determine_function:
+            return determine_function[no_format](self.filepath, settings)
         else:
             return generic_import(self.filepath, settings)
 

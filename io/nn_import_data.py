@@ -1,5 +1,3 @@
-from Sega_NN_tools.io.nn_import import match, debug, phantasy_star_universe_x, sonic_riders_x
-
 no_list = (
     # keep debug first!!
     ("Debug__", "Debug", "For Developer testing and otherwise"),
@@ -36,13 +34,7 @@ determine_bone = {
     "Match__": 1, "Debug__": 1,
     "Sonic2006_X": 10, "PhantasyStarUniverse_X": 1, "SonicRiders_X": 0.1,
     "Sonic4Episode1_Z": 1,
-    "X": 1, "Z": 1
-}
-
-determine_function = {  # only for formats that need their own importer function
-    "Match__": match, "Debug__": debug,
-    "PhantasyStarUniverse_X": phantasy_star_universe_x,
-    "SonicRiders_X": sonic_riders_x,
+    "Latest_X": 1, "Latest_Z": 1
 }
 
 
