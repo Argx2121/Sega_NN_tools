@@ -8,7 +8,7 @@ from ..util import console_out
 
 
 class Model:
-    def __init__(self, nn, settings):  # TODO format xbox/gamecube/etc
+    def __init__(self, nn, settings):
         self.model_data = nn.model_data
         self.settings = settings
         self.format = settings.format
@@ -27,7 +27,7 @@ class Model:
         self.mat_names = []
         self.mesh_names = []
 
-    def x(self):
+    def execute(self):
         print("Making a Model------------------------------------")
         message = "Making" + " " + self.model_name
         print(message + " " * (50 - len(message)) + "|")

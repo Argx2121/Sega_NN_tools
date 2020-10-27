@@ -35,7 +35,7 @@ class ReadCollision:
                 else:
                     faces.append((i + 1, i, i + 2))
 
-        def _3():  # its strips. this is tri to irradicate any doubts that its triangles lmao
+        def _3():  # its strips. this is tri to eradicate any doubts that its triangles
             for i in range(len(self.vertex_list) // 3):
                 i *= 3
                 faces.append((i, i + 1, i + 2))

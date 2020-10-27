@@ -94,14 +94,14 @@ def match(filepath, settings):
     return {'FINISHED'}
 
 
-def debug(filepath, settings):  # todo remove debug and use as variable instead + tie printing to it
+def debug(filepath, settings):
     def execute():
         print_line()
         f = open(filepath, 'rb')
         nn_data = ReadNn(f, filepath, settings.format, True).read_file_special()
         for nn in nn_data:
             if nn.model_data:
-                Model(nn, settings).x()
+                Model(nn, settings).execute()
         f.close()
 
     start_time = time()
@@ -126,7 +126,7 @@ def sonic_2006_x(filepath, settings):
             print_line()
             nn = ReadNn(f, filepath, settings.format).read_file()
             if nn.model_data:
-                Model(nn, settings).x()
+                Model(nn, settings).execute()
         f.close()
 
     start_time = time()
@@ -151,7 +151,7 @@ def generic_import(filepath, settings):
             print_line()
             nn = ReadNn(f, filepath, settings.format).read_file()
             if nn.model_data:
-                Model(nn, settings).x()
+                Model(nn, settings).execute()
         f.close()
 
     start_time = time()
@@ -174,7 +174,7 @@ def phantasy_star_universe_x(filepath, settings):
         nn = ReadNn(f, filepath, settings.format).read_block()
         nn.file_name = bpy.path.basename(filepath)
         if nn.model_data:
-            Model(nn, settings).x()
+            Model(nn, settings).execute()
         f.close()
 
     start_time = time()
@@ -219,7 +219,7 @@ def sonic_4_episode_1_z(filepath, settings):
             print_line()
             nn = ReadNn(f, filepath, settings.format).read_file()
             if nn.model_data:
-                Model(nn, settings).x()
+                Model(nn, settings).execute()
         f.close()
 
     start_time = time()

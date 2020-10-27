@@ -95,7 +95,7 @@ class ReadSRPC:
                     s_extra = -1
                 obj_make_start = time()
                 s_data.texture_names = texture_name_list[s_extra]
-                self.material_in_next_block.append(Model(s_data, self.settings).x())
+                self.material_in_next_block.append(Model(s_data, self.settings).execute())
                 print(" " * 49, "| Overall %f seconds" % (time() - obj_make_start))
             else:  # anims here when done
                 print(" " * 49, "| Skipping unsupported block")

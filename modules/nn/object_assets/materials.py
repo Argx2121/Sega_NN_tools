@@ -117,7 +117,7 @@ class Read:
         return material_list
 
     def _colour_texture_type_1(self):
-        f = self.f  # TODO see texture types
+        f = self.f
         texture_type = {1: "diffuse", 2: "diffuse", 3: "diffuse", 4: "reflection", 5: "diffuse", 6: "diffuse"}
         for offset in self.colour_offset:
             f.seek(offset + self.post_nxif + 4)

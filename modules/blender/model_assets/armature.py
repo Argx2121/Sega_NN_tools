@@ -1,5 +1,4 @@
 import bpy
-from mathutils import Matrix
 
 
 class Armature:
@@ -16,35 +15,10 @@ class Armature:
             bone = armature.edit_bones.new(bone_names[i])
             if b.parent != 65535:
                 bone.parent = armature.edit_bones[b.parent]
-            matrix = Matrix(b.position).transposed().inverted_safe()  # there are unsafe matrices
             bone.tail = b.relative  # they store the position relative to parent bone
-            bone.transform(matrix)  # this isn't the correct usage but it looks nice!
+            bone.transform(b.position)  # this isn't the correct usage for b relative but it looks nice!
             if not 0.0001 < bone.length < tail_var * max_len:
                 bone.length = tail_var  # len too small = bone isn't made, len too big = can't see anything in blender
-            bone.roll = 0
-
-        if self.settings.all_bones_one_length:
-            for bone in armature.edit_bones:
-                bone.length = tail_var
-
-    def make_bones_type_2(self):  # this needs to be updated
-        bone_count = self.model_data.data.bone_count
-        bone_data = self.model_data.bones
-        bone_names = self.bone_names
-        max_len = self.settings.max_bone_length
-        armature = bpy.context.object.data
-        tail_var = self.settings.format_bone_scale
-
-        for i in range(bone_count):
-            b = bone_data[i]
-            bone = armature.edit_bones.new(bone_names[i])
-            if b.parent != 65535:
-                bone.parent = armature.edit_bones[b.parent]
-            matrix = Matrix(b.position).transposed().inverted_safe()
-            bone.tail = b.relative
-            bone.transform(matrix)
-            if not 0.0001 < bone.length < tail_var * max_len:
-                bone.length = tail_var
             bone.roll = 0
 
         if self.settings.all_bones_one_length:
