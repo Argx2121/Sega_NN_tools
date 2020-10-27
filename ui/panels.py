@@ -6,8 +6,7 @@ import requests
 u_ver = [addon.bl_info.get('version') for addon in addon_utils.modules() if addon.bl_info['name'] == 'Sega NN tools'][0]
 
 try:
-    l_ver = requests.get("https://github.com/Argx2121/test/releases/latest", timeout=5).url.rsplit("/")[-1]
-
+    l_ver = requests.get("https://github.com/Argx2121/Sega_NN_tools/releases/latest").url.rsplit("/")[-1]
     if "." in l_ver:
         l_ver = tuple(int(a) for a in l_ver.split("."))
     else:
