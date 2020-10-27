@@ -24,7 +24,7 @@ class Read:
         mesh_data_count: list
         mesh_data_offset: list
 
-    def _data_type_1(self):
+    def type_1(self):
         f = self.f
         start_nxob = self.start_nxob
         read_float_tuple(f, 4)  # hit box
@@ -37,7 +37,7 @@ class Read:
             if not m_sets_count:
                 self.post_nxif = start_nxob + 16 - b_offset
                 return self.ModelInfo(mat_count, mat_offset, 0, - self.post_nxif, 0, - self.post_nxif, b_count,
-                                      b_offset, b_used_count, m_sets_count, [0], [0])
+                                      b_offset, b_used_count, m_sets_count, [0], [0]), self.post_nxif
         # get data just before hit box
         offset0101 = read_int(f)
         f.seek(offset0101 + self.post_nxif + 4)
@@ -49,9 +49,9 @@ class Read:
 
         return self.ModelInfo(
             mat_count, mat_offset, m_01_count, m_01_offset, f_01_count, f_01_offset, b_count, b_offset,
-            b_used_count, m_sets_count, m_data_count, m_data_offset)
+            b_used_count, m_sets_count, m_data_count, m_data_offset), self.post_nxif
 
-    def _data_type_2(self):
+    def type_2(self):
         f = self.f
         start_nxob = self.start_nxob
         read_float_tuple(f, 4)  # hit box
@@ -72,10 +72,4 @@ class Read:
 
         return self.ModelInfo(
             mat_count, mat_offset, m_01_count, m_01_offset, f_01_count, f_01_offset, b_count, b_offset,
-            b_used_count, m_sets_count, m_data_count, m_data_offset)
-
-    def type_1(self):
-        return self._data_type_1(), self.post_nxif
-
-    def gamecube(self):
-        return self._data_type_1(), self.post_nxif
+            b_used_count, m_sets_count, m_data_count, m_data_offset), self.post_nxif

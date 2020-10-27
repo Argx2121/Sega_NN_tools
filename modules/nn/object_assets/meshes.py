@@ -22,7 +22,7 @@ class Read:
         face: int
         index: int  # no clue
 
-    def _build_mesh_type_1(self):
+    def type_1(self):
         f = self.f
         build_mesh = []
         for var in range(self.sets_count):  # usually about two of these
@@ -33,6 +33,3 @@ class Read:
                 vis, bone, mat, mesh, face, index = read_multi_ints(f, 6)
                 build_mesh.append(self.BuildMesh(pos, scale, vis, bone, mat, mesh, face, index))
         return build_mesh
-
-    def type_1(self):
-        return self._build_mesh_type_1()
