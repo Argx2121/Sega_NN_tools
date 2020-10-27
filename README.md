@@ -1,4 +1,4 @@
-# Sega NN Tools (0.4.0)
+# Sega NN Tools
 
 A Python library for Blender of tools for games using Sega's NN libraries.
 
