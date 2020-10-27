@@ -2,7 +2,7 @@ bl_info = {
     "name": "Sega NN tools",
     "description": "Tools to import models using the NN libraries and some",
     "author": "Arg!! (Special thanks to Sewer56, Yacker, firegodjr and Shadowth117!)",
-    "version": (0, 4, 0),
+    "version": (0, 5, 0),
     "blender": (2, 80, 0),
     "location": "3d View > Sidebar",
     "warning": "",
