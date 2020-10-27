@@ -37,15 +37,15 @@ class ReadInstanceModels:
         bpy.ops.object.mode_set(mode="OBJECT")
 
         par = bpy.data.objects.new("Instancing_Root", None)
-        par.hide_viewport = True
+        # par.hide_viewport = True
         col.objects.link(par)
 
         def make_empty():
-            obj = bpy.data.objects.new(str(obj_index), None)
+            obj = bpy.data.objects.new("Instance_Object_" + str(obj_index), None)
             col.objects.link(obj)
             obj.location = pos[0], - pos[2], pos[1]
             obj.rotation_euler = rot
-            obj.parent = par
+            # obj.parent = par
 
         # def duplicate():
         #     obj = bpy.data.objects.new(model_name, bpy.data.objects[model_name].data)

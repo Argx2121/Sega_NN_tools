@@ -82,7 +82,7 @@ class ReadPaths:
         bpy.ops.object.mode_set(mode="OBJECT")
 
         for p in self.paths:
-            # par = bpy.data.objects.new("Aaaaaaaaaaaa", None)
+            # par = bpy.data.objects.new("Paths", None)
             # col.objects.link(par)
             # par.location = p.root[0], - p.root[2], p.root[1]
-            blender_mesh("Aaaaaa", p.position, p.edges, p.i)
+            blender_mesh("Paths", p.position, p.edges, p.i)
