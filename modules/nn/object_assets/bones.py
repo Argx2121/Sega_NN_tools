@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from mathutils import Matrix
 
 from ...util import *
 
@@ -14,7 +15,7 @@ class Read:
         parent: int
         relative: tuple
         scale: tuple
-        position: tuple
+        position: Matrix
 
     def type_1(self):
         f = self.f
@@ -28,7 +29,7 @@ class Read:
             scale = read_float_tuple(f, 3)
             pos = read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4)
             f.seek(32, 1)  # skip some more
-            bone_data.append(self.Bone(group, parent, rel, scale, pos))
+            bone_data.append(self.Bone(group, parent, rel, scale, Matrix(pos).transposed().inverted_safe()))
         return bone_data
 
     def type_2(self):
@@ -43,5 +44,5 @@ class Read:
             scale = read_float_tuple(f, 3, ">")
             pos = read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), (0, 0, 0, 1)
             f.seek(32, 1)  # skip some more
-            bone_data.append(self.Bone(group, parent, rel, scale, pos))
+            bone_data.append(self.Bone(group, parent, rel, scale, Matrix(pos).inverted_safe()))
         return bone_data
