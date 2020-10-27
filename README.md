@@ -1,6 +1,6 @@
 # Sega NN Tools (0.4.0)
 
-A python library for blender of tools for games using Sega's NN libraries.
+A Python library for Blender of tools for games using Sega's NN libraries.
 
 ## Requirements
  - Blender 2.80 or above.
@@ -13,13 +13,14 @@ A python library for blender of tools for games using Sega's NN libraries.
     3. In Blender file view: navigate to where you downloaded the zip, select the zip and press install addon.
     4. In Blender preferences: make sure the box for Sega NN tools is checked.
 - On updating you should reload scripts by pressing f8 (or spacebar if you've set the search key as it) and searching reload to find the option "Reload scripts"
+- If downloading zip from code, you'll have to rename the folder from "Sega NN Tools (0.4.0)" to "Sega_NN_tools" inside the zip
 
 ## Usage
 1. Open from either
    - 3d view > sidebar (press n on your keyboard!) > Sega NN tools > import
    - Top bar > file > import > Sega NN xno 
 2. Choose the correct game format that the model originates from.
-3. Importing opens the console to print data. This is done for large files that may take minutes to import.
+3. Importing large files or files in batch opens the console to print data on windows, to show the user that files are being processed.
   
 ## About
 
@@ -31,7 +32,8 @@ A python library for blender of tools for games using Sega's NN libraries.
  - Sewer56
  - Shadowth117
  - Yacker
-
+[Discord Link](https://discord.gg/CURRBfq)
+[GitHub Link](https://github.com/Argx2121/Sega_NN_tools/)
 ## Games
 
 ### Xno
