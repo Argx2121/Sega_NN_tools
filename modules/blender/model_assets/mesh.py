@@ -59,16 +59,15 @@ class Mesh:
                     weights_main = v_data.weights
                     for bone in m_info.bone_list_complex:
                         obj.vertex_groups.new(name=bone_names[b_group.index(bone)])
-
                     for vertex_index in range(vertex_count):  # for each vert
-                        b_count = m_info.bone_count_complex
                         if v_data.bone_list_indices:
                             w_ind = weights_main[vertex_index]
                             for var in range(len(w_ind)):  # for all the bones
                                 b_complex_index = v_data.bone_list_indices[vertex_index][var]
                                 weight = w_ind[var]
-                                obj.vertex_groups[b_complex_index].add([vertex_index], weight, "REPLACE")
+                                obj.vertex_groups[b_complex_index].add([vertex_index], weight, "ADD")
                         else:  # bone indices arent stored in the vertex block
+                            b_count = m_info.bone_count_complex
                             for b_complex_index in range(b_count):  # for all the bones
                                 weight = weights_main[vertex_index][b_complex_index]
                                 obj.vertex_groups[b_complex_index].add([vertex_index], weight, "REPLACE")
@@ -83,7 +82,9 @@ class Mesh:
             obj = bpy.data.objects.new(mesh.name, mesh)
             obj_list.append(obj)
             collection.objects.link(obj)
+            # mesh.from_pydata(pos_short_hand, [], [])
             mesh.from_pydata(pos_short_hand, [], face_list)
+            # mesh.validate(verbose=True)
             obj.data.materials.append(material_list_blender[sm.material])
             make_uvs()
             make_colours()

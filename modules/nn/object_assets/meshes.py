@@ -33,3 +33,16 @@ class Read:
                 vis, bone, mat, mesh, face, index = read_multi_ints(f, 6)
                 build_mesh.append(self.BuildMesh(pos, scale, vis, bone, mat, mesh, face, index))
         return build_mesh
+
+    def type_2(self):
+        f = self.f
+        build_mesh = []
+        for var in range(self.sets_count):
+            f.seek(self.data_offset[var] + self.post_nxif)
+            for _ in range(self.data_count[var]):
+                pos = read_float_tuple(f, 3)
+                scale = read_float(f)
+                vis, bone, mat, mesh, face, index = read_multi_ints(f, 6)
+                f.seek(8, 1)
+                build_mesh.append(self.BuildMesh(pos, scale, vis, bone, mat, mesh, face, index))
+        return build_mesh

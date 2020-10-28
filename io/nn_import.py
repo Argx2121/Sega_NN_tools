@@ -37,15 +37,15 @@ def match(filepath, settings):
     def execute():
         print_line()
         f = open(filepath, 'rb')
-        first_uint = read_int(f)  # xno is always little endian
+        first_uint = read_int(f)
         f.close()
         if first_uint == 1179211854:  # NXIF
-            print("Game assumed to be Sonic '06")
+            print("Reading as latest xno format")
             stdout.flush()
-            settings.format = "Sonic2006_X"
+            settings.format = "Latest_X"
             settings.format_bone_scale = determine_bone[settings.format]
 
-            sonic_2006_x(filepath, settings)
+            generic_import(filepath, settings)
 
         elif first_uint == 1112496206:  # NXOB
             print("Game assumed to be Phantasy Star Universe")
@@ -57,13 +57,22 @@ def match(filepath, settings):
             phantasy_star_universe_x(filepath, settings)
 
         elif first_uint == 1179212366:  # NZIF
-            print("Game assumed to be Sonic 4 Episode 1")
+            print("Reading as latest zno format")
             stdout.flush()
-            settings.format = "Sonic4Episode1_Z"
+            settings.format = "Latest_Z"
             settings.format_bone_scale = determine_bone[settings.format]
             settings.use_vertex_colours = True
 
-            sonic_4_episode_1_z(filepath, settings)
+            generic_import(filepath, settings)
+
+        elif first_uint == 1179208782:  # NLIF
+            print("Reading as latest lno format")
+            stdout.flush()
+            settings.format = "Latest_L"
+            settings.format_bone_scale = determine_bone[settings.format]
+            settings.use_vertex_colours = True
+
+            generic_import(filepath, settings)
 
         elif 0 < first_uint < 100:  # typically ~ 45 models in a srpc map file
             print("Game assumed to be Sonic Riders")
@@ -75,7 +84,7 @@ def match(filepath, settings):
             sonic_riders_x(filepath, settings)
 
         else:
-            print("Couldn't match to a game")
+            print("Couldn't match to a format")
             stdout.flush()
 
     if settings.batch_import == "Single":
@@ -114,31 +123,6 @@ def debug(filepath, settings):
             execute()
     finish_process(start_time)
     toggle_console()
-    return {'FINISHED'}
-
-
-def sonic_2006_x(filepath, settings):
-    def execute():
-        f = open(filepath, 'rb')
-        block = read_str_nulls(f, 4)[0]
-        f.seek(0)
-        if block == "NXIF":
-            print_line()
-            nn = ReadNn(f, filepath, settings.format).read_file()
-            if nn.model_data:
-                Model(nn, settings).execute()
-        f.close()
-
-    start_time = time()
-    if settings.batch_import == "Single":
-        execute()
-    else:
-        toggle_console()
-        file_list = get_files(filepath)
-        for filepath in file_list:
-            execute()
-        toggle_console()
-    finish_process(start_time)
     return {'FINISHED'}
 
 
@@ -203,31 +187,6 @@ def sonic_riders_x(filepath, settings):
     else:
         toggle_console()
         file_list = get_files(filepath, name_ignore=".")
-        for filepath in file_list:
-            execute()
-        toggle_console()
-    finish_process(start_time)
-    return {'FINISHED'}
-
-
-def sonic_4_episode_1_z(filepath, settings):
-    def execute():
-        f = open(filepath, 'rb')
-        block = read_str_nulls(f, 4)[0]
-        f.seek(0)
-        if block == "NZIF":
-            print_line()
-            nn = ReadNn(f, filepath, settings.format).read_file()
-            if nn.model_data:
-                Model(nn, settings).execute()
-        f.close()
-
-    start_time = time()
-    if settings.batch_import == "Single":
-        execute()
-    else:
-        toggle_console()
-        file_list = get_files(filepath)
         for filepath in file_list:
             execute()
         toggle_console()

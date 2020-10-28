@@ -50,6 +50,14 @@ class Read:
             self.texture_count.append(read_int(f, ">") >> 4)
             self.info_offset.append(read_int(f))
 
+    def _info_offsets_type_3(self):
+        f = self.f
+        material_count = self.material_count
+        for _ in range(material_count):
+            var = len(format(read_int(f) >> 1, "b"))
+            self.texture_count.append(var)
+            self.info_offset.append(read_int(f))
+
     def _info_type_1(self):
         f = self.f
         for offset in self.info_offset:
@@ -133,15 +141,23 @@ class Read:
                     texture_list.append(self.Texture(texture_type[tex_type], tex_type, tex_set, tex_index))
             self.texture_list.append(texture_list)
 
-    def type_1(self):  # [two offsets] all colour blocks, all texture blocks
+    def xno(self):  # [two offsets] all colour blocks, all texture blocks
         self._info_offsets_type_1()
         self._info_type_1()
         self._colour_type_1()
         self._texture_type_1()
         return self._return_data_type_1()
 
-    def type_2(self):  # [two offsets] all colour blocks, all texture blocks
+    def zno(self):  # [two offsets] all colour blocks, all texture blocks
         self._info_offsets_type_2()
+        self._info_type_2()
+        for _ in self.colour_offset:
+            self.colour_list.append(self.Colour())
+        self._texture_type_2()
+        return self._return_data_type_1()
+
+    def lno(self):  # [two offsets] all colour blocks, all texture blocks
+        self._info_offsets_type_3()
         self._info_type_2()
         for _ in self.colour_offset:
             self.colour_list.append(self.Colour())

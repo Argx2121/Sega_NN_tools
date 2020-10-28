@@ -14,10 +14,10 @@ class Read:
 
     @dataclass
     class MeshData:
-        vertex_block_type: str
-        vertex_block_size: int
+        vertex_block_type: Any
+        vertex_block_size: Any
         vertex_count: int
-        vertex_offset: int
+        vertex_offset: Any
         bone_count_complex: int
         bone_list_complex: tuple
 
@@ -44,8 +44,8 @@ class Read:
         vertex_count_list = []
         bone_count_list = []
         bone_offset_complex = []
-        for var in range(self.vertex_buffer_count):
-            f.seek(self.vert_info_offset[var] + post_nxif)
+        for offset in self.vert_info_offset:
+            f.seek(offset + post_nxif)
             block_type_list.append(unpack(">Q", f.read(8))[0])  # python gives back as big endian so countering
             size, count, offset, b_count, b_offset = read_multi_ints(f, 5)
             block_size_list.append(size)
@@ -65,6 +65,34 @@ class Read:
                 self.mesh_info.append(
                     self.MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
                                   self.vertex_mesh_offset[i], bone_count_list[i], ()))
+
+    def _info_type_2(self):
+        f = self.f
+        post_nxif = self.post_nxif
+        for offset in self.vert_info_offset:
+            f.seek(offset + post_nxif + 4)
+            vertex_count, info_count, info_offset = read_multi_ints(f, 3)
+            f.seek(8, 1)
+            v_bone_count, v_bone_off = read_multi_ints(f, 2)
+            f.seek(v_bone_off + post_nxif)
+            v_bone_list = read_multi_shorts(f, v_bone_count)
+
+            f.seek(info_offset + post_nxif)
+            v_offset = []
+            v_format = []
+            v_format_size = []
+            det_format = {
+                1: "pos", 8: "norm", 64: "unknown", 128: "unknown", 256: "uv", 2: "weight", 4: "bone"
+            }
+
+            for _ in range(info_count):
+                data = read_multi_ints(f, 5)
+                v_offset.append(data[-1])
+                v_format.append(det_format[data[0]])
+                v_format_size.append(data[-2])
+
+            self.mesh_info.append(self.MeshData(
+                v_format, v_format_size, vertex_count, v_offset, v_bone_count, v_bone_list))
 
     def _vertices_type_1(self):
         f = self.f
@@ -220,7 +248,65 @@ class Read:
                     v_norms2_list, v_norms3_list))
         return vertex_data, self.mesh_info
 
+    def _vertices_type_2(self):
+        def pos():
+            for _ in range(vertex_count):
+                v_pos_list.append(read_float_tuple(f, 3))
+
+        def norm():
+            for _ in range(vertex_count):
+                v_norms_list.append(read_float_tuple(f, 3))
+
+        def uv():
+            for _ in range(vertex_count):
+                v_uvs_list.append(read_float_tuple(f, 2))
+
+        def wei():
+            for _ in range(vertex_count):
+                var = [a / 255 for a in read_multi_bytes(f, block_size)]
+                if len(var) > 1:
+                    var.append(1 - sum(var))
+                else:
+                    var = (var[0], 1 - var[0])
+                v_b_wei_list.append(var)
+
+        def bone():
+            for _ in range(vertex_count):
+                v_b_index_list.append(read_multi_bytes(f, block_size))
+
+        def unknown():
+            pass
+
+        f = self.f
+        vertex_data = []
+
+        for info in self.mesh_info:  # for all sub meshes
+            vertex_count = info.vertex_count
+            v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
+            v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
+
+            for i in range(len(info.vertex_offset)):
+                f.seek(info.vertex_offset[i] + self.post_nxif)
+                block_type = info.vertex_block_type[i]
+                block_size = info.vertex_block_size[i]
+                block_type_func = {
+                    "pos": pos, "norm": norm, "unknown": unknown, "uv": uv, "weight": wei, "bone": bone
+                }
+                block_type_func[block_type]()
+
+            vertex_data.append(
+                self.VertexData(
+                    v_pos_list, v_b_wei_list, v_b_index_list,
+                    v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
+                    v_norms2_list, v_norms3_list))
+        return vertex_data, self.mesh_info
+
     def type_1(self):
         self._info_offsets_type_1()
         self._info_type_1()
         return self._vertices_type_1()
+
+    def type_2(self):
+        self._info_offsets_type_1()
+        self._info_type_2()
+        return self._vertices_type_2()

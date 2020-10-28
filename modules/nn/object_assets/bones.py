@@ -17,7 +17,7 @@ class Read:
         scale: tuple
         position: Matrix
 
-    def type_1(self):
+    def le_full(self):
         f = self.f
         bone_data = []
         for _ in range(self.bone_count):
@@ -32,7 +32,23 @@ class Read:
             bone_data.append(self.Bone(group, parent, rel, scale, Matrix(pos).transposed().inverted_safe()))
         return bone_data
 
-    def type_2(self):
+    def be_full(self):
+        f = self.f
+        bone_data = []
+        for _ in range(self.bone_count):
+            f.seek(4, 1)  # skip flags
+            group, parent = read_multi_shorts(f, 2, ">")
+            f.seek(4, 1)  # skip child and sibling (4)
+            rel = read_float_tuple(f, 3, ">")
+            f.seek(12, 1)  # some shorts (2*6)
+            scale = read_float_tuple(f, 3, ">")
+            pos = (read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"),
+                   read_float_tuple(f, 4, ">"))
+            f.seek(32, 1)  # skip some more
+            bone_data.append(self.Bone(group, parent, rel, scale, Matrix(pos).transposed().inverted_safe()))
+        return bone_data
+
+    def be_semi(self):
         f = self.f
         bone_data = []
         for _ in range(self.bone_count):

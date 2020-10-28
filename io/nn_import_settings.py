@@ -2,8 +2,7 @@ from bpy.props import StringProperty, EnumProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 
 from Sega_NN_tools.io.nn_import import *
-from Sega_NN_tools.io.nn_import_data import no_list, xno_list, zno_list, determine_format_no, determine_bone, \
-    specific
+from Sega_NN_tools.io.nn_import_data import *
 from Sega_NN_tools.io.nn_import import determine_function
 
 
@@ -31,8 +30,13 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
         name="Format",
         description="*no variant",
         items=no_list,
-        default="Match__")
+        default="Debug__")
 
+    lno_format: EnumProperty(
+        name="Game",
+        description="Game the model is from (to get the correct lno variant)",
+        items=lno_list,
+        default="Latest_L")
     xno_format: EnumProperty(
         name="Game",
         description="Game the model is from (to get the correct xno variant)",
@@ -145,7 +149,9 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
             no_nn_format = self.no_format_dev
         else:
             no_nn_format = self.no_format
-        if no_nn_format == "X":
+        if no_nn_format == "L":
+            no_format = self.lno_format
+        elif no_nn_format == "X":
             no_format = self.xno_format
         elif no_nn_format == "Z":
             no_format = self.zno_format
