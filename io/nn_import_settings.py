@@ -37,6 +37,11 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
         description="Game the model is from (to get the correct lno variant)",
         items=lno_list,
         default="Latest_L")
+    sno_format: EnumProperty(
+        name="Game",
+        description="Game the model is from (to get the correct sno variant)",
+        items=sno_list,
+        default="Latest_S")
     xno_format: EnumProperty(
         name="Game",
         description="Game the model is from (to get the correct xno variant)",
@@ -149,14 +154,11 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
             no_nn_format = self.no_format_dev
         else:
             no_nn_format = self.no_format
-        if no_nn_format == "L":
-            no_format = self.lno_format
-        elif no_nn_format == "X":
-            no_format = self.xno_format
-        elif no_nn_format == "Z":
-            no_format = self.zno_format
-        else:
-            no_format = no_nn_format
+        determine_nn_no = {
+            "L": self.lno_format, "S": self.sno_format, "X": self.xno_format, "Z": self.zno_format,
+            "Match__": "Match__", "Debug__": "Debug__",
+        }
+        no_format = determine_nn_no[no_nn_format]
         settings.format = no_format
         settings.format_bone_scale = determine_bone[no_format]
 

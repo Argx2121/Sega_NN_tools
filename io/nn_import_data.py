@@ -1,9 +1,6 @@
 # lists lists
 # determine_function is in nn_import - only needs to change for functions that need their own function
-# *no_format in nn_import_settings
-# theres also
-# if no_nn_format == "L":
-#     no_format = self.lno_format
+# *no_format in nn_import_settings and determine_nn_no
 
 no_list = (
     # keep debug first!!
@@ -12,6 +9,7 @@ no_list = (
     ("Match__", "Match", "Tries to match the file with a known format (Experimental!!)"),
     # formats
     ("L", "LNO", "Lno"),
+    ("S", "SNO", "Sno"),
     ("X", "XNO", "Xno"),
     ("Z", "ZNO", "Zno"),
 )
@@ -29,6 +27,11 @@ lno_list = (
     ("HouseOfTheDead4_L", "The House of the Dead 4", "The House of the Dead 4 Model | 30 Dec 2005"),
 )
 
+sno_list = (
+    ("Latest_S", "Latest", "Latest released game | N/A"),
+    ("SonicRidersZeroGravity_S", "Sonic Riders Zero Gravity", "Sonic Riders Zero Gravity Model | 8 Jan 2008"),
+)
+
 xno_list = (
     ("Latest_X", "Latest", "Latest released game | N/A"),
     ("Sonic2006_X", "Sonic 2006", "Sonic '06 Model | 14 Nov 2006"),
@@ -42,13 +45,14 @@ zno_list = (
 )
 
 determine_format_no = {
-    "L": "lno_format", "X": "xno_format", "Z": "zno_format"
+    "L": "lno_format", "S": "sno_format", "X": "xno_format", "Z": "zno_format"
 }
 
 determine_bone = {
     "Match__": 1, "Debug__": 1,
-    "Latest_L": 1, "Latest_X": 1, "Latest_Z": 1,
+    "Latest_L": 1, "Latest_S": 1,  "Latest_X": 1, "Latest_Z": 1,
     "HouseOfTheDead4_L": 5,
+    "SonicRidersZeroGravity_S": 1,
     "Sonic2006_X": 10, "PhantasyStarUniverse_X": 1, "SonicRiders_X": 0.1,
     "Sonic4Episode1_Z": 1,
 }
@@ -81,6 +85,6 @@ def specific(no_nn_format, self):
 
     determine_draw = {
         "Match__": empty_set, "Debug__": empty_set,
-        "L": empty_set, "X": xno_set, "Z": empty_set
+        "L": empty_set, "S": empty_set, "X": xno_set, "Z": empty_set
     }
     determine_draw[no_nn_format]()  # execute the right ui for the format

@@ -94,6 +94,12 @@ class Read:
             self.mesh_info.append(self.MeshData(
                 v_format, v_format_size, vertex_count, v_offset, v_bone_count, v_bone_list))
 
+    def _info_type_3(self):
+        for offset in self.vert_info_offset:
+            self.f.seek(offset + self.post_nxif)
+            var = read_multi_ints(self.f, 5)
+            self.vertex_mesh_offset.append([var[2], var[1]])
+
     def _vertices_type_1(self):
         f = self.f
         vertex_data = []
@@ -301,6 +307,62 @@ class Read:
                     v_norms2_list, v_norms3_list))
         return vertex_data, self.mesh_info
 
+    def _vertices_type_3(self):
+        def pos():
+            for _ in range(vertex_count):
+                v_pos_list.append(read_float_tuple(f, 3))
+
+        def norm():
+            for _ in range(vertex_count):
+                v_norms_list.append(read_float_tuple(f, 3))
+
+        def uv():
+            for _ in range(vertex_count):
+                v_uvs_list.append(read_float_tuple(f, 2))
+
+        def unknown():
+            pass
+
+        f = self.f
+        post_info = self.post_nxif
+        det_v_type = {
+            2: pos, 3: norm, 4: uv,
+        }
+        vertex_data = []
+        mesh_info = []
+
+        for info in self.vertex_mesh_offset:
+            pos = info[0] + post_info
+            f.seek(pos)
+            v_data = []
+            v_count_sum = 0
+            final_pos = info[1] * 16 + pos
+            while f.tell() < final_pos:
+                v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
+                v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
+
+                f.seek(8, 1)
+                vertex_count = read_int(f)
+                v_count_sum += vertex_count
+                f.seek(28, 1)
+                var = read_multi_bytes(f, 4)
+                type_count = var[0]
+                for _ in range(type_count):
+                    v_type = read_multi_bytes(f, 4)[0]
+                    det_v_type[v_type]()
+                read_aligned(f, 16)
+
+                v_data.append(
+                    self.VertexData(
+                        v_pos_list, v_b_wei_list, v_b_index_list,
+                        v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
+                        v_norms2_list, v_norms3_list))
+
+            mesh_info.append(
+                self.MeshData(None, None, v_count_sum, None, 0, ()))
+            vertex_data.append(v_data)
+        return vertex_data, mesh_info
+
     def type_1(self):
         self._info_offsets_type_1()
         self._info_type_1()
@@ -310,3 +372,8 @@ class Read:
         self._info_offsets_type_1()
         self._info_type_2()
         return self._vertices_type_2()
+
+    def type_3(self):
+        self._info_offsets_type_1()
+        self._info_type_3()
+        return self._vertices_type_3()

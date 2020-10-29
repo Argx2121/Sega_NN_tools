@@ -72,7 +72,23 @@ def match(filepath, settings):
             settings.format_bone_scale = determine_bone[settings.format]
             settings.use_vertex_colours = True
 
-            generic_import(filepath, settings)
+        elif first_uint == 1179210574:  # NSIF
+            print("Reading as latest sno format")
+            stdout.flush()
+            settings.format = "Latest_S"
+            settings.format_bone_scale = determine_bone[settings.format]
+            settings.use_vertex_colours = True
+
+            sonic_riders_zero_gravity_s(filepath, settings)
+
+        elif first_uint == 1801675120:  # pack
+            print("Game assumed to be Sonic Riders Zero Gravity")
+            stdout.flush()
+            settings.format = "Latest_S"
+            settings.format_bone_scale = determine_bone[settings.format]
+            settings.use_vertex_colours = True
+
+            sonic_riders_zero_gravity_s(filepath, settings)
 
         elif 0 < first_uint < 100:  # typically ~ 45 models in a srpc map file
             print("Game assumed to be Sonic Riders")
@@ -194,8 +210,31 @@ def sonic_riders_x(filepath, settings):
     return {'FINISHED'}
 
 
+def sonic_riders_zero_gravity_s(filepath, settings):
+    def execute():
+        print_line()
+        f = open(filepath, 'rb')
+        for nn in ReadNn(f, filepath, settings.format, True).read_file_special():  # didn't have enough samples for this
+            if nn.model_data:
+                Model(nn, settings).execute()
+        f.close()
+
+    start_time = time()
+    if settings.batch_import == "Single":
+        execute()
+    else:
+        toggle_console()
+        file_list = get_files(filepath, name_ignore=".")
+        for filepath in file_list:
+            execute()
+        toggle_console()
+    finish_process(start_time)
+    return {'FINISHED'}
+
+
 determine_function = {  # only for formats that need their own importer function
     "Match__": match, "Debug__": debug,
     "PhantasyStarUniverse_X": phantasy_star_universe_x,
     "SonicRiders_X": sonic_riders_x,
+    "SonicRidersZeroGravity_S": sonic_riders_zero_gravity_s,
 }

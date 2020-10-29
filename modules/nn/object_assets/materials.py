@@ -33,8 +33,8 @@ class Read:
     @dataclass
     class Material:
         tex_count: int
-        colour: tuple
-        texture: tuple
+        colour: Any
+        texture: Any
 
     def _info_offsets_type_1(self):
         f = self.f
@@ -57,6 +57,15 @@ class Read:
             var = len(format(read_int(f) >> 1, "b"))
             self.texture_count.append(var)
             self.info_offset.append(read_int(f))
+
+    def _info_offsets_type_4(self):
+        f = self.f
+        material_count = self.material_count
+        for _ in range(material_count):
+            var = len(format(read_short(f, ">") >> 2, "b"))
+            self.texture_count.append(var)
+            f.seek(2, 1)
+            self.texture_offset.append(read_int(f))
 
     def _info_type_1(self):
         f = self.f
@@ -118,10 +127,34 @@ class Read:
                     f.seek(56, 1)
             self.texture_list.append(texture_list)
 
+    def _texture_type_3(self):
+        # 11 = normals? (sonic 06)
+        texture_type = {
+            1: "diffuse", 2: "diffuse", 3: "diffuse", 4: "reflection", 5: "diffuse", 6: "diffuse",
+            9: "diffuse", 11: "normal"}
+        f = self.f
+        material_count = self.material_count
+        for texture_value in range(material_count):
+            texture_list = []
+            texture_offset = self.texture_offset[texture_value]
+            if texture_offset:
+                f.seek(texture_offset + self.post_nxif + 80)
+                for _ in range(self.texture_count[texture_value]):
+                    var = read_multi_bytes(f, 6)
+                    texture_list.append(self.Texture(texture_type[var[1]], var[1], 0, read_short(f)))
+                    f.seek(104, 1)
+            self.texture_list.append(texture_list)
+
     def _return_data_type_1(self):
         material_list = []
         for i in range(self.material_count):
             material_list.append(self.Material(self.texture_count[i], self.colour_list[i], self.texture_list[i]))
+        return material_list
+
+    def _return_data_type_2(self):
+        material_list = []
+        for i in range(self.material_count):
+            material_list.append(self.Material(self.texture_count[i], self.Colour(), self.texture_list[i]))
         return material_list
 
     def _colour_texture_type_1(self):
@@ -163,6 +196,11 @@ class Read:
             self.colour_list.append(self.Colour())
         self._texture_type_2()
         return self._return_data_type_1()
+
+    def sno(self):  # [two offsets] all colour blocks, all texture blocks
+        self._info_offsets_type_4()
+        self._texture_type_3()
+        return self._return_data_type_2()
 
     def gamecube(self):  # [one offset] colour block, texture block
         self._info_offsets_type_2()

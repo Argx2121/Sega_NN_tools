@@ -36,6 +36,17 @@ A Python library for Blender of tools for games using Sega's NN libraries.
 [GitHub Link](https://github.com/Argx2121/Sega_NN_tools/)
 ## Games
 
+### Lno
+
+#### The House of the Dead 4
+- The files are expected to be individual, that is to say model.lno and texture.dds.
+
+### Sno
+
+#### Sonic Riders Zero Gravity
+- Due to a very small sample size importing will probably throw an error with player models - please let me know if it does!
+- This won't extract textures
+
 ### Xno
 
 #### Sonic Riders
