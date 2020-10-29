@@ -166,6 +166,8 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
             settings.use_vertex_colours = True
         if no_format in determine_function:
             return determine_function[no_format](self.filepath, settings)
+        elif "Latest" in no_format:
+            return read_all_file(self.filepath, settings)
         else:
             return generic_import(self.filepath, settings)
 

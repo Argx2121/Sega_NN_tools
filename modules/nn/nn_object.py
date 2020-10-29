@@ -150,7 +150,6 @@ class Read:
         model.faces, model.vertices = implicit_faces(model.vertices)
         console_out_post(var)
 
-        print(data.mesh_data_offset)
         model.build_mesh = console_out("Parsing Sub Mesh Data...", meshes.Read(
             f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).type_3)  # seeks in method
 

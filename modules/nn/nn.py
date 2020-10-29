@@ -29,7 +29,7 @@ class ReadNn:
             "NCNN": self.node_2, "NENN": self.node_2, "NGNN": self.node_2,
             "NLNN": self.node_1, "NSNN": self.node_1, "NXNN": self.node_1, "NZNN": self.node_1,
 
-            "NXOB": self.obje_1, "NZOB": self.obje_2, "NLOB": self.obje_3, "NSOB": self.obje_4,
+            "NLOB": self.obje_3, "NSOB": self.obje_4, "NXOB": self.obje_1, "NZOB": self.obje_2,
 
             # generic
             "NOF0": self.nof0, "NFN0": self.nfn0, "NEND": self.nend

@@ -79,16 +79,16 @@ def match(filepath, settings):
             settings.format_bone_scale = determine_bone[settings.format]
             settings.use_vertex_colours = True
 
-            sonic_riders_zero_gravity_s(filepath, settings)
+            read_all_file(filepath, settings)
 
         elif first_uint == 1801675120:  # pack
             print("Game assumed to be Sonic Riders Zero Gravity")
             stdout.flush()
-            settings.format = "Latest_S"
+            settings.format = "SonicRidersZeroGravity_S"
             settings.format_bone_scale = determine_bone[settings.format]
             settings.use_vertex_colours = True
 
-            sonic_riders_zero_gravity_s(filepath, settings)
+            read_all_file(filepath, settings)
 
         elif 0 < first_uint < 100:  # typically ~ 45 models in a srpc map file
             print("Game assumed to be Sonic Riders")
@@ -210,11 +210,11 @@ def sonic_riders_x(filepath, settings):
     return {'FINISHED'}
 
 
-def sonic_riders_zero_gravity_s(filepath, settings):
+def read_all_file(filepath, settings):
     def execute():
         print_line()
         f = open(filepath, 'rb')
-        for nn in ReadNn(f, filepath, settings.format, True).read_file_special():  # didn't have enough samples for this
+        for nn in ReadNn(f, filepath, settings.format).read_file_special():
             if nn.model_data:
                 Model(nn, settings).execute()
         f.close()
@@ -236,5 +236,5 @@ determine_function = {  # only for formats that need their own importer function
     "Match__": match, "Debug__": debug,
     "PhantasyStarUniverse_X": phantasy_star_universe_x,
     "SonicRiders_X": sonic_riders_x,
-    "SonicRidersZeroGravity_S": sonic_riders_zero_gravity_s,
+    "SonicRidersZeroGravity_S": read_all_file,
 }
