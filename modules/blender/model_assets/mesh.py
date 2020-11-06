@@ -38,7 +38,7 @@ class Mesh:
 
             def make_colours():
                 col_layer = mesh.vertex_colors.new(name=model_name_strip + "_Vertex_Colours")  # keep for materials
-                if self.settings.use_vertex_colours and col_short_hand:
+                if col_short_hand:
                     for vert_index in range(v_loop_count):
                         v_index = vert_index * 3
                         col_layer.data[v_index].color = col_short_hand[face_list[vert_index][0]]
@@ -98,7 +98,7 @@ class Mesh:
             m_info = mesh_info[sm_mesh_index]
             v_data = vertex_data[sm_mesh_index]
             face_list = face_list1[sm.face].faces
-            vertex_count = m_info.vertex_count
+            vertex_count = len(v_data.positions)
 
             v_loop_count = len(face_list)
             uv_short_hand = v_data.uvs
