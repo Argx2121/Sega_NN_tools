@@ -24,34 +24,34 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
     no_format: EnumProperty(
         name="Format",
         description="*no variant",
-        items=no_list[1:],
-        default="Match__")
-    no_format_dev: EnumProperty(
-        name="Format",
-        description="*no variant",
         items=no_list,
-        default="Debug__")
+        default="Match__")
 
-    lno_format: EnumProperty(
+    E: EnumProperty(
+        name="Game",
+        description="Game the model is from (to get the correct eno variant)",
+        items=eno_list,
+        )
+    L: EnumProperty(
         name="Game",
         description="Game the model is from (to get the correct lno variant)",
         items=lno_list,
-        default="Latest_L")
-    sno_format: EnumProperty(
+        )
+    S: EnumProperty(
         name="Game",
         description="Game the model is from (to get the correct sno variant)",
         items=sno_list,
-        default="Latest_S")
-    xno_format: EnumProperty(
+        )
+    X: EnumProperty(
         name="Game",
         description="Game the model is from (to get the correct xno variant)",
         items=xno_list,
-        default="Latest_X")
-    zno_format: EnumProperty(
+        )
+    Z: EnumProperty(
         name="Game",
         description="Game the model is from (to get the correct zno variant)",
         items=zno_list,
-        default="Latest_Z")
+        )
 
     batch: EnumProperty(
         name="Batch usage",
@@ -79,14 +79,6 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
         description="Don't import bone scale - importing may make models appear distorted",
         default=True)
 
-    # sonic 06 specific
-    colour: BoolProperty(
-        name="Import vertex colours",
-        description="Import vertex colours - colours may make the model appear distorted",
-        default=False)
-
-    # psu specific
-
     # riders specific
     image: EnumProperty(
         name="Image naming conventions",
@@ -110,19 +102,20 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
         description="Remove anything that will make blender crash - speeds up importing at the cost of edit mode",
         default=True)
 
+    debug: BoolProperty(
+        name="Debug mode",
+        description="Print debug data",
+        default=True)
+
     def draw(self, context):
         layout = self.layout
         preferences = bpy.context.preferences.addons[__package__.partition(".")[0]].preferences
         layout.label(text="Sega NN importer settings:", icon="KEYFRAME_HLT")
 
-        if preferences.dev_mode:
-            layout.row().prop(self, "no_format_dev")
-            no_nn_format = self.no_format_dev
-        else:
-            layout.row().prop(self, "no_format")
-            no_nn_format = self.no_format
+        layout.row().prop(self, "no_format")
+        no_nn_format = self.no_format
         if not no_nn_format.endswith("_"):
-            layout.row().prop(self, determine_format_no[no_nn_format])
+            layout.row().prop(self, no_nn_format)
         specific(no_nn_format, self)
 
         box = layout.box()
@@ -135,41 +128,30 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
         if preferences.dev_mode:
             box = layout.box()
             box.label(text="Dev settings:", icon="KEYFRAME_HLT")
+            box.row().prop(self, "debug")
             box.row().prop(self, "clean")
 
     def execute(self, context):
         preferences = bpy.context.preferences.addons[__package__.partition(".")[0]].preferences
         if not preferences.dev_mode:
             self.clean = True
+            self.debug = False
         settings = Settings(
-            "", 0,
-            self.batch, self.clean, self.simple_mat, self.length, preferences.max_len, self.pose, self.bone,
-            # s06
-            self.colour,
-            # psu
+            "", 0, self.debug,
+            self.batch, self.clean, self.simple_mat,
+            self.length, preferences.max_len, self.pose, self.bone,
             # srpc
             self.all_blocks, self.image
         )
-        if preferences.dev_mode:
-            no_nn_format = self.no_format_dev
-        else:
-            no_nn_format = self.no_format
-        determine_nn_no = {
-            "L": self.lno_format, "S": self.sno_format, "X": self.xno_format, "Z": self.zno_format,
-            "Match__": "Match__", "Debug__": "Debug__",
-        }
-        no_format = determine_nn_no[no_nn_format]
+        no_nn_format = self.no_format
+        no_format = getattr(self, no_nn_format, no_nn_format)
         settings.format = no_format
         settings.format_bone_scale = determine_bone[no_format]
 
-        if no_format not in ["Sonic2006_X", "Match__"]:
-            settings.use_vertex_colours = True
         if no_format in determine_function:
             return determine_function[no_format](self.filepath, settings)
-        elif "Latest" in no_format:
-            return read_all_file(self.filepath, settings)
         else:
-            return generic_import(self.filepath, settings)
+            return generic_import_1_type(self.filepath, settings)
 
 
 def menu_func_import(self, context):  # add to dynamic menu
