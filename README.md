@@ -13,7 +13,7 @@ A Python library for Blender of tools for games using Sega's NN libraries.
     3. In Blender file view: navigate to where you downloaded the zip, select the zip and press install addon.
     4. In Blender preferences: make sure the box for Sega NN tools is checked.
 - On updating you should reload scripts by pressing f8 (or spacebar if you've set the search key as it) and searching reload to find the option "Reload scripts"
-- If downloading zip from code, you'll have to rename the folder from "Sega NN Tools (0.4.0)" to "Sega_NN_tools" inside the zip
+- If downloading zip from code, you'll have to rename the folder from "Sega NN Tools (version number)" to "Sega_NN_tools" inside the zip
 
 ## Usage
 1. Open from either
@@ -35,6 +35,11 @@ A Python library for Blender of tools for games using Sega's NN libraries.
 [Discord Link](https://discord.gg/CURRBfq)
 [GitHub Link](https://github.com/Argx2121/Sega_NN_tools/)
 ## Games
+
+### Eno
+
+#### Sonic Free Riders
+- Files are expected to have the paST header so they can include both the model and textures.
 
 ### Lno
 
