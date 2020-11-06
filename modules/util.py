@@ -38,7 +38,25 @@ def get_files(file_path: str, name_ignore: str = False, name_require: str = Fals
     return [file_path + file for file in file_list]
 
 
-def read_texture_block_info(f: BinaryIO) -> tuple:
+def make_bpy_textures(filepath, texture_names):  # see if textures already exist in the folder
+    has_png = True  # png shouldn't be used in game but converted image files might be .png
+    has_dds = True
+    for tex in texture_names:
+        if not os.path.exists(filepath + tex[:-4] + ".png"):
+            has_png = False
+            break
+    for tex in texture_names:
+        if not os.path.exists(filepath + tex[:-4] + ".dds"):
+            has_dds = False
+            break
+    if has_png:
+        return [bpy.data.images.load(filepath + tex[:-4] + ".png") for tex in texture_names]
+    elif has_dds:
+        return [bpy.data.images.load(filepath + tex[:-4] + ".dds") for tex in texture_names]
+    return [filepath + a for a in texture_names]
+
+
+def le_read_texture_block_info(f: BinaryIO) -> tuple:
     """Reads texture block info. Returns start offset, count, type_byte, offsets and names.
 
     Parameters
@@ -63,6 +81,32 @@ def read_texture_block_info(f: BinaryIO) -> tuple:
     texture_names = [name.replace("/", ".").replace("\\", ".").replace(".....", ".").replace("..", ".") for name in
                      texture_names]
     return tex_start, img_count, type_byte, texture_offsets, texture_names
+
+
+def be_read_texture_block_info(f: BinaryIO) -> tuple:
+    """Reads texture block info. Returns start offset, count, type_byte, offsets and names.
+
+    Parameters
+    ----------
+    f : BinaryIO
+        The file read.
+
+    Returns
+    -------
+    list
+        Start offset, count, type_byte, offsets and names.
+
+    """
+    tex_start = f.tell()
+    img_count = read_short(f, ">")
+    f.seek(2, 1)
+    texture_offsets = read_multi_ints(f, img_count, ">")
+    texture_lens = read_multi_ints(f, img_count, ">")
+    tex_names_len = (texture_offsets[0] - f.tell() + tex_start)
+    texture_names = read_str_nulls(f, tex_names_len)[:img_count]
+    texture_names = [name.replace("/", ".").replace("\\", ".").replace(".....", ".").replace("..", ".") for name in
+                     texture_names]
+    return tex_start, img_count, texture_names, texture_offsets, texture_lens
 
 
 def console_out(text: str, execute, variable=None) -> Any:
@@ -169,8 +213,10 @@ def for_each_offset(f: BinaryIO, post_info: int, offsets: list, execute, variabl
 
 
 def toggle_console():
-    """Toggles Blenders console"""
-    bpy.ops.wm.console_toggle()
+    """Toggles Blenders console if on windows"""
+    from platform import system
+    if system() == "Windows":
+        bpy.ops.wm.console_toggle()
 
 
 def print_line():
@@ -253,6 +299,26 @@ def read_float(file: BinaryIO, endian="<") -> float:
     """
 
     return unpack(endian + "f", file.read(4))[0]
+
+
+def read_half(file: BinaryIO, endian="<") -> float:
+    """Reads and returns a half float.
+
+    Parameters
+    ----------
+    file : BinaryIO
+        The file read.
+
+    endian :
+        Endian of what's being read.
+
+    Returns
+    -------
+    float
+        The float read.
+    """
+
+    return unpack(endian + "e", file.read(2))[0]
 
 
 def read_int(file: BinaryIO, endian="<") -> int:
@@ -356,6 +422,29 @@ def read_float_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[float, ...
 
     """
     return unpack(endian + str(count) + "f", file.read(count * 4))
+
+
+def read_half_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[float, ...]:
+    """Reads and returns tuple of half floats.
+
+        Parameters
+        ----------
+        file : BinaryIO
+            The file read.
+
+        count : int
+            How many floats to read.
+
+        endian :
+            Endian of what's being read.
+
+        Returns
+        -------
+        tuple
+            A tuple of floats.
+
+    """
+    return unpack(endian + str(count) + "f", file.read(count * 2))
 
 
 def read_multi_ints(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
