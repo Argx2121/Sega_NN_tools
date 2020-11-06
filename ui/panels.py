@@ -10,9 +10,9 @@ try:
     if "." in l_ver:
         l_ver = tuple(int(a) for a in l_ver.split("."))
     else:
-        l_ver = "No Releases"
+        l_ver = "No Releases."
 except (requests.ConnectionError, requests.Timeout) as exception:
-    l_ver = u_ver
+    l_ver = "No Connection."
 
 
 class GENERIC_panel:
@@ -75,6 +75,8 @@ class NN_PT_About(GENERIC_panel, bpy.types.Panel):
         layout.label(text="Version: " + str(u_ver))
         if l_ver == u_ver:
             layout.label(text="You're on the latest version.")
+        elif "No" in l_ver:
+            layout.label(text=l_ver)
         else:
             layout.label(text="You're not on the latest version!", icon="ERROR")
             layout.operator("wm.url_open", text="Latest Release Link: " + str(l_ver)).url = \
