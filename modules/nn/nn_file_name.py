@@ -25,7 +25,7 @@ class Read:
         f = self.f
         start_nfn0 = f.tell() - 4
         block_len = read_int(f)
-        read_aligned(f, 16)
+        f.seek(8, 1)
         file_name = read_str_nulls(f, block_len)[0]
         f.seek(start_nfn0 + block_len + 8)
         return file_name
