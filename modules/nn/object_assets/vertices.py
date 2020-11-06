@@ -33,10 +33,13 @@ class Read:
         normals2: list
         normals3: list
 
-    def _info_offsets_type_1(self):  # 1, offset, 1, offset, ...
+    def _le_offsets(self):  # 1, offset, 1, offset, ...
         self.vert_info_offset = read_multi_ints(self.f, self.vertex_buffer_count * 2)[1::2]
 
-    def _info_type_1(self):
+    def _be_offsets(self):  # 1, offset, 1, offset, ...
+        self.vert_info_offset = read_multi_ints(self.f, self.vertex_buffer_count * 2, ">")[1::2]
+
+    def _le_info_1(self):
         f = self.f
         post_nxif = self.post_nxif
         block_type_list = []
@@ -66,7 +69,38 @@ class Read:
                     self.MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
                                   self.vertex_mesh_offset[i], bone_count_list[i], ()))
 
-    def _info_type_2(self):
+    def _be_info_1(self):
+        f = self.f
+        post_nxif = self.post_nxif
+        block_type_list = []
+        block_size_list = []
+        vertex_count_list = []
+        bone_count_list = []
+        bone_offset_complex = []
+        for offset in self.vert_info_offset:
+            f.seek(offset + post_nxif)
+            block_type_list.append(unpack(">Q", f.read(8))[0])
+            size, count, offset, b_count, b_offset = read_multi_ints(f, 5, ">")
+            block_size_list.append(size)
+            vertex_count_list.append(count)
+            self.vertex_mesh_offset.append(offset)
+            bone_count_list.append(b_count)  # if > 1 bone its stored here
+            bone_offset_complex.append(b_offset)
+
+        for i in range(len(bone_offset_complex)):
+            offset = bone_offset_complex[i] + post_nxif
+            if offset > 0:  # actually get bones for meshes with >1 bone
+                f.seek(offset)
+                self.mesh_info.append(
+                    self.MeshData(
+                        block_type_list[i], block_size_list[i], vertex_count_list[i],
+                        self.vertex_mesh_offset[i], bone_count_list[i], read_multi_ints(f, bone_count_list[i], ">")))
+            else:
+                self.mesh_info.append(
+                    self.MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
+                                  self.vertex_mesh_offset[i], bone_count_list[i], ()))
+
+    def _le_info_2(self):
         f = self.f
         post_nxif = self.post_nxif
         for offset in self.vert_info_offset:
@@ -94,13 +128,12 @@ class Read:
             self.mesh_info.append(self.MeshData(
                 v_format, v_format_size, vertex_count, v_offset, v_bone_count, v_bone_list))
 
-    def _info_type_3(self):
+    def _le_info_3(self):
         for offset in self.vert_info_offset:
             self.f.seek(offset + self.post_nxif)
-            var = read_multi_ints(self.f, 5)
-            self.vertex_mesh_offset.append([var[2], var[1]])
+            self.vertex_mesh_offset.append(read_multi_ints(self.f, 5))
 
-    def _vertices_type_1(self):
+    def _le_vertices_1(self):
         f = self.f
         vertex_data = []
 
@@ -191,7 +224,8 @@ class Read:
                     pos(BitFlags.position)
                     wei(BitFlags.weights, BitFlags.weight_indices)
                     norm(BitFlags.normal)
-                    col(BitFlags.colour_short, BitFlags.colour_byte)  # colours assumed to exist
+                    if BitFlags.colour_byte:
+                        f.seek(4, 1)
                     uv_wx(BitFlags.wx, BitFlags.uv)  # wx assumed to exist
                     extra_norms(BitFlags.extra_normals)
 
@@ -254,7 +288,85 @@ class Read:
                     v_norms2_list, v_norms3_list))
         return vertex_data, self.mesh_info
 
-    def _vertices_type_2(self):
+    def _be_vertices_1(self):
+        f = self.f
+        vertex_data = []
+
+        def vert_block():
+            def pos(is_pos):
+                if is_pos:
+                    v_pos_list.append(read_float_tuple(f, 3, ">"))
+
+            def uv(is_uv):
+                if is_uv:
+                    f.seek(4, 1)
+                    v_uvs_list.append([read_half(f, ">"), - read_half(f, ">") + 1])
+
+            def wei(is_wei, is_index):
+                if is_wei:
+                    w1, w2, w3 = read_float_tuple(f, 3, ">")
+                    if is_index:
+                        b4, b3, b2, b1 = read_multi_bytes(f, 4, ">")
+                        v_b_index_list.append((b1, b2, b3, b4))
+                        v_b_wei_list.append((w1, w2, w3, 1 - w1 - w2 - w3))
+                    else:
+                        v_b_wei_list.append((w1, w2, w3, 1 - w1 - w2 - w3))
+
+            # 00000000 00PP000P 0WWW0X80 80000P0P 00000000 00000000 000X000P 000PW0P0 sonic free riders
+            # 00000000 00110010 01110110 10000101 00000000 00000000 00010010 00011010 ?? size 48
+            # I didn't have enough samples to check if P is P or UV but made a guess for 1 based on similar structures
+            # order Pos Wei indeX Uv 8 (no idea but skip 8)
+
+            # latest goes first and should be of the latest games format
+            def latest_e():
+                sonic_free_riders_e()
+
+            def sonic_free_riders_e():
+                for _ in range(vertex_count):
+                    pos(BitFlags.position)
+                    wei(BitFlags.weights, BitFlags.index)
+                    uv(BitFlags.uv)
+                    if BitFlags.unk1:
+                        f.seek(8, 1)
+                    if BitFlags.unk2:
+                        f.seek(4, 1)
+
+            dict_e = {
+                "SonicFreeRiders_E": sonic_free_riders_e}
+            format_type = self.format_type
+            if format_type[-1] == "E":
+                if format_type in dict_e:
+                    dict_e[format_type]()
+                else:
+                    latest_e()
+
+        for var in range(self.vertex_buffer_count):  # for all sub meshes
+            v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
+            v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
+            f.seek(self.vertex_mesh_offset[var] + self.post_nxif)
+            vertex_count = self.mesh_info[var].vertex_count
+            block_type = self.mesh_info[var].vertex_block_type
+            from enum import Flag
+
+            class BitFlags(Flag):
+                # generic
+                position = block_type >> 1 & 1
+                weights = block_type >> 3 & 1
+                index = block_type >> 12 & 1
+                uv = block_type >> 4 & 1
+                unk1 = block_type >> 39 & 1
+                unk2 = block_type >> 9 & 1
+                # keep generic values here
+
+            vert_block()
+            vertex_data.append(
+                self.VertexData(
+                    v_pos_list, v_b_wei_list, v_b_index_list,
+                    v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
+                    v_norms2_list, v_norms3_list))
+        return vertex_data, self.mesh_info
+
+    def _le_vertices_2(self):
         def pos():
             for _ in range(vertex_count):
                 v_pos_list.append(read_float_tuple(f, 3))
@@ -307,7 +419,7 @@ class Read:
                     v_norms2_list, v_norms3_list))
         return vertex_data, self.mesh_info
 
-    def _vertices_type_3(self):
+    def _le_vertices_3(self):
         def pos():
             for _ in range(vertex_count):
                 v_pos_list.append(read_float_tuple(f, 3))
@@ -320,60 +432,78 @@ class Read:
             for _ in range(vertex_count):
                 v_uvs_list.append(read_float_tuple(f, 2))
 
-        def unknown():
-            pass
+        def unk1():
+            f.seek(vertex_count * 6, 1)
+
+        def unk2():
+            f.seek(vertex_count * 4, 1)
 
         f = self.f
         post_info = self.post_nxif
         det_v_type = {
-            2: pos, 3: norm, 4: uv,
+            (2, 120): pos, (3, 120): norm, (4, 116): uv,
+            (3, 121): unk1, (4, 117): unk2,
         }
         vertex_data = []
         mesh_info = []
 
         for info in self.vertex_mesh_offset:
-            pos = info[0] + post_info
+            _, v_len, pos, bone_count_complex, b_off = info
+            f.seek(b_off + post_info)
+            bone_list_complex = read_multi_ints(f, bone_count_complex)
+            pos = pos + post_info
             f.seek(pos)
+            final_pos = v_len * 16 + pos - 32
             v_data = []
-            v_count_sum = 0
-            final_pos = info[1] * 16 + pos
-            while f.tell() < final_pos:
+            while final_pos > f.tell():
                 v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
                 v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
 
-                f.seek(8, 1)
+                var = read_int(f)
+                while var != 16778244:
+                    var = read_int(f)
+                f.seek(4, 1)
+
                 vertex_count = read_int(f)
-                v_count_sum += vertex_count
+                if vertex_count == 0:
+                    break
+
                 f.seek(28, 1)
                 var = read_multi_bytes(f, 4)
-                type_count = var[0]
-                for _ in range(type_count):
-                    v_type = read_multi_bytes(f, 4)[0]
-                    det_v_type[v_type]()
-                read_aligned(f, 16)
+                for _ in range(var[0]):
+                    v_type = read_multi_bytes(f, 4)
+                    if (v_type[0], v_type[1]) == (0, 0):
+                        f.seek(-4, 1)
+                        read_aligned(f, 4)
+                        v_type = read_multi_bytes(f, 4)
+                    det_v_type[(v_type[0], v_type[-1])]()
 
                 v_data.append(
                     self.VertexData(
                         v_pos_list, v_b_wei_list, v_b_index_list,
                         v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
                         v_norms2_list, v_norms3_list))
-
             mesh_info.append(
-                self.MeshData(None, None, v_count_sum, None, 0, ()))
+                self.MeshData(None, None, 0, None, bone_count_complex, bone_list_complex))
             vertex_data.append(v_data)
         return vertex_data, mesh_info
 
-    def type_1(self):
-        self._info_offsets_type_1()
-        self._info_type_1()
-        return self._vertices_type_1()
+    def le_1(self):
+        self._le_offsets()
+        self._le_info_1()
+        return self._le_vertices_1()
 
-    def type_2(self):
-        self._info_offsets_type_1()
-        self._info_type_2()
-        return self._vertices_type_2()
+    def le_2(self):
+        self._le_offsets()
+        self._le_info_2()
+        return self._le_vertices_2()
 
-    def type_3(self):
-        self._info_offsets_type_1()
-        self._info_type_3()
-        return self._vertices_type_3()
+    def le_3(self):
+        self._le_offsets()
+        self._le_info_3()
+        return self._le_vertices_3()
+
+    def be_1(self):
+        self._be_offsets()
+        self._be_info_1()
+        return self._be_vertices_1()
