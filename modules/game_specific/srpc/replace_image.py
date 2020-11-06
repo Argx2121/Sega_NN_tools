@@ -113,6 +113,6 @@ class ReplaceImage:  # main
             f.seek(tex_end)
 
         self.texture_start, self.image_count, _, _, self.texture_names = \
-            read_texture_block_info(self.f)
+            le_read_texture_block_info(self.f)
         replace()
         f.flush()
