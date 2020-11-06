@@ -1,5 +1,7 @@
 import bpy
 
+from Sega_NN_tools.modules.util import make_bpy_textures
+
 
 class Material:  # functional, but needs a rework
     def make_material_complex(self):
@@ -17,8 +19,10 @@ class Material:  # functional, but needs a rework
                 for m in material_list:
                     m.tex_count = 0
             elif type(texture_name[0]) == str:
-                for m in material_list:
-                    m.tex_count = 0
+                texture_name = make_bpy_textures("", texture_name)
+                if type(texture_name[0]) == str:
+                    for m in material_list:
+                        m.tex_count = 0
 
         for mat_index in range(material_count):
             # make material - first mat data stored
