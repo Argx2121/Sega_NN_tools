@@ -20,9 +20,8 @@ class Read:
         material: int
         vertex: int
         face: int
-        index: int  # no clue
 
-    def le_1(self):
+    def le_10(self):
         f = self.f
         build_mesh = []
         for var in range(self.sets_count):  # usually about two of these
@@ -30,11 +29,11 @@ class Read:
             for _ in range(self.data_count[var]):
                 pos = read_float_tuple(f, 3)
                 scale = read_float(f)
-                vis, bone, mat, mesh, face, index = read_multi_ints(f, 6)
-                build_mesh.append(self.BuildMesh(pos, scale, vis, bone, mat, mesh, face, index))
+                var = read_multi_ints(f, 6)
+                build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
         return build_mesh
 
-    def le_2(self):
+    def le_12(self):
         f = self.f
         build_mesh = []
         for var in range(self.sets_count):
@@ -42,12 +41,11 @@ class Read:
             for _ in range(self.data_count[var]):
                 pos = read_float_tuple(f, 3)
                 scale = read_float(f)
-                vis, bone, mat, mesh, face, index = read_multi_ints(f, 6)
-                f.seek(8, 1)
-                build_mesh.append(self.BuildMesh(pos, scale, vis, bone, mat, mesh, face, index))
+                var = read_multi_ints(f, 8)
+                build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
         return build_mesh
 
-    def le_3(self):
+    def le_9(self):
         f = self.f
         build_mesh = []
         for var in range(self.sets_count):
@@ -55,11 +53,11 @@ class Read:
             for _ in range(self.data_count[var]):
                 pos = read_float_tuple(f, 3)
                 scale = read_float(f)
-                vis, bone, mat, mesh, face = read_multi_ints(f, 5)
-                build_mesh.append(self.BuildMesh(pos, scale, vis, bone, mat, mesh, face, 0))
+                var = read_multi_ints(f, 5)
+                build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
         return build_mesh
 
-    def be_1(self):
+    def be_10(self):
         f = self.f
         build_mesh = []
         for var in range(self.sets_count):  # usually about two of these
@@ -67,6 +65,18 @@ class Read:
             for _ in range(self.data_count[var]):
                 pos = read_float_tuple(f, 3, ">")
                 scale = read_float(f, ">")
-                vis, bone, mat, mesh, face, index = read_multi_ints(f, 6, ">")
-                build_mesh.append(self.BuildMesh(pos, scale, vis, bone, mat, mesh, face, index))
+                var = read_multi_ints(f, 6, ">")
+                build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
+        return build_mesh
+
+    def be_12(self):
+        f = self.f
+        build_mesh = []
+        for var in range(self.sets_count):  # usually about two of these
+            f.seek(self.data_offset[var] + self.post_nxif)
+            for _ in range(self.data_count[var]):
+                pos = read_float_tuple(f, 3, ">")
+                scale = read_float(f, ">")
+                var = read_multi_ints(f, 8, ">")
+                build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
         return build_mesh

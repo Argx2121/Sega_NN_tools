@@ -58,7 +58,7 @@ class Read:
             data.vertex_buffer_offset, 4, vertices.Read(f, post, self.format_type, data.vertex_buffer_count).le_1)
 
         model.build_mesh = console_out("Parsing Sub Mesh Data...", meshes.Read(
-            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).le_1)  # seeks in method
+            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).le_10)  # seeks in method
 
         if self.debug:
             print(model.build_mesh)
@@ -88,7 +88,7 @@ class Read:
             data.vertex_buffer_offset, 4, vertices.Read(f, post, self.format_type, data.vertex_buffer_count).le_1)
 
         model.build_mesh = console_out("Parsing Sub Mesh Data...", meshes.Read(
-            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).le_1)  # seeks in method
+            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).le_10)  # seeks in method
 
         if self.debug:
             print(model.build_mesh)
@@ -119,7 +119,7 @@ class Read:
 
         print(data.mesh_data_offset)
         model.build_mesh = console_out("Parsing Sub Mesh Data...", meshes.Read(
-            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).le_2)  # seeks in method
+            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).le_12)  # seeks in method
 
         if self.debug:
             print(model.build_mesh)
@@ -151,7 +151,7 @@ class Read:
         console_out_post(var)
 
         model.build_mesh = console_out("Parsing Sub Mesh Data...", meshes.Read(
-            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).le_3)  # seeks in method
+            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).le_9)  # seeks in method
 
         if self.debug:
             print(model.build_mesh)
@@ -159,7 +159,7 @@ class Read:
         return model
 
     def eno(self) -> ModelData:
-        start_block, len_block = self._start()  # len block is wrong btw
+        start_block, len_block = self._start()  # len block is wrong
         f = self.f
         model = self.ModelData()
         post = self.post_info
@@ -178,7 +178,7 @@ class Read:
         model.faces = self._execute(data.face_set_offset, 3, faces.Read(f, post, data.face_set_count).be_1)
 
         model.build_mesh = console_out("Parsing Sub Mesh Data...", meshes.Read(
-            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).be_1)  # seeks in method
+            f, post, data.mesh_sets_count, data.mesh_data_offset, data.mesh_data_count).be_10)  # seeks in method
 
         model.vertices, model.mesh_info = self._execute(
             data.vertex_buffer_offset, 4, vertices.Read(f, post, self.format_type, data.vertex_buffer_count).be_1)
