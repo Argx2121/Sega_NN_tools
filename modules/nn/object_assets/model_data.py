@@ -103,3 +103,29 @@ class Read:
         return self.ModelInfo(
             mat_count, mat_offset, m_01_count, m_01_offset, f_01_count, f_01_offset, b_count, b_offset,
             b_used_count, m_sets_count, m_data_count, m_data_offset), self.post_nxif
+
+    def be_semi(self):
+        f = self.f
+        start_obj = self.start_obj
+        read_float_tuple(f, 4, ">")  # hit box
+        mat_count, mat_offset, m_01_count, m_01_offset, f_01_count, f_01_offset = read_multi_ints(f, 6, ">")
+        b_count, _, b_offset, b_used_count, m_sets_count = read_multi_ints(f, 5, ">")
+        m_data_count, m_data_offset = [], []
+        # make sure pointers are fine
+        if b_offset > self.post_nxif + 16:
+            self.post_nxif = start_obj + 16 - b_offset
+            if not m_sets_count:
+                return self.ModelInfo(mat_count, mat_offset, 0, - self.post_nxif, 0, - self.post_nxif, b_count,
+                                      b_offset, b_used_count, m_sets_count, [0], [0]), self.post_nxif
+        # get data just before hit box
+        offset0101 = read_int(f, ">")
+        f.seek(offset0101 + self.post_nxif + 4)
+        # i used to think sub mesh sets were for bones, this seeks to the sets
+        for _ in range(m_sets_count):
+            m_data_count.append(read_int(f, ">"))
+            m_data_offset.append(read_int(f, ">"))
+            f.seek(12, 1)
+
+        return self.ModelInfo(
+            mat_count, mat_offset, m_01_count, m_01_offset, f_01_count, f_01_offset, b_count, b_offset,
+            b_used_count, m_sets_count, m_data_count, m_data_offset), self.post_nxif

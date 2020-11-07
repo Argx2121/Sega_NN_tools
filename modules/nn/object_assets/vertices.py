@@ -100,6 +100,37 @@ class Read:
                     self.MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
                                   self.vertex_mesh_offset[i], bone_count_list[i], ()))
 
+    def _be_info_2(self):
+        f = self.f
+        post_nxif = self.post_nxif
+        block_type_list = []
+        block_size_list = []
+        vertex_count_list = []
+        bone_count_list = []
+        bone_offset_complex = []
+        for offset in self.vert_info_offset:
+            f.seek(offset + post_nxif)
+            block_type_list.append(read_int(f, ">"))
+            size, count, offset, b_count, b_offset = read_multi_ints(f, 5, ">")
+            block_size_list.append(size)
+            vertex_count_list.append(count)
+            self.vertex_mesh_offset.append(offset)
+            bone_count_list.append(b_count)  # if > 1 bone its stored here
+            bone_offset_complex.append(b_offset)
+
+        for i in range(len(bone_offset_complex)):
+            offset = bone_offset_complex[i] + post_nxif
+            if offset > 0:  # get bones
+                f.seek(offset)
+                self.mesh_info.append(
+                    self.MeshData(
+                        block_type_list[i], block_size_list[i], vertex_count_list[i],
+                        self.vertex_mesh_offset[i], bone_count_list[i], read_multi_shorts(f, bone_count_list[i], ">")))
+            else:
+                self.mesh_info.append(
+                    self.MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
+                                  self.vertex_mesh_offset[i], bone_count_list[i], ()))
+
     def _le_info_2(self):
         f = self.f
         post_nxif = self.post_nxif
@@ -366,6 +397,98 @@ class Read:
                     v_norms2_list, v_norms3_list))
         return vertex_data, self.mesh_info
 
+    def _be_vertices_2(self):
+        f = self.f
+        vertex_data = []
+
+        def vert_block():
+            def pos(is_pos):
+                if is_pos:
+                    v_pos_list.append(read_float_tuple(f, 3, ">"))
+
+            def uv_wx(is_wx, is_uv):
+                if is_wx:
+                    v_uvs_list.append([read_float(f, ">"), - read_float(f, ">") + 1])
+                    v_wxs_list.append([read_float(f, ">"), - read_float(f, ">") + 1])
+                elif is_uv:
+                    v_uvs_list.append([read_float(f, ">"), - read_float(f, ">") + 1])
+
+            def wei(is_wei, is_index):
+                if is_wei:
+                    w1, w2, w3 = read_float_tuple(f, 3, ">")
+                    if is_index:
+                        b1, b2, b3, b4 = read_multi_bytes(f, 4, ">")
+                        v_b_index_list.append((b1, b2, b3, b4))
+                        if b4:
+                            v_b_wei_list.append((w1, w2, w3, 1 - w1 - w2 - w3))
+                        elif b3:
+                            v_b_wei_list.append((w1, w2, 1 - w1 - w2))
+                        elif b2:
+                            v_b_wei_list.append((w1, 1 - w1))
+                        else:
+                            v_b_wei_list.append((1,))
+                    else:
+                        v_b_wei_list.append((w1, w2, w3, 1 - w1 - w2 - w3))
+
+            # 00000000 000?00XU 0000IW0? 0?0??0N/P house of the dead 4
+            # either have U or X on - you shouldn't have both
+            # order:
+            # Pos Weights boneIndices ? Uvs wX ?
+            # I only had samples with both W and I, so it may be WI instead of IW
+            # I only had samples with all unknowns active - all unknowns have been assigned to the first ?
+            # / is an unknown as well but I could actually identify the section size
+
+            # latest goes first and should be of the latest games format
+            def latest_c():
+                house_of_the_dead_4_c()
+
+            def house_of_the_dead_4_c():
+                for _ in range(vertex_count):
+                    pos(BitFlags.position)
+                    wei(BitFlags.weights, BitFlags.indices)
+                    if BitFlags.unknown:
+                        f.seek(20, 1)
+                    uv_wx(BitFlags.wx, BitFlags.uv)
+                    if BitFlags.unknown:
+                        f.seek(12, 1)
+                    if BitFlags.unknown2:
+                        f.seek(12, 1)
+
+            dict_c = {
+                "HouseOfTheDead4_C": house_of_the_dead_4_c}
+            format_type = self.format_type
+            if format_type[-1] == "C":
+                if format_type in dict_c:
+                    dict_c[format_type]()
+                else:
+                    latest_c()
+
+        for var in range(self.vertex_buffer_count):  # for all sub meshes
+            v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
+            v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
+            f.seek(self.vertex_mesh_offset[var] + self.post_nxif)
+            vertex_count = self.mesh_info[var].vertex_count
+            block_type = self.mesh_info[var].vertex_block_type
+            from enum import Flag
+
+            class BitFlags(Flag):
+                # generic
+                position = block_type & 1
+                unknown2 = block_type >> 1 & 1
+                uv = block_type >> 16 & 1
+                wx = block_type >> 17 & 1
+                weights = block_type >> 10 & 1
+                indices = block_type >> 11 & 1
+                unknown = block_type >> 3 & 1
+
+            vert_block()
+            vertex_data.append(
+                self.VertexData(
+                    v_pos_list, v_b_wei_list, v_b_index_list,
+                    v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
+                    v_norms2_list, v_norms3_list))
+        return vertex_data, self.mesh_info
+
     def _le_vertices_2(self):
         def pos():
             for _ in range(vertex_count):
@@ -507,3 +630,8 @@ class Read:
         self._be_offsets()
         self._be_info_1()
         return self._be_vertices_1()
+
+    def be_2(self):
+        self._be_offsets()
+        self._be_info_2()
+        return self._be_vertices_2()

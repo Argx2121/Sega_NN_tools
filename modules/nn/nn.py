@@ -31,7 +31,7 @@ class ReadNn:
             "NCNN": self.node_2, "NENN": self.node_2, "NGNN": self.node_2,
             "NLNN": self.node_1, "NSNN": self.node_1, "NXNN": self.node_1, "NZNN": self.node_1,
 
-            "NEOB": self.obje_e,
+            "NCOB": self.obje_c, "NEOB": self.obje_e,
             "NLOB": self.obje_l, "NSOB": self.obje_s, "NXOB": self.obje_x, "NZOB": self.obje_z,
 
             # generic
@@ -140,6 +140,10 @@ class ReadNn:
 
     def obje_e(self):
         self.nn_file.model_data = nn_object.Read(self.f, self.nn_file.post_info, self.format_type, self.debug).eno()
+        console_out_pre("")
+
+    def obje_c(self):
+        self.nn_file.model_data = nn_object.Read(self.f, self.nn_file.post_info, self.format_type, self.debug).cno()
         console_out_pre("")
 
     # generic

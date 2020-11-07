@@ -6,6 +6,7 @@ no_list = (
     ("Match__", "Match", "Tries to match the file with a known format (Experimental!!)"),
     ("All__", "Read All", "Brute-forces the file, checking the whole file for models (Experimental, may be slow)"),
     # formats
+    ("C", "CNO", "Cno"),
     ("E", "ENO", "Eno"),
     ("L", "LNO", "Lno"),
     ("S", "SNO", "Sno (Experimental!!)"),
@@ -24,10 +25,11 @@ no_list = (
 
 # if any lists are added here you should add in nn.py
 cno_list = (
+    ("HouseOfTheDead4_C", "The House of the Dead 4", "The House of the Dead 4 Model | 17 Apr 2012"),
 )
 
 eno_list = (
-    ("SonicFreeRiders_E", "Sonic Free Riders", "Sonic Free Riders Model | 4 Nov 2010"),
+    ("SonicFreeRiders_E", "Sonic Free Riders", "Sonic Free Riders Model / Archive | 4 Nov 2010"),
 )
 
 gno_list = (
@@ -56,6 +58,7 @@ determine_bone = {
     # functions
     "Match__": 1, "All__": 1,
     # formats
+    "HouseOfTheDead4_C": 2,
     "SonicFreeRiders_E": 0.5,
     "HouseOfTheDead4_L": 5,
     "SonicRidersZeroGravity_S": 1,

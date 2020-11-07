@@ -3,7 +3,7 @@ import os
 from struct import unpack, pack
 from sys import stdout
 from time import time
-from typing import BinaryIO, Tuple, Any
+from typing import BinaryIO, Tuple, Any, Union
 
 import bpy
 

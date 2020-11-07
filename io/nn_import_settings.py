@@ -27,31 +27,36 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
         items=no_list,
         default="Match__")
 
+    C: EnumProperty(
+        name="Game",
+        description="Game the model is from (to get the correct cno variant)",
+        items=cno_list,
+    )
     E: EnumProperty(
         name="Game",
         description="Game the model is from (to get the correct eno variant)",
         items=eno_list,
-        )
+    )
     L: EnumProperty(
         name="Game",
         description="Game the model is from (to get the correct lno variant)",
         items=lno_list,
-        )
+    )
     S: EnumProperty(
         name="Game",
         description="Game the model is from (to get the correct sno variant)",
         items=sno_list,
-        )
+    )
     X: EnumProperty(
         name="Game",
         description="Game the model is from (to get the correct xno variant)",
         items=xno_list,
-        )
+    )
     Z: EnumProperty(
         name="Game",
         description="Game the model is from (to get the correct zno variant)",
         items=zno_list,
-        )
+    )
 
     batch: EnumProperty(
         name="Batch usage",

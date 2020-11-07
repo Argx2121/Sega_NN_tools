@@ -36,6 +36,11 @@ A Python library for Blender of tools for games using Sega's NN libraries.
 [GitHub Link](https://github.com/Argx2121/Sega_NN_tools/)
 ## Games
 
+### Cno
+
+#### The House of the Dead 4
+- The files are expected to be individual, that is to say model.lno and texture.dds.
+
 ### Eno
 
 #### Sonic Free Riders
