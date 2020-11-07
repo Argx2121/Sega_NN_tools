@@ -126,7 +126,8 @@ class Material:  # functional, but needs a rework
 
                         norm_node = n_tree.nodes.new(type="ShaderNodeNormalMap")
                         norm_node.location = - 200, 20
-                        norm_node.space = 'WORLD'
+                        if model_format == "Sonic2006_X":
+                            norm_node.space = 'WORLD'
 
                         n_tree.links.new(norm_node.inputs[1], tex_node.outputs[0])
                         n_tree.links.new(diffuse.inputs[-3], norm_node.outputs[0])
@@ -275,7 +276,8 @@ class Material:  # functional, but needs a rework
 
                         norm_node = n_tree.nodes.new(type="ShaderNodeNormalMap")
                         norm_node.location = - 200, 20
-                        norm_node.space = 'WORLD'
+                        if model_format == "Sonic2006_X":
+                            norm_node.space = 'WORLD'
 
                         n_tree.links.new(norm_node.inputs[1], tex_node.outputs[0])
                         n_tree.links.new(diffuse.inputs[-3], norm_node.outputs[0])
