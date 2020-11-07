@@ -60,10 +60,6 @@ class ExtractImage:
             write_integer(ft, 4198408)
             for _ in range(4):
                 write_integer(ft, 0)
-            # blender does not have support for latest dxt yet...
-            # dxt10 header
-            # format, resource, misc flag 1, array size, misc flag 2
-            # write_int(ft, 71, 3, 0, 1, 3)
 
             ft.write(self.texture_data)
             ft.close()
@@ -139,14 +135,12 @@ class ExtractImage:
         def write_pixel(colour_list):
             file_name: str = tex_path + self.texture_names[texture_index] + "." + str(texture_index) + ".tiff"
             self.texture_files.append(file_name)
-            # Create a new image.
             img = bpy.data.images.new(self.texture_names[texture_index], self.tex_x, self.tex_y, alpha=True)
             img.pixels = colour_list
             img.update()
             img.file_format = "TIFF"
             img.filepath_raw = file_name
             img.save()
-            # All done.
 
         dxt_format = {
             "01110011": dxt1, "01110100": dxt1,
@@ -162,18 +156,14 @@ class ExtractImage:
             texture_offset_current = self.texture_offsets[texture_index]
             f.seek(self.texture_start + texture_offset_current + 20)
             tex_len = read_int(f) - 40
-            texture_type = read_multi_bytes(f, 2)
+            texture_type = read_byte_tuple(f, 2)
             tex_bin_1 = format(texture_type[0], "08b")
             tex_bin_2 = format(texture_type[1], "08b")
-            _, self.tex_x, self.tex_y = read_multi_shorts(f, 3)
+            _, self.tex_x, self.tex_y = read_short_tuple(f, 3)
             f.seek(32, 1)
             if tex_bin_2 not in {"01110000", "01110001"}:
                 self.texture_data = (f.read(tex_len))
                 dxt_format[tex_bin_2]()
             else:
-                # print("Dumping unsupported texture as dds")
                 self.texture_data = (f.read(tex_len))
                 dxt(b'DXT0')  # BREAKS TEXTURE + SAVES BLENDER FROM CRASH
-                # pix_format[tex_bin_2]()
-            # write textures to external file so blender can read them easy
-            # index included in case of doubles

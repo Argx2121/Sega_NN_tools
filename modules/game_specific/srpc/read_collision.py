@@ -61,7 +61,7 @@ class ReadCollision:
         for i in range(len(offset)):
             f.seek(start + offset[i])
             for _ in range(s_block_count[i]):
-                _, a = read_multi_shorts(f, 2)
+                _, a = read_short_tuple(f, 2)
                 self.face_strip_len.append(a)
 
         f.seek(start + offset[-1])

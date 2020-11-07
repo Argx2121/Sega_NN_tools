@@ -1,7 +1,7 @@
 import os
 import bpy
 
-from Sega_NN_tools.modules.util import read_int, read_multi_ints, read_str_nulls, get_files
+from Sega_NN_tools.modules.util import read_int, read_int_tuple, read_str_nulls, get_files
 
 
 class ExtractS4E1:
@@ -23,7 +23,7 @@ class ExtractS4E1:
         count = read_int(f)
         f.seek(8, 1)
         names_offset = read_int(f)
-        data = read_multi_ints(f, count * 4)
+        data = read_int_tuple(f, count * 4)
         offsets = data[::4]
         offset_sizes = data[1::4]
 

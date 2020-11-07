@@ -13,26 +13,17 @@ class BlockTypeCheck:
         self.file_path = file_path
         self.next_block = next_block
         self.start = f.tell() - 4
+        self.uint = 0
+        self.string = ""
 
     def check_image(self):
         f = self.f
         start = self.start
         f.seek(start + read_int(f))
         if f.tell() < path.getsize(self.file_path):
-            block_type = read_str(f, 4)
-            if block_type == 'GBIX':
+            if read_str(f, 4) == 'GBIX':
                 f.seek(start)
                 return True
-        f.seek(start)
-        return False
-
-    def check_xbox(self):
-        f = self.f
-        start = self.start
-        block_type = read_str(f, 4)
-        if block_type == 'XBOX':
-            f.seek(start)
-            return True
         f.seek(start)
         return False
 
@@ -41,20 +32,9 @@ class BlockTypeCheck:
         start = self.start
         f.seek(2, 1)
         block_type = read_str(f, 4)
+        f.seek(start)
         if block_type == 'XBOX':
-            f.seek(start)
             return True
-        f.seek(start)
-        return False
-
-    def check_collision(self):
-        f = self.f
-        start = self.start
-        block_type = read_int(f)
-        if block_type == 66048:
-            f.seek(start)
-            return True
-        f.seek(start)
         return False
 
     def check_instancing(self):
@@ -62,50 +42,35 @@ class BlockTypeCheck:
         start = self.start
         f.seek(3, 1)
         block_type = read_byte(f)
+        f.seek(start)
         if block_type == 128:
-            f.seek(start)
             return True
-        f.seek(start)
-        return False
-
-    def check_rendering(self):
-        f = self.f
-        start = self.start
-        block_type = read_int(f)
-        if 1 < block_type < 25:  # yeah i have no idea im just guessing what a good range would be
-            f.seek(start)
-            return True
-        f.seek(start)
-        return False
-
-    def check_world_rendering(self):
-        f = self.f
-        start = self.start
-        block_type = read_int(f)
-        if block_type == 1:
-            f.seek(start)
-            return True
-        f.seek(start)
         return False
 
     def execute(self):
         f = self.f
+        start = self.start
+        f.seek(start)
+        self.uint = read_int(f)
+        f.seek(start)
+        self.string = read_str(f, 4)
+        f.seek(start)
         # theres at least two other blocks not listed here
         if self.check_image():
             print("Reading texture block")
             return True
-        elif self.check_xbox():
+        elif self.string == 'XBOX':
             re_path.ReadXbox(f).execute()
         elif self.check_00_02_xbox():
             re_paths.ReadPaths(f, self.next_block).execute()
-        elif self.check_collision():
+        elif self.uint == 66048:
             re_col.ReadCollision(f, self.next_block).execute()
         elif self.check_instancing():
             re_inst.ReadInstanceModels(f).execute()
-        elif self.check_rendering():
+        elif 1 < self.uint < 25:  # yeah i have no idea im just guessing what a good range would be
             print("Skipping player / item rendering settings - inapplicable data")
             re_inst.ReadInstanceModels(f).execute()
-        elif self.check_world_rendering():  # its not worth making a function for this lmao
+        elif self.uint == 1:  # its not worth making a function for this
             print("Reading scene rendering settings")
             f.seek(12, 1)
             bpy.context.space_data.clip_end = read_float(f)

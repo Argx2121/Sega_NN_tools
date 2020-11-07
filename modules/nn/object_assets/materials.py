@@ -16,12 +16,8 @@ class Read:
         self.texture_list = []
 
     @dataclass
-    class Colour:  # only main is used in materials
+    class Colour:  # there is other data available but we only ise main
         rgba_main: tuple = (0.75, 0.75, 0.75, 1)
-        rgba_sub: tuple = (0.75, 0.75, 0.75, 1)
-        rgba_highlight: tuple = (0.75, 0.75, 0.75, 1)
-        rgba_shadow: tuple = (0.75, 0.75, 0.75, 1)
-        shadow_intensity: float = 1
 
     @dataclass
     class Texture:
@@ -78,7 +74,7 @@ class Read:
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.post_nxif + 8)
-            var1, _, var2 = read_multi_ints(f, 3)
+            var1, _, var2 = read_int_tuple(f, 3)
             self.colour_offset.append(var1)
             self.texture_offset.append(var2)
 
@@ -86,7 +82,7 @@ class Read:
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.post_nxif)
-            _, _, var1, _, _, var3, var2 = read_multi_ints(f, 7)
+            _, _, var1, _, _, var3, var2 = read_int_tuple(f, 7)
             self.colour_offset.append(var1 + 4)
             self.texture_count.append(var3)
             self.texture_offset.append(var2)
@@ -95,7 +91,7 @@ class Read:
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.post_nxif + 8)
-            var = read_multi_ints(f, 5, ">")
+            var = read_int_tuple(f, 5, ">")
             self.colour_offset.append(var[0])
             self.texture_count.append(var[-2])
             self.texture_offset.append(var[-1])
@@ -104,8 +100,7 @@ class Read:
         f = self.f
         for offset in self.colour_offset:
             f.seek(offset + self.post_nxif)
-            self.colour_list.append(self.Colour(read_float_tuple(f, 4), read_float_tuple(f, 4),
-                                                read_float_tuple(f, 4), read_float_tuple(f, 4), read_float(f)))
+            self.colour_list.append(self.Colour(read_float_tuple(f, 4)))
 
     def _be_colour_1(self):
         f = self.f
@@ -127,7 +122,7 @@ class Read:
             if texture_offset:
                 f.seek(texture_offset + self.post_nxif)
                 for _ in range(self.texture_count[texture_value]):
-                    tex_type, _, tex_set, _ = read_multi_bytes(f, 4)
+                    tex_type, _, tex_set, _ = read_byte_tuple(f, 4)
                     if tex_type in texture_type:
                         var = texture_type[tex_type]
                     else:
@@ -137,7 +132,6 @@ class Read:
             self.texture_list.append(texture_list)
 
     def _be_texture_1(self):
-        # 11 = normals? (sonic 06)
         texture_type = {
             1: "normal", 2: "diffuse", 32: "reflection"
         }
@@ -149,7 +143,7 @@ class Read:
             if texture_offset:
                 f.seek(texture_offset + self.post_nxif)
                 for _ in range(self.texture_count[texture_value]):
-                    tex_set, _, _, tex_type = read_multi_bytes(f, 4, ">")
+                    tex_set, _, _, tex_type = read_byte_tuple(f, 4, ">")
                     if tex_type in texture_type:
                         var = texture_type[tex_type]
                     else:
@@ -159,7 +153,6 @@ class Read:
             self.texture_list.append(texture_list)
 
     def _le_texture_2(self):
-        # 11 = normals? (sonic 06)
         texture_type = {
             1: "diffuse", 2: "diffuse", 3: "diffuse", 4: "reflection", 5: "diffuse", 6: "diffuse",
             9: "diffuse", 11: "normal"}
@@ -171,7 +164,7 @@ class Read:
             if texture_offset:
                 f.seek(texture_offset + self.post_nxif)
                 for _ in range(self.texture_count[texture_value]):
-                    tex_type, _, tex_set, _ = read_multi_bytes(f, 4)
+                    tex_type, _, tex_set, _ = read_byte_tuple(f, 4)
                     if tex_type in texture_type:
                         var = texture_type[tex_type]
                     else:
@@ -181,7 +174,6 @@ class Read:
             self.texture_list.append(texture_list)
 
     def _le_texture_3(self):
-        # 11 = normals? (sonic 06)
         texture_type = {
             1: "diffuse", 2: "diffuse", 3: "diffuse", 4: "reflection", 5: "diffuse", 6: "diffuse",
             9: "diffuse", 11: "normal"}
@@ -193,7 +185,7 @@ class Read:
             if texture_offset:
                 f.seek(texture_offset + self.post_nxif + 80)
                 for _ in range(self.texture_count[texture_value]):
-                    var = read_multi_bytes(f, 6)
+                    var = read_byte_tuple(f, 6)
                     if var[1] in texture_type:
                         var1 = texture_type[var[1]]
                     else:
@@ -219,13 +211,12 @@ class Read:
         texture_type = {1: "diffuse", 2: "diffuse", 3: "diffuse", 4: "reflection", 5: "diffuse", 6: "diffuse"}
         for offset in self.colour_offset:
             f.seek(offset + self.post_nxif + 4)
-            self.colour_list.append(self.Colour(
-                read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">")))
-            f.seek(36, 1)
+            self.colour_list.append(self.Colour(read_float_tuple(f, 4, ">")))
+            f.seek(68, 1)
             texture_list = []
             for t_count in self.texture_count:
                 for _ in range(t_count):
-                    _, tex_set, _, tex_type = read_multi_bytes(f, 4)
+                    _, tex_set, _, tex_type = read_byte_tuple(f, 4)
                     tex_index = read_int(f, ">")
                     f.seek(12, 1)
                     texture_list.append(self.Texture(texture_type[tex_type], tex_type, tex_set, tex_index))

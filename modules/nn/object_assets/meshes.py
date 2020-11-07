@@ -29,7 +29,7 @@ class Read:
             for _ in range(self.data_count[var]):
                 pos = read_float_tuple(f, 3)
                 scale = read_float(f)
-                var = read_multi_ints(f, 6)
+                var = read_int_tuple(f, 6)
                 build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
         return build_mesh
 
@@ -41,7 +41,7 @@ class Read:
             for _ in range(self.data_count[var]):
                 pos = read_float_tuple(f, 3)
                 scale = read_float(f)
-                var = read_multi_ints(f, 8)
+                var = read_int_tuple(f, 8)
                 build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
         return build_mesh
 
@@ -53,7 +53,7 @@ class Read:
             for _ in range(self.data_count[var]):
                 pos = read_float_tuple(f, 3)
                 scale = read_float(f)
-                var = read_multi_ints(f, 5)
+                var = read_int_tuple(f, 5)
                 build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
         return build_mesh
 
@@ -65,7 +65,7 @@ class Read:
             for _ in range(self.data_count[var]):
                 pos = read_float_tuple(f, 3, ">")
                 scale = read_float(f, ">")
-                var = read_multi_ints(f, 6, ">")
+                var = read_int_tuple(f, 6, ">")
                 build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
         return build_mesh
 
@@ -77,6 +77,6 @@ class Read:
             for _ in range(self.data_count[var]):
                 pos = read_float_tuple(f, 3, ">")
                 scale = read_float(f, ">")
-                var = read_multi_ints(f, 8, ">")
+                var = read_int_tuple(f, 8, ">")
                 build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
         return build_mesh

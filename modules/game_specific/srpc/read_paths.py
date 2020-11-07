@@ -25,7 +25,7 @@ class ReadPaths:
         start = f.tell()
         f.seek(8, 1)
         count = read_int(f)
-        offsets = read_multi_ints(f, count)
+        offsets = read_int_tuple(f, count)
         ends = list(offsets)
         ends.append(self.next_block - start)
 
@@ -33,9 +33,9 @@ class ReadPaths:
         for offset in offsets:
             annoying += 1
             f.seek(start + offset + 4)
-            off1, _ = read_multi_ints(f, 2)
+            off1, _ = read_int_tuple(f, 2)
             root = read_float_tuple(f, 3)
-            _, count, _, _, _ = read_multi_ints(f, 5)
+            _, count, _, _, _ = read_int_tuple(f, 5)
 
             positions = []
             for _ in range((start + off1 - f.tell()) // 12):

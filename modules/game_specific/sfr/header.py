@@ -12,7 +12,7 @@ class PastInfo:
 def read_archive(f: BinaryIO) -> PastInfo:
     start_time = console_out_pre("Reading Archive Info...")
     file_count = read_int(f, ">")
-    offsets = read_multi_ints(f, file_count, ">")
+    offsets = read_int_tuple(f, file_count, ">")
     console_out_post(start_time)
     print("File count is", file_count)
     print("File offsets are", offsets)

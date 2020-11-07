@@ -13,17 +13,17 @@ class ReadSFR:
     def execute(self):
         f = self.f
         b_type = read_str(f, 4)
-        if b_type == "paST":
-            header = read_archive(f)
-            nn_list = []
-            for offset in header.offsets:
-                f.seek(offset)
-                b_type = read_str(f, 4)
-                f.seek(-4, 1)
-                if b_type == "NEIF":
-                    nn_list.append(ReadNn(f, self.file_path, self.settings.format, self.settings.debug).read_file()[1])
-                else:
-                    ExtractImage(f, self.file_path).execute()
-            for nn in nn_list:
-                if nn.model_data:
-                    Model(nn, self.settings).execute()
+        if b_type != "paST":
+            return
+
+        header = read_archive(f)
+        nn_list = []
+        for offset in header.offsets:
+            f.seek(offset)
+            b_type = read_str(f, 4)
+            f.seek(offset)
+            if b_type == "NEIF":
+                nn_list.append(ReadNn(f, self.file_path, self.settings.format, self.settings.debug).read_file()[1])
+            else:
+                ExtractImage(f, self.file_path).execute()
+        [Model(nn, self.settings).execute() for nn in nn_list if nn.model_data]

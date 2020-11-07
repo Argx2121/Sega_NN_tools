@@ -3,7 +3,34 @@ import bpy
 from Sega_NN_tools.modules.util import make_bpy_textures
 
 
+def _get_image_type(model_format, texture_name, m_tex_index, m_tex_type):
+    tex_name = None
+    if texture_name:
+        tex_name = texture_name[m_tex_index]
+        tex_name_str = str(tex_name)
+        if model_format == "Sonic2006_X":  # shortcuts
+            if "_df." in tex_name_str:
+                m_tex_type = "diffuse"
+            elif "_nw." in tex_name_str:
+                m_tex_type = "normal"
+            elif "_sp." in tex_name_str:
+                m_tex_type = "emission"
+            elif "_rf." in tex_name_str:
+                m_tex_type = "reflection"
+        elif model_format == "HouseOfTheDead4_C":  # shortcuts
+            if "_dif." in tex_name_str:
+                m_tex_type = "diffuse"
+            elif "_nom." in tex_name_str:
+                m_tex_type = "normal"
+            elif "_spe." in tex_name_str:
+                m_tex_type = "emission"
+            elif "_ref." in tex_name_str:
+                m_tex_type = "reflection"
+    return m_tex_type, tex_name
+
+
 class Material:  # functional, but needs a rework
+
     def make_material_complex(self):
         model_format = self.format
         texture_name = self.texture_names
@@ -86,18 +113,7 @@ class Material:  # functional, but needs a rework
                 m_tex_set = m_tex.tex_setting
                 m_tex_index = m_tex.tex_index
 
-                if texture_name:
-                    tex_name = texture_name[m_tex_index]
-                    tex_name_str = str(tex_name)
-                    if model_format == "Sonic2006_X":  # shortcuts
-                        if "_df." in tex_name_str:
-                            m_tex_type = "diffuse"
-                        elif "_nw." in tex_name_str:
-                            m_tex_type = "normal"
-                        elif "_sp." in tex_name_str:
-                            m_tex_type = "emission"
-                        elif "_rf." in tex_name_str:
-                            m_tex_type = "reflection"
+                m_tex_type, tex_name = _get_image_type(model_format, texture_name, m_tex_index, m_tex_type)
 
                 if m_tex_type == "diffuse":
                     if not diffuse_done:
@@ -239,18 +255,7 @@ class Material:  # functional, but needs a rework
                 m_tex_set = m_tex.tex_setting
                 m_tex_index = m_tex.tex_index
 
-                if texture_name:
-                    tex_name = texture_name[m_tex_index]
-                    tex_name_str = str(tex_name)
-                    if model_format == "Sonic2006_X":  # shortcuts
-                        if "_df." in tex_name_str:
-                            m_tex_type = "diffuse"
-                        elif "_nw." in tex_name_str:
-                            m_tex_type = "normal"
-                        elif "_sp." in tex_name_str:
-                            m_tex_type = "emission"
-                        elif "_rf." in tex_name_str:
-                            m_tex_type = "reflection"
+                m_tex_type, tex_name = _get_image_type(model_format, texture_name, m_tex_index, m_tex_type)
 
                 if m_tex_type == "diffuse":
                     if not diffuse_done:

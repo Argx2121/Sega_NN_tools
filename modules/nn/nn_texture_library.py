@@ -29,7 +29,7 @@ class Read:
     def type_1(self):
         f = self.f
         start_block = f.tell() - 4
-        block_len, to_texture_count = read_multi_ints(f, 2)
+        block_len, to_texture_count = read_int_tuple(f, 2)
         f.seek(to_texture_count + start_block)
         texture_count = read_int(f)
         f.seek(4, 1)

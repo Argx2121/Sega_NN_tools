@@ -72,8 +72,8 @@ def le_read_texture_block_info(f: BinaryIO) -> tuple:
     """
     tex_start = f.tell()
     img_count = read_short(f)
-    _, image_pad = read_multi_bytes(f, 2)
-    texture_offsets = read_multi_ints(f, img_count)
+    _, image_pad = read_byte_tuple(f, 2)
+    texture_offsets = read_int_tuple(f, img_count)
     tex_names_len = (texture_offsets[0] - (4 * img_count + 4 + img_count * image_pad))
     f.seek(tex_start + 4 + img_count * 4 + img_count * image_pad - 1)
     type_byte = read_byte(f)
@@ -100,8 +100,8 @@ def be_read_texture_block_info(f: BinaryIO) -> tuple:
     tex_start = f.tell()
     img_count = read_short(f, ">")
     f.seek(2, 1)
-    texture_offsets = read_multi_ints(f, img_count, ">")
-    texture_lens = read_multi_ints(f, img_count, ">")
+    texture_offsets = read_int_tuple(f, img_count, ">")
+    texture_lens = read_int_tuple(f, img_count, ">")
     tex_names_len = (texture_offsets[0] - f.tell() + tex_start)
     texture_names = read_str_nulls(f, tex_names_len)[:img_count]
     texture_names = [name.replace("/", ".").replace("\\", ".").replace(".....", ".").replace("..", ".") for name in
@@ -447,7 +447,7 @@ def read_half_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[float, ...]
     return unpack(endian + str(count) + "f", file.read(count * 2))
 
 
-def read_multi_ints(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
+def read_int_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
     """Reads and returns tuple of integers.
 
         Parameters
@@ -470,7 +470,7 @@ def read_multi_ints(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
     return unpack(endian + str(count) + "I", file.read(count * 4))
 
 
-def read_multi_shorts(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
+def read_short_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
     """Reads and returns tuple of shorts.
 
         Parameters
@@ -493,7 +493,7 @@ def read_multi_shorts(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]
     return unpack(endian + str(count) + "H", file.read(count * 2))
 
 
-def read_multi_bytes(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
+def read_byte_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
     """Reads and returns tuple of bytes.
 
         Parameters

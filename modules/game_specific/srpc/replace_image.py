@@ -47,7 +47,7 @@ class ReplaceImage:  # main
 
         def read_image(ft: BinaryIO):
             ft.seek(12)
-            ft_y, ft_x = read_multi_ints(ft, 2)
+            ft_y, ft_x = read_int_tuple(ft, 2)
             ft.seek(28)
             mip_map_count = read_int(ft)
             ft.seek(44)

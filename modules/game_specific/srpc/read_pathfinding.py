@@ -18,7 +18,7 @@ class ReadXbox:
         f = self.f
         start = f.tell()
         f.seek(8, 1)
-        to_simple, to_complex, to_edge = read_multi_ints(f, 3)
+        to_simple, to_complex, to_edge = read_int_tuple(f, 3)
         self.root_node = read_float_tuple(f, 3)
         complex_count = read_int(f)
 
@@ -36,7 +36,7 @@ class ReadXbox:
 
         f.seek(start + to_edge)
         for _ in range(complex_count):
-            self.complex_edge.append(read_multi_shorts(f, 2))
+            self.complex_edge.append(read_short_tuple(f, 2))
 
     def make_blender(self):
         def blender_mesh(m_name, verts, edges):

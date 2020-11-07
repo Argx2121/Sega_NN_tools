@@ -10,18 +10,21 @@ bl_info = {
     "tracker_url": "https://github.com/Argx2121/Sega_NN_tools/issues/new",
     "category": "Import-Export",
 }
+
 # import all and reload all if loaded
+
 import glob
 import importlib
 import os
 import sys
 
+
 # get all .py files in this addon recursively, remove __init__ files and convert those files from absolute to relative
 # (to this package), make them use dot notation and remove file extension
-files = [__package__ + file.split(__package__)[1].replace("\\", ".")[:-3] for file in
-         glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/**/*.py', recursive=True) if "__init__" not in file]
 
-if __package__ + ".io" in sys.modules:  # this package is loaded already so we can't use it - check a sub file instead
+if __package__ + ".io" in sys.modules:  # Sega_NN_tools is already loaded in to read this - check a sub file instead
+    files = [__package__ + f.split(__package__)[1].replace("\\", ".")[:-3] for f in
+             glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/**/*.py', recursive=True) if "__init__" not in f]
     [importlib.reload(sys.modules[name]) for name in files if name in sys.modules]  # refresh all loaded modules
 
 import bpy

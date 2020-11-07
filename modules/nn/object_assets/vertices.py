@@ -34,10 +34,10 @@ class Read:
         normals3: list
 
     def _le_offsets(self):  # 1, offset, 1, offset, ...
-        self.vert_info_offset = read_multi_ints(self.f, self.vertex_buffer_count * 2)[1::2]
+        self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 2)[1::2]
 
     def _be_offsets(self):  # 1, offset, 1, offset, ...
-        self.vert_info_offset = read_multi_ints(self.f, self.vertex_buffer_count * 2, ">")[1::2]
+        self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 2, ">")[1::2]
 
     def _le_info_1(self):
         f = self.f
@@ -50,7 +50,7 @@ class Read:
         for offset in self.vert_info_offset:
             f.seek(offset + post_nxif)
             block_type_list.append(unpack(">Q", f.read(8))[0])  # python gives back as big endian so countering
-            size, count, offset, b_count, b_offset = read_multi_ints(f, 5)
+            size, count, offset, b_count, b_offset = read_int_tuple(f, 5)
             block_size_list.append(size)
             vertex_count_list.append(count)
             self.vertex_mesh_offset.append(offset)
@@ -63,7 +63,7 @@ class Read:
                 self.mesh_info.append(
                     self.MeshData(
                         block_type_list[i], block_size_list[i], vertex_count_list[i],
-                        self.vertex_mesh_offset[i], bone_count_list[i], read_multi_ints(f, bone_count_list[i])))
+                        self.vertex_mesh_offset[i], bone_count_list[i], read_int_tuple(f, bone_count_list[i])))
             else:
                 self.mesh_info.append(
                     self.MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
@@ -80,7 +80,7 @@ class Read:
         for offset in self.vert_info_offset:
             f.seek(offset + post_nxif)
             block_type_list.append(unpack(">Q", f.read(8))[0])
-            size, count, offset, b_count, b_offset = read_multi_ints(f, 5, ">")
+            size, count, offset, b_count, b_offset = read_int_tuple(f, 5, ">")
             block_size_list.append(size)
             vertex_count_list.append(count)
             self.vertex_mesh_offset.append(offset)
@@ -94,7 +94,7 @@ class Read:
                 self.mesh_info.append(
                     self.MeshData(
                         block_type_list[i], block_size_list[i], vertex_count_list[i],
-                        self.vertex_mesh_offset[i], bone_count_list[i], read_multi_ints(f, bone_count_list[i], ">")))
+                        self.vertex_mesh_offset[i], bone_count_list[i], read_int_tuple(f, bone_count_list[i], ">")))
             else:
                 self.mesh_info.append(
                     self.MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
@@ -111,7 +111,7 @@ class Read:
         for offset in self.vert_info_offset:
             f.seek(offset + post_nxif)
             block_type_list.append(read_int(f, ">"))
-            size, count, offset, b_count, b_offset = read_multi_ints(f, 5, ">")
+            size, count, offset, b_count, b_offset = read_int_tuple(f, 5, ">")
             block_size_list.append(size)
             vertex_count_list.append(count)
             self.vertex_mesh_offset.append(offset)
@@ -125,7 +125,7 @@ class Read:
                 self.mesh_info.append(
                     self.MeshData(
                         block_type_list[i], block_size_list[i], vertex_count_list[i],
-                        self.vertex_mesh_offset[i], bone_count_list[i], read_multi_shorts(f, bone_count_list[i], ">")))
+                        self.vertex_mesh_offset[i], bone_count_list[i], read_short_tuple(f, bone_count_list[i], ">")))
             else:
                 self.mesh_info.append(
                     self.MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
@@ -136,11 +136,11 @@ class Read:
         post_nxif = self.post_nxif
         for offset in self.vert_info_offset:
             f.seek(offset + post_nxif + 4)
-            vertex_count, info_count, info_offset = read_multi_ints(f, 3)
+            vertex_count, info_count, info_offset = read_int_tuple(f, 3)
             f.seek(8, 1)
-            v_bone_count, v_bone_off = read_multi_ints(f, 2)
+            v_bone_count, v_bone_off = read_int_tuple(f, 2)
             f.seek(v_bone_off + post_nxif)
-            v_bone_list = read_multi_shorts(f, v_bone_count)
+            v_bone_list = read_short_tuple(f, v_bone_count)
 
             f.seek(info_offset + post_nxif)
             v_offset = []
@@ -151,7 +151,7 @@ class Read:
             }
 
             for _ in range(info_count):
-                data = read_multi_ints(f, 5)
+                data = read_int_tuple(f, 5)
                 v_offset.append(data[-1])
                 v_format.append(det_format[data[0]])
                 v_format_size.append(data[-2])
@@ -162,7 +162,7 @@ class Read:
     def _le_info_3(self):
         for offset in self.vert_info_offset:
             self.f.seek(offset + self.post_nxif)
-            self.vertex_mesh_offset.append(read_multi_ints(self.f, 5))
+            self.vertex_mesh_offset.append(read_int_tuple(self.f, 5))
 
     def _le_vertices_1(self):
         f = self.f
@@ -193,7 +193,7 @@ class Read:
                 if is_wei:
                     w1, w2, w3 = read_float_tuple(f, 3)
                     if is_index:
-                        b1, b2, b3, b4 = read_multi_bytes(f, 4)
+                        b1, b2, b3, b4 = read_byte_tuple(f, 4)
                         v_b_index_list.append((b1, b2, b3, b4))
                         if b4:
                             v_b_wei_list.append((w1, w2, w3, 1 - w1 - w2 - w3))
@@ -209,10 +209,10 @@ class Read:
             def col(is_short, is_byte):  # colours stored as b g r a
                 if is_short:
                     div_by = 65535
-                    cols = read_multi_shorts(f, 4)
+                    cols = read_short_tuple(f, 4)
                 elif is_byte:
                     div_by = 255
-                    cols = read_multi_bytes(f, 4)
+                    cols = read_byte_tuple(f, 4)
                 else:
                     return
                 v_cols_list.append([cols[2] / div_by, cols[1] / div_by, cols[0] / div_by, cols[3] / div_by])
@@ -337,7 +337,7 @@ class Read:
                 if is_wei:
                     w1, w2, w3 = read_float_tuple(f, 3, ">")
                     if is_index:
-                        b4, b3, b2, b1 = read_multi_bytes(f, 4, ">")
+                        b4, b3, b2, b1 = read_byte_tuple(f, 4, ">")
                         v_b_index_list.append((b1, b2, b3, b4))
                         v_b_wei_list.append((w1, w2, w3, 1 - w1 - w2 - w3))
                     else:
@@ -417,7 +417,7 @@ class Read:
                 if is_wei:
                     w1, w2, w3 = read_float_tuple(f, 3, ">")
                     if is_index:
-                        b1, b2, b3, b4 = read_multi_bytes(f, 4, ">")
+                        b1, b2, b3, b4 = read_byte_tuple(f, 4, ">")
                         v_b_index_list.append((b1, b2, b3, b4))
                         if b4:
                             v_b_wei_list.append((w1, w2, w3, 1 - w1 - w2 - w3))
@@ -504,7 +504,7 @@ class Read:
 
         def wei():
             for _ in range(vertex_count):
-                var = [a / 255 for a in read_multi_bytes(f, block_size)]
+                var = [a / 255 for a in read_byte_tuple(f, block_size)]
                 if len(var) > 1:
                     var.append(1 - sum(var))
                 else:
@@ -513,7 +513,7 @@ class Read:
 
         def bone():
             for _ in range(vertex_count):
-                v_b_index_list.append(read_multi_bytes(f, block_size))
+                v_b_index_list.append(read_byte_tuple(f, block_size))
 
         def unknown():
             pass
@@ -573,7 +573,7 @@ class Read:
         for info in self.vertex_mesh_offset:
             _, v_len, pos, bone_count_complex, b_off = info
             f.seek(b_off + post_info)
-            bone_list_complex = read_multi_ints(f, bone_count_complex)
+            bone_list_complex = read_int_tuple(f, bone_count_complex)
             pos = pos + post_info
             f.seek(pos)
             final_pos = v_len * 16 + pos - 32
@@ -592,13 +592,13 @@ class Read:
                     break
 
                 f.seek(28, 1)
-                var = read_multi_bytes(f, 4)
+                var = read_byte_tuple(f, 4)
                 for _ in range(var[0]):
-                    v_type = read_multi_bytes(f, 4)
+                    v_type = read_byte_tuple(f, 4)
                     if (v_type[0], v_type[1]) == (0, 0):
                         f.seek(-4, 1)
                         read_aligned(f, 4)
-                        v_type = read_multi_bytes(f, 4)
+                        v_type = read_byte_tuple(f, 4)
                     det_v_type[(v_type[0], v_type[-1])]()
 
                 v_data.append(
