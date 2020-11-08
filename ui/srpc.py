@@ -1,8 +1,9 @@
 import bpy
 
 import Sega_NN_tools.modules.game_specific.srpc.block_type_check
-from Sega_NN_tools.modules.game_specific import srpc as riders
 from Sega_NN_tools.modules.game_specific.srpc import replace_image as re_img
+from Sega_NN_tools.modules.game_specific.srpc import read_archive as re_arc
+from Sega_NN_tools.modules.game_specific.srpc import extract_image as ex_img
 
 
 def file_loc(file_path: str):  # is there a better way to do this?
@@ -19,29 +20,30 @@ class Tools:
         self.image_setting = image_setting
 
     def batch(self, archive_list, set_extract):
-        riders.toggle_console()
+        re_arc.toggle_console()
         if set_extract:
             for file_name in archive_list:
                 print(file_name)
                 self.file_path = file_name
                 f = open(file_name, 'rb')
-                arc_data = riders.re_arc.read_archive(f)
+                arc_data = re_arc.read_archive(f)
                 self.extract(arc_data.sub_file_offsets, f)
                 f.close()
         else:
             for file_name in archive_list:
                 print(file_name)
                 f = open(self.tex_path + file_name, 'r+b')
-                arc_data = riders.re_arc.read_archive(f)
+                arc_data = re_arc.read_archive(f)
                 self.insert(arc_data.file_count, arc_data.sub_file_offsets, f)
                 f.close()
-        riders.ex_img.toggle_console()
+        ex_img.toggle_console()
 
     def extract(self, sub_file_offsets, f):
         for i in range(len(sub_file_offsets)):
             f.seek(sub_file_offsets[i] + 4)
-            if Sega_NN_tools.modules.game_specific.srpc.block_type_check.BlockTypeCheck(f, self.file_path, 0).check_image():
-                riders.ex_img.ExtractImage(f, self.file_path, self.image_setting, i).execute()
+            if Sega_NN_tools.modules.game_specific.srpc.block_type_check.BlockTypeCheck(
+                    f, self.file_path, 0).check_image():
+                ex_img.ExtractImage(f, self.file_path, self.image_setting, i).execute()
 
     def insert(self, file_count, sub_file_offsets, f):
         re_img.ReplaceImage(f, self.file_path, file_count, sub_file_offsets, self.image_setting).execute()
@@ -59,23 +61,23 @@ def texture_tools(context, file_path, in_out, set_batch, image):
         f = open(file_path, 'rb')
         if in_out == "Extract":
             print("Extracting a files textures")
-            arc_data = riders.re_arc.read_archive(f)
+            arc_data = re_arc.read_archive(f)
             Tools(file_path, image).extract(arc_data.sub_file_offsets, f)
         else:
             print("Inserting a files textures")
             f = open(file_path, 'r+b')
-            arc_data = riders.re_arc.read_archive(f)
+            arc_data = re_arc.read_archive(f)
             Tools(file_path, image).insert(arc_data.file_count, arc_data.sub_file_offsets, f)
         f.close()
     else:
         f = open(file_path, 'rb')
         if in_out == "Extract":
             print("Batch extracting a files textures")
-            archive_list = riders.get_files(file_path, ".")
+            archive_list = ex_img.get_files(file_path, ".")
             Tools(file_path, image).batch(archive_list, True)
         else:
             print("Batch inserting a files textures")
-            archive_list = riders.get_files(file_path, ".")
+            archive_list = ex_img.get_files(file_path, ".")
             Tools(file_path, image).batch(archive_list, False)
         f.close()
     print("Finished")
