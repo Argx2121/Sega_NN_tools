@@ -23,7 +23,7 @@ import sys
 # (to this package), make them use dot notation and remove file extension
 
 if __package__ + ".io" in sys.modules:  # Sega_NN_tools is already loaded in to read this - check a sub file instead
-    files = [__package__ + f.split(__package__)[1].replace("\\", ".")[:-3] for f in
+    files = [__package__ + f.split(__package__)[1].replace("\\", ".").replace("/", ".")[:-3] for f in
              glob.glob(os.path.dirname(os.path.abspath(__file__)) + '/**/*.py', recursive=True) if "__init__" not in f]
     [importlib.reload(sys.modules[name]) for name in files if name in sys.modules]  # refresh all loaded modules
 

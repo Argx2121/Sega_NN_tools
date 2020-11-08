@@ -98,11 +98,17 @@ class OpenTextureFolder(bpy.types.Operator):
     bl_label = "Open Texture Folder"
 
     def execute(self, context):
-        print("Opening texture location")
+        print("Opening texture location ")
         import subprocess
         filepath = file_loc.file_path
-        folder_path: str = (bpy.path.abspath(filepath).rstrip(bpy.path.basename(filepath) + "\\"))
-        subprocess.Popen('explorer ' + folder_path)
+        folder_path = bpy.path.native_pathsep(bpy.path.abspath(filepath).rstrip(bpy.path.basename(filepath) + "\\"))
+        from platform import system
+        if system() == "Windows":
+            subprocess.run(['explorer', folder_path])
+        elif system() == 'Darwin':
+            subprocess.run(['open', folder_path])
+        else:
+            subprocess.run(['xdg-open', folder_path])
         return {'FINISHED'}
 
 
@@ -140,7 +146,7 @@ class SonicRPCTextureTools(Operator, ImportHelper):
         description="How extracted texture names should be formatted",
         items=(
             ('Simple', "Simple Names",
-             "Allows textures with the same name to be replace eachother "
+             "Allows textures with the same name to be replace each other "
              "(syntax: Texture_name.dds)"),
             ('Complex', "Specific Names",
              "Prevents a texture from being replaced by one with the same name "

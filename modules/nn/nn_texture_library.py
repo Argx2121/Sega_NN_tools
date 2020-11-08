@@ -35,7 +35,7 @@ class Read:
         f.seek(4, 1)
         texture_names = read_str_nulls(f, start_block + block_len + 8 - f.tell())[:texture_count]
         f.seek(start_block + block_len + 8)
-        return make_bpy_textures(self.filepath, texture_names)
+        return make_bpy_textures([self.filepath + t for t in texture_names])
 
     def type_2(self):
         f = self.f
@@ -47,4 +47,4 @@ class Read:
         f.seek(4, 1)
         texture_names = read_str_nulls(f, start_block + block_len + 8 - f.tell())[:texture_count]
         f.seek(start_block + block_len + 8)
-        return make_bpy_textures(self.filepath, texture_names)
+        return make_bpy_textures([self.filepath + t for t in texture_names])

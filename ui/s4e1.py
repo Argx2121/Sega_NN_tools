@@ -34,7 +34,10 @@ class ExtractS4E1:
             self.file_data.append(self.f.read(lens[i]))
         self.f.seek(names_offset)
         for _ in range(count):
-            self.file_names.append(read_str_nulls(self.f, 32)[0])
+            var = read_str_nulls(self.f, 32)[0]
+            if var[0] == ".":
+                var = var[2:]
+            self.file_names.append(var)
         if "#AMB " in self.file_names:
             if self.file_names[0] == "#AMB ":
                 self.file_names = [self.file_name + "_" + str(a) + ".AMB"
@@ -59,9 +62,14 @@ class ExtractS4E1:
                 self.amb_block()
                 print(self.file_names)
                 for i in range(self.file_count):
-                    file_path = self.file_path + self.file_names[i]
-                    if not os.path.exists(file_path.rsplit(sep="\\", maxsplit=1)[0]):
-                        os.mkdir(file_path.rsplit(sep="\\", maxsplit=1)[0])
+                    file_path = bpy.path.native_pathsep(self.file_path + self.file_names[i])
+                    from platform import system
+                    if system() == "Windows":
+                        new_path = file_path.rsplit(sep="\\", maxsplit=1)[0]
+                    else:
+                        new_path = file_path.rsplit(sep="/", maxsplit=1)[0]
+                    if not os.path.exists(new_path):
+                        os.mkdir(new_path)
                     fn = open(file_path, "wb")
                     fn.write(self.file_data[i])
 

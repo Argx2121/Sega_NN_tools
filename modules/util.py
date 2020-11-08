@@ -38,22 +38,22 @@ def get_files(file_path: str, name_ignore: str = False, name_require: str = Fals
     return [file_path + file for file in file_list]
 
 
-def make_bpy_textures(filepath, texture_names):  # see if textures already exist in the folder
+def make_bpy_textures(texture_names):  # see if textures already exist in the folder
     has_png = True  # png shouldn't be used in game but converted image files might be .png
     has_dds = True
     for tex in texture_names:
-        if not os.path.exists(filepath + tex[:-4] + ".png"):
+        if not os.path.exists(tex[:-4] + ".png"):
             has_png = False
             break
     for tex in texture_names:
-        if not os.path.exists(filepath + tex[:-4] + ".dds"):
+        if not os.path.exists(tex[:-4] + ".dds"):
             has_dds = False
             break
     if has_png:
-        return [bpy.data.images.load(filepath + tex[:-4] + ".png") for tex in texture_names]
+        return [bpy.data.images.load(tex[:-4] + ".png") for tex in texture_names]
     elif has_dds:
-        return [bpy.data.images.load(filepath + tex[:-4] + ".dds") for tex in texture_names]
-    return [filepath + a for a in texture_names]
+        return [bpy.data.images.load(tex[:-4] + ".dds") for tex in texture_names]
+    return texture_names
 
 
 def le_read_texture_block_info(f: BinaryIO) -> tuple:
@@ -77,9 +77,9 @@ def le_read_texture_block_info(f: BinaryIO) -> tuple:
     tex_names_len = (texture_offsets[0] - (4 * img_count + 4 + img_count * image_pad))
     f.seek(tex_start + 4 + img_count * 4 + img_count * image_pad - 1)
     type_byte = read_byte(f)
-    texture_names = read_str_nulls(f, tex_names_len)[:img_count]
     texture_names = [name.replace("/", ".").replace("\\", ".").replace(".....", ".").replace("..", ".") for name in
-                     texture_names]
+                     read_str_nulls(f, tex_names_len)[:img_count]]
+    texture_names = [bpy.path.native_pathsep(t) for t in texture_names]
     return tex_start, img_count, type_byte, texture_offsets, texture_names
 
 
@@ -103,9 +103,9 @@ def be_read_texture_block_info(f: BinaryIO) -> tuple:
     texture_offsets = read_int_tuple(f, img_count, ">")
     texture_lens = read_int_tuple(f, img_count, ">")
     tex_names_len = (texture_offsets[0] - f.tell() + tex_start)
-    texture_names = read_str_nulls(f, tex_names_len)[:img_count]
     texture_names = [name.replace("/", ".").replace("\\", ".").replace(".....", ".").replace("..", ".") for name in
-                     texture_names]
+                     read_str_nulls(f, tex_names_len)[:img_count]]
+    texture_names = [bpy.path.native_pathsep(t) for t in texture_names]
     return tex_start, img_count, texture_names, texture_offsets, texture_lens
 
 

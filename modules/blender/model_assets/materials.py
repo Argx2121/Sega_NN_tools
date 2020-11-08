@@ -46,7 +46,7 @@ class Material:  # functional, but needs a rework
                 for m in material_list:
                     m.tex_count = 0
             elif type(texture_name[0]) == str:
-                texture_name = make_bpy_textures("", texture_name)
+                texture_name = make_bpy_textures(texture_name)
                 if type(texture_name[0]) == str:
                     for m in material_list:
                         m.tex_count = 0
