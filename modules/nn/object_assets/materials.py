@@ -171,6 +171,9 @@ class Read:
                         var = "diffuse"
                     texture_list.append(self.Texture(var, tex_type, tex_set, read_int(f)))
                     f.seek(56, 1)
+            elif self.texture_count[texture_value]:
+                for _ in range(self.texture_count[texture_value]):
+                    texture_list.append(self.Texture("diffuse", 0, 0, 0))
             self.texture_list.append(texture_list)
 
     def _le_texture_3(self):
