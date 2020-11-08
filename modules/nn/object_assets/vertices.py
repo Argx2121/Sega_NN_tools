@@ -220,7 +220,7 @@ class Read:
             def sonic_riders_x():
                 for _ in range(vertex_count):
                     pos(BitFlags.position)
-                    if block_type >> 17 & 1:  # unknown float
+                    if BitFlags.wx:  # unknown float
                         f.seek(4, 1)
                     wei(BitFlags.weights, BitFlags.weight_indices)
                     norm(BitFlags.normal)
@@ -242,7 +242,12 @@ class Read:
                     norm(BitFlags.normal)
                     if BitFlags.colour_byte:
                         f.seek(4, 1)
-                    uv_wx(BitFlags.wx, BitFlags.uv)  # wx assumed to exist
+                    if BitFlags.wx and BitFlags.uv:
+                        v_uvs_list.append([read_float(f), - read_float(f) + 1])
+                        f.seek(8, 1)
+                        v_wxs_list.append([read_float(f), - read_float(f) + 1])
+                    else:
+                        uv_wx(BitFlags.wx, BitFlags.uv)
                     extra_norms(BitFlags.extra_normals)
 
             def sonic_4_episode_1_z():
@@ -272,10 +277,11 @@ class Read:
             from enum import Flag
 
             class BitFlags(Flag):
-                # 000KC0NP 0WWW0000 000000QU 00000000  KC0NW0P0 000000QU 00000000 00000000 SR PC
+                # 000KC0NP 0WWW0000 000000QU 00000000 KC0NW0P0 000000QU 00000000 00000000 SR PC
                 #  K = colours as shorts, not bytes Q = unknown, in psu Q is wx but srpc has only one float
                 #  block order: POS Q WEIGH NORM COL UV SR PC
-                # 0M00C0NP 0WWW0I02 0000000U 00000000  0C0NW0P0 000W000U 00000000 00000000 06
+                # 0M00C0NP 0WWW0I02 000000XU 00000000 0C0NW0P0 000W00XU 00000000 00000000 06
+                # X is wx - if both U and X are on its a different thing
                 #  M = 2 extra normal sets, I = bone indices
                 # 00000001 00000000 00000011 00000000 00000010 00000011 00000000 00000000 s4e1
                 # p, uw,
