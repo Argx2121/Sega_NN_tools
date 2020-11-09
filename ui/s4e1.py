@@ -60,7 +60,6 @@ class ExtractS4E1:
             self.index = 0
             if block == "#AMB":
                 self.amb_block()
-                print(self.file_names)
                 for i in range(self.file_count):
                     file_path = bpy.path.native_pathsep(self.file_path + self.file_names[i])
                     from platform import system
