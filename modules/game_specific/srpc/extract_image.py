@@ -23,7 +23,6 @@ class ExtractImage:
         self.texture_start, self.image_count, self.type_byte, self.texture_offsets, self.texture_names = \
             le_read_texture_block_info(self.f)
         self.make_image()
-        self.texture_files = make_bpy_textures(self.texture_files)
         return self.texture_files, self.texture_path, self.texture_names, self.type_byte
 
     def make_image(self):

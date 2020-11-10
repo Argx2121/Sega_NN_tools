@@ -17,7 +17,7 @@ def _get_image_type(model_format, texture_name, m_tex_index, m_tex_type):
                 m_tex_type = "emission"
             elif "_rf." in tex_name_str:
                 m_tex_type = "reflection"
-        elif model_format == "HouseOfTheDead4_C":  # shortcuts
+        elif model_format == "HouseOfTheDead4_C":
             if "_dif." in tex_name_str:
                 m_tex_type = "diffuse"
             elif "_nom." in tex_name_str:
@@ -45,11 +45,11 @@ class Material:  # functional, but needs a rework
             if not texture_name:
                 for m in material_list:
                     m.tex_count = 0
-            elif type(texture_name[0]) == str:
-                texture_name = make_bpy_textures(texture_name)
-                if type(texture_name[0]) == str:
-                    for m in material_list:
-                        m.tex_count = 0
+        if texture_name:
+            texture_name = make_bpy_textures(texture_name)
+            if type(texture_name[0]) == str:
+                for m in material_list:
+                    m.tex_count = 0
 
         for mat_index in range(material_count):
             # make material - first mat data stored

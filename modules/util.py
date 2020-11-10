@@ -1,9 +1,11 @@
 # this file just collects common functions
 import os
+from platform import system
 from struct import unpack, pack
 from sys import stdout
 from time import time
 from typing import BinaryIO, Tuple, Any, Union
+import pathlib
 
 import bpy
 
@@ -41,18 +43,37 @@ def get_files(file_path: str, name_ignore: str = False, name_require: str = Fals
 def make_bpy_textures(texture_names):  # see if textures already exist in the folder
     has_png = True  # png shouldn't be used in game but converted image files might be .png
     has_dds = True
-    for tex in texture_names:
-        if not os.path.exists(tex[:-4] + ".png"):
+    path_base = pathlib.Path(bpy.path.abspath(texture_names[0]).rstrip(bpy.path.basename(texture_names[0])))
+
+    path_list_dds = [str(path) for path in path_base.rglob("*.dds")]
+    path_list_png = [str(path) for path in path_base.rglob("*.png")]
+    dds_join = ', '.join(path_list_dds).casefold()
+    png_join = ', '.join(path_list_png).casefold()
+
+    texture_names = [bpy.path.basename(tex.split(".")[0]) for tex in texture_names]
+
+    for name in texture_names:
+        if name.casefold() not in png_join:
             has_png = False
-            break
-    for tex in texture_names:
-        if not os.path.exists(tex[:-4] + ".dds"):
+        if name.casefold() not in dds_join:
             has_dds = False
-            break
+
+    img_list = []
+
+    if system() == "Windows":
+        var = "\\"
+    else:
+        var = "/"
+
     if has_png:
-        return [bpy.data.images.load(tex[:-4] + ".png") for tex in texture_names]
+        for name in texture_names:
+            [img_list.append(path) for path in path_list_png if (var + name + ".").casefold() in path.casefold()]
+        return [bpy.data.images.load(tex) for tex in img_list]
     elif has_dds:
-        return [bpy.data.images.load(tex[:-4] + ".dds") for tex in texture_names]
+        for name in texture_names:
+            [img_list.append(path) for path in path_list_dds if (var + name + ".").casefold() in path.casefold()]
+        return [bpy.data.images.load(tex) for tex in img_list]
+
     return texture_names
 
 

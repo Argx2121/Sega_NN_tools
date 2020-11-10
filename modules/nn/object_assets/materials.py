@@ -43,8 +43,7 @@ class Read:
         f = self.f
         material_count = self.material_count
         for _ in range(material_count):
-            self.texture_count.append(read_int(f, ">") >> 4)
-            self.info_offset.append(read_int(f))
+            self.info_offset.append(read_int_tuple(f, 2)[1])
 
     def _le_offsets_3(self):
         f = self.f
