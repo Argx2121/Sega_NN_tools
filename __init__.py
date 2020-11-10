@@ -30,15 +30,16 @@ if __package__ + ".io" in sys.modules:  # Sega_NN_tools is already loaded in to 
 import bpy
 
 from .io import nn_import, nn_import_settings
-from .ui import panels, srpc, preferences, s4e1
+from .ui import panels, srpc, preferences, s4e1, tha
 
 # classes
 classes = (
     nn_import_settings.ImportSegaNN, preferences.ImportSegaNN,
-    srpc.SonicRPCTextureTools, srpc.OpenTextureFolder, s4e1.Sonic4E1Tools,
+    srpc.SonicRPCTextureTools, srpc.OpenTextureFolder, s4e1.Sonic4E1Tools, tha.ExtractThaTools,
     panels.NN_PT_ModelPanel,
     panels.SRPC_PT_Panel,
     panels.S4E1_PT_Panel,
+    panels.THA_PT_Panel,
     panels.NN_PT_About
 )
 

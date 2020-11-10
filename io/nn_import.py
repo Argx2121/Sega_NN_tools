@@ -51,6 +51,24 @@ def match_text_handle(text):
 
 def match(filepath, settings):
     def execute(file_path):
+        def psu_x():
+            match_text_handle("Game assumed to be Phantasy Star Universe")
+            settings.format = "PhantasyStarUniverse_X"
+            phantasy_star_universe_x(file_path, settings)
+
+        def srzg_s():
+            match_text_handle("Game assumed to be Sonic Riders Zero Gravity")
+            settings.format = "SonicRidersZeroGravity_S"
+            read_all_file(file_path, settings)
+
+        def sfr_e():
+            match_text_handle("Game assumed to be Sonic Free Riders")
+            settings.format = "SonicFreeRiders_E"
+            sonic_free_riders_e(file_path, settings)
+
+        str_list = {
+            "NXOB": psu_x, "pack": srzg_s, "paST": sfr_e,
+        }
         settings.batch_import = "Single"
         print_line()
         f = open(file_path, 'rb')
@@ -60,7 +78,12 @@ def match(filepath, settings):
         f.seek(0)
         f.close()
 
-        if first_str[0] == "N" and first_str[2] == "I" and first_str[3] == "F":
+        if file_path[-4:] == "HMDL":
+            match_text_handle("Game assumed to be Transformers Human Alliance")
+            settings.format = "TransformersHumanAlliance_Z"
+            generic_import_1_type(file_path, settings)
+
+        elif first_str[0] == "N" and first_str[2] == "I" and first_str[3] == "F":
             if first_str[1] in [a[0] for a in no_list]:
                 match_text_handle("Reading as latest " + first_str[1] + "no format")
                 generic_import(file_path, settings)
@@ -68,22 +91,10 @@ def match(filepath, settings):
                 print("Couldn't match to a format")
                 stdout.flush()
 
-        elif first_str == "NXOB":
-            match_text_handle("Game assumed to be Phantasy Star Universe")
-            settings.format = "PhantasyStarUniverse_X"
-            phantasy_star_universe_x(file_path, settings)
+        elif first_str in str_list:
+            str_list[first_str]()
 
-        elif first_str == "pack":
-            match_text_handle("Game assumed to be Sonic Riders Zero Gravity")
-            settings.format = "SonicRidersZeroGravity_S"
-            read_all_file(file_path, settings)
-
-        elif first_str == "paST":
-            match_text_handle("Game assumed to be Sonic Free Riders")
-            settings.format = "SonicFreeRiders_E"
-            sonic_free_riders_e(file_path, settings)
-
-        elif 0 < first_uint < 100:  # typically ~ 45 models in a srpc map file
+        elif 0 < first_uint < 100 and "." not in bpy.path.basename(file_path):  # typically ~ 45 models in a map level
             match_text_handle("Game assumed to be Sonic Riders")
             settings.format = "SonicRiders_X"
             sonic_riders_x(file_path, settings)

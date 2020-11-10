@@ -14,7 +14,8 @@ no_list = (
     ("Z", "ZNO", "Zno"),
 )
 
-# game formats from newest to oldest
+# the formats should be sorted by date, with the exception of the first one which has to be as unspecific as possible
+# the zno transformers format is identifiable as the model files all are *.HMDL so s4e1 must go first
 
 # syntax plays a role in importing so follow this arrangement - no_list is just for the user:
 # [game (caramel caps) + _ + nn indicator (_ for non game, in caps)], [game], [game + file | platform | release date]
@@ -51,6 +52,7 @@ xno_list = (
 
 zno_list = (
     ("Sonic4Episode1_Z", "Sonic 4 Ep 1", "Sonic 4 Episode 1 Model | 7 Oct 2010"),
+    ("TransformersHumanAlliance_Z", "Transformers: Human Alliance", "Transformers Human Alliance | 2013"),
 )
 
 
@@ -64,6 +66,7 @@ determine_bone = {
     "SonicRidersZeroGravity_S": 1,
     "Sonic2006_X": 10, "PhantasyStarUniverse_X": 1, "SonicRiders_X": 0.5,
     "Sonic4Episode1_Z": 1,
+    "TransformersHumanAlliance_Z": 1,
 }
 
 

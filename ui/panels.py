@@ -67,6 +67,15 @@ class S4E1_PT_Panel(GENERIC_panel, bpy.types.Panel):
         layout.operator("s4e1.extract")
 
 
+class THA_PT_Panel(GENERIC_panel, bpy.types.Panel):
+    bl_label = "Transformers: Human Alliance Tools"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("tha.extract")
+
+
 class NN_PT_About(GENERIC_panel, bpy.types.Panel):
     bl_label = "About"
 

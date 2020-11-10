@@ -261,10 +261,22 @@ class Read:
                         f.seek(16, 1)
                     extra_norms(BitFlags.extra_normals)
 
-            format_dict = {
+            def transformers_human_alliance_z():
+                for _ in range(vertex_count):
+                    pos(BitFlags.position)
+                    wei(BitFlags.weights, BitFlags.weight_indices)
+                    norm(BitFlags.normal)
+                    col(BitFlags.colour_short, BitFlags.colour_byte)
+                    uv_wx(None, BitFlags.uv)
+                    if BitFlags.wx:
+                        f.seek(16, 1)
+                    extra_norms(BitFlags.extra_normals)
+
+            format_dict = {  # z needs flags fixed - xtra normals arent normals
                 "SonicRiders_X": sonic_riders_x, "PhantasyStarUniverse_X": phantasy_star_universe_x,
                 "Sonic2006_X": sonic_2006_x,
                 "Sonic4Episode1_Z": sonic_4_episode_1_z,
+                "TransformersHumanAlliance_Z": transformers_human_alliance_z,
             }
             format_dict[self.format_type]()
 
