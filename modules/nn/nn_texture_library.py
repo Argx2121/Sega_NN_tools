@@ -2,6 +2,8 @@ from ..util import *
 
 
 class Read:
+    __slots__ = ["f", "filepath"]
+
     def __init__(self, f: BinaryIO, filepath: str):
         """Reads a N*TL block.
 
@@ -26,25 +28,22 @@ class Read:
         self.f = f
         self.filepath = filepath.rstrip(bpy.path.basename(filepath))
 
-    def type_1(self):
+    def le(self):
         f = self.f
         start_block = f.tell() - 4
-        block_len, to_texture_count = read_int_tuple(f, 2)
-        f.seek(to_texture_count + start_block)
-        texture_count = read_int(f)
-        f.seek(4, 1)
-        texture_names = read_str_nulls(f, start_block + block_len + 8 - f.tell())[:texture_count]
-        f.seek(start_block + block_len + 8)
+        end_of_block = start_block + read_int(f) + 8
+        f.seek(read_int(f) + start_block)
+        texture_count = read_int_tuple(f, 2)[0]
+        texture_names = read_str_nulls(f, end_of_block - f.tell())[:texture_count]
+        f.seek(end_of_block)
         return [self.filepath + t for t in texture_names]
 
-    def type_2(self):
+    def be(self):
         f = self.f
         start_block = f.tell() - 4
-        block_len = read_int(f)
-        to_texture_count = read_int(f, ">")
-        f.seek(to_texture_count + start_block)
-        texture_count = read_int(f, ">")
-        f.seek(4, 1)
-        texture_names = read_str_nulls(f, start_block + block_len + 8 - f.tell())[:texture_count]
-        f.seek(start_block + block_len + 8)
+        end_of_block = start_block + read_int(f) + 8
+        f.seek(read_int(f, ">") + start_block)
+        texture_count = read_int_tuple(f, 2, ">")[0]
+        texture_names = read_str_nulls(f, end_of_block - f.tell())[:texture_count]
+        f.seek(end_of_block)
         return [self.filepath + t for t in texture_names]

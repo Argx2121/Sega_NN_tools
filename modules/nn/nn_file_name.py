@@ -2,6 +2,8 @@ from ..util import *
 
 
 class Read:
+    __slots__ = ["f"]
+
     def __init__(self, f: BinaryIO):
         """Reads a NFN0 block.
 
@@ -23,9 +25,9 @@ class Read:
 
     def generic(self) -> str:
         f = self.f
-        start_nfn0 = f.tell() - 4
         block_len = read_int(f)
+        end_of_block = block_len + f.tell()
         f.seek(8, 1)
         file_name = read_str_nulls(f, block_len)[0]
-        f.seek(start_nfn0 + block_len + 8)
+        f.seek(end_of_block)
         return file_name

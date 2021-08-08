@@ -2,6 +2,8 @@ from ..util import *
 
 
 class Read:
+    __slots__ = ["f"]
+
     def __init__(self, f: BinaryIO):
         """Reads a NEND block.
 
@@ -18,5 +20,4 @@ class Read:
 
     def generic(self):
         f = self.f
-        block_len = read_int(f)
-        f.seek(block_len, 1)
+        f.seek(read_int(f), 1)

@@ -2,6 +2,8 @@ from ..util import *
 
 
 class Read:
+    __slots__ = ["f"]
+
     def __init__(self, f: BinaryIO):
         """Reads a N*EF block.
 
@@ -19,5 +21,4 @@ class Read:
 
     def type_1(self):
         f = self.f
-        n_block_len = read_int(f)
-        f.seek(n_block_len, 1)
+        f.seek(read_int(f), 1)

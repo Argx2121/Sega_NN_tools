@@ -1,19 +1,18 @@
-# this file just collects common functions
 import os
-from platform import system
+import bpy
+import pathlib  # used by files that import util
 from struct import unpack, pack
 from sys import stdout
 from time import time
-from typing import BinaryIO, Tuple, Any, Union
-import pathlib
-
-import bpy
+from typing import BinaryIO, Tuple, Any, Union  # Union is used by files that import util
 
 
-# large functions
+# collection of common functions
+
+# functions
 
 
-def get_files(file_path: str, name_ignore: str = False, name_require: str = False) -> list:
+def get_files(file_path: str, name_ignore: str = False, name_require: str = False, case_sensitive: bool = True) -> list:
     """Returns a list of file names in the current folder with optional restrictions on name.
 
     Parameters
@@ -24,6 +23,8 @@ def get_files(file_path: str, name_ignore: str = False, name_require: str = Fals
         String that files should not have in their name.
     name_require : str
         String that files should have in their name.
+    case_sensitive: bool
+        If the strings are case sensitive (defaults to true).
 
     Returns
     -------
@@ -33,6 +34,9 @@ def get_files(file_path: str, name_ignore: str = False, name_require: str = Fals
     """
     file_path = bpy.path.abspath(file_path).rstrip(bpy.path.basename(file_path))
     file_list = [file for file in os.listdir(file_path) if os.path.isfile(file_path + file)]
+    if not case_sensitive:
+        name_require = name_require.casefold()
+        file_list = [file.casefold() for file in file_list]
     if name_require:
         file_list = [file for file in file_list if name_require in file]
     if name_ignore:
@@ -40,97 +44,8 @@ def get_files(file_path: str, name_ignore: str = False, name_require: str = Fals
     return [file_path + file for file in file_list]
 
 
-def make_bpy_textures(texture_names):  # see if textures already exist in the folder
-    has_png = True  # png shouldn't be used in game but converted image files might be .png
-    has_dds = True
-    path_base = pathlib.Path(bpy.path.abspath(texture_names[0]).rstrip(bpy.path.basename(texture_names[0])))
-
-    path_list_dds = [str(path) for path in path_base.rglob("*.dds")]
-    path_list_png = [str(path) for path in path_base.rglob("*.png")]
-    dds_join = ', '.join(path_list_dds).casefold()
-    png_join = ', '.join(path_list_png).casefold()
-
-    texture_names = [bpy.path.basename(tex.split(".")[0]) for tex in texture_names]
-
-    for name in texture_names:
-        if name.casefold() not in png_join:
-            has_png = False
-        if name.casefold() not in dds_join:
-            has_dds = False
-
-    img_list = []
-
-    if system() == "Windows":
-        var = "\\"
-    else:
-        var = "/"
-
-    if has_png:
-        for name in texture_names:
-            [img_list.append(path) for path in path_list_png if (var + name + ".").casefold() in path.casefold()]
-        return [bpy.data.images.load(tex) for tex in img_list]
-    elif has_dds:
-        for name in texture_names:
-            [img_list.append(path) for path in path_list_dds if (var + name + ".").casefold() in path.casefold()]
-        return [bpy.data.images.load(tex) for tex in img_list]
-
-    return texture_names
-
-
-def le_read_texture_block_info(f: BinaryIO) -> tuple:
-    """Reads texture block info. Returns start offset, count, type_byte, offsets and names.
-
-    Parameters
-    ----------
-    f : BinaryIO
-        The file read.
-
-    Returns
-    -------
-    list
-        Start offset, count, type_byte, offsets and names.
-
-    """
-    tex_start = f.tell()
-    img_count = read_short(f)
-    _, image_pad = read_byte_tuple(f, 2)
-    texture_offsets = read_int_tuple(f, img_count)
-    tex_names_len = (texture_offsets[0] - (4 * img_count + 4 + img_count * image_pad))
-    f.seek(tex_start + 4 + img_count * 4 + img_count * image_pad - 1)
-    type_byte = read_byte(f)
-    texture_names = [name.replace("/", ".").replace("\\", ".").replace(".....", ".").replace("..", ".") for name in
-                     read_str_nulls(f, tex_names_len)[:img_count]]
-    texture_names = [bpy.path.native_pathsep(t) for t in texture_names]
-    return tex_start, img_count, type_byte, texture_offsets, texture_names
-
-
-def be_read_texture_block_info(f: BinaryIO) -> tuple:
-    """Reads texture block info. Returns start offset, count, type_byte, offsets and names.
-
-    Parameters
-    ----------
-    f : BinaryIO
-        The file read.
-
-    Returns
-    -------
-    list
-        Start offset, count, type_byte, offsets and names.
-
-    """
-    tex_start = f.tell()
-    img_count = read_short(f, ">")
-    f.seek(2, 1)
-    texture_offsets = read_int_tuple(f, img_count, ">")
-    texture_lens = read_int_tuple(f, img_count, ">")
-    tex_names_len = (texture_offsets[0] - f.tell() + tex_start)
-    texture_names = [name.replace("/", ".").replace("\\", ".").replace(".....", ".").replace("..", ".") for name in
-                     read_str_nulls(f, tex_names_len)[:img_count]]
-    texture_names = [bpy.path.native_pathsep(t) for t in texture_names]
-    return tex_start, img_count, texture_names, texture_offsets, texture_lens
-
-
-def console_out(text: str, execute, variable=None) -> Any:
+# noinspection PyArgumentList
+def console_out(text: str, execute, variable: Any = None) -> Any:
     """Prints a string to the console with padding to 50 letters, executes a function and prints the time it took.
 
     Parameters
@@ -147,7 +62,7 @@ def console_out(text: str, execute, variable=None) -> Any:
     Returns
     -------
     Any
-        The functions return data
+        The functions return info
     """
     def console_print():
         stdout.write(text)
@@ -198,8 +113,33 @@ def console_out_post(s_time: float):
     stdout.flush()
 
 
+def show_finished(tool_name):
+    """Shows a pop-up to tell the user a process is finished"""
+    def draw(self, context):
+        self.layout.label(text="Finished!")
+    bpy.context.window_manager.popup_menu(draw, tool_name, "INFO")
+
+
+def toggle_console():
+    """Toggles Blenders console if on windows"""
+    from platform import system
+    if system() == "Windows":
+        bpy.ops.wm.console_toggle()
+
+
+def print_line():
+    """Prints a line of 50 hyphens to the console"""
+    print("--------------------------------------------------")
+
+
+# read / write info
+
+# functions
+
+
+# noinspection PyArgumentList
 def for_each_offset(f: BinaryIO, post_info: int, offsets: list, execute, variable) -> list:
-    """Executes a function at each offset + post_info amd returns returned data.
+    """Executes a function at each offset + start amd returns returned info.
 
         Parameters
         ----------
@@ -221,7 +161,7 @@ def for_each_offset(f: BinaryIO, post_info: int, offsets: list, execute, variabl
         Returns
         -------
         tuple
-            Tuple containing each executed functions return data from the offset
+            Tuple containing each executed functions return info from the offset
 
         """
     function_list = []
@@ -229,25 +169,6 @@ def for_each_offset(f: BinaryIO, post_info: int, offsets: list, execute, variabl
         f.seek(offset + post_info)
         function_list.append(execute(variable))
     return function_list
-
-# small functions
-
-
-def toggle_console():
-    """Toggles Blenders console if on windows"""
-    from platform import system
-    if system() == "Windows":
-        bpy.ops.wm.console_toggle()
-
-
-def print_line():
-    """Prints a line of 50 hyphens to the console"""
-    print("--------------------------------------------------")
-
-
-# read / write data
-
-# alignment
 
 
 def read_aligned(file: BinaryIO, divide_by: int):
@@ -276,10 +197,10 @@ def write_aligned(file: BinaryIO, divide_by: int):
         Alignment to write to.
     """
     while file.tell() % divide_by:
-        write_byte(file)
+        write_byte(file, "<")
 
 
-# read data
+# read info
 
 
 def read_str(file: BinaryIO, count: int) -> str:
@@ -465,7 +386,7 @@ def read_half_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[float, ...]
             A tuple of floats.
 
     """
-    return unpack(endian + str(count) + "f", file.read(count * 2))
+    return unpack(endian + str(count) + "e", file.read(count * 2))
 
 
 def read_int_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
@@ -537,7 +458,7 @@ def read_byte_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
     return unpack(endian + str(count) + "B", file.read(count))
 
 
-# write data
+# write info
 
 
 def write_string(file: BinaryIO, *value: bytes):
@@ -556,7 +477,7 @@ def write_string(file: BinaryIO, *value: bytes):
         file.write(pack(str(len(values)) + "s", values))
 
 
-def write_float(file: BinaryIO, *value: float):
+def write_float(file: BinaryIO, endian: str, *value: float):
     """Writes a tuple of floats to a file.
 
         Parameters
@@ -564,15 +485,18 @@ def write_float(file: BinaryIO, *value: float):
         file : BinaryIO
             The file to write to.
 
+        endian :
+            Endian of what's being wrote.
+
         value : tuple
             The floats to write.
 
     """
     for values in value:
-        file.write(pack("f", values))
+        file.write(pack(endian + "f", values))
 
 
-def write_integer(file: BinaryIO, *value: int):
+def write_integer(file: BinaryIO, endian: str, *value: int):
     """Writes a tuple of integers to a file.
 
         Parameters
@@ -580,15 +504,18 @@ def write_integer(file: BinaryIO, *value: int):
         file : BinaryIO
             The file to write to.
 
+        endian :
+            Endian of what's being wrote.
+
         value : tuple
             The integers to write.
 
     """
     for values in value:
-        file.write(pack("I", values))
+        file.write(pack(endian + "I", values))
 
 
-def write_short(file: BinaryIO, *value: int):
+def write_short(file: BinaryIO, endian: str, *value: int):
     """Writes a tuple of shorts to a file.
 
         Parameters
@@ -596,15 +523,18 @@ def write_short(file: BinaryIO, *value: int):
         file : BinaryIO
             The file to write to.
 
+        endian :
+            Endian of what's being wrote.
+
         value : tuple
             The shorts to write.
 
     """
     for values in value:
-        file.write(pack("H", values))
+        file.write(pack(endian + "H", values))
 
 
-def write_byte(file: BinaryIO, *value: int):
+def write_byte(file: BinaryIO, endian: str, *value: int):
     """Writes a tuple of bytes to a file.
 
         Parameters
@@ -612,9 +542,12 @@ def write_byte(file: BinaryIO, *value: int):
         file : BinaryIO
             The file to write to.
 
+        endian :
+            Endian of what's being wrote.
+
         value : tuple
             The bytes to write.
 
     """
     for values in value:
-        file.write(pack("B", values))
+        file.write(pack(endian + "B", values))

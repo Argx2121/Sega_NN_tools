@@ -1,290 +1,336 @@
 import bpy
-
-from Sega_NN_tools.modules.util import make_bpy_textures
-
-
-def _get_image_type(model_format, texture_name, m_tex_index, m_tex_type):
-    tex_name = None
-    if texture_name:
-        tex_name = texture_name[m_tex_index]
-        tex_name_str = str(tex_name)
-        if model_format == "Sonic2006_X":  # shortcuts
-            if "_df." in tex_name_str:
-                m_tex_type = "diffuse"
-            elif "_nw." in tex_name_str:
-                m_tex_type = "normal"
-            elif "_sp." in tex_name_str:
-                m_tex_type = "emission"
-            elif "_rf." in tex_name_str:
-                m_tex_type = "reflection"
-        elif model_format == "HouseOfTheDead4_C":
-            if "_dif." in tex_name_str:
-                m_tex_type = "diffuse"
-            elif "_nom." in tex_name_str:
-                m_tex_type = "normal"
-            elif "_spe." in tex_name_str:
-                m_tex_type = "emission"
-            elif "_ref." in tex_name_str:
-                m_tex_type = "reflection"
-    return m_tex_type, tex_name
+import os
+import pathlib
+from platform import system
 
 
-class Material:  # functional, but needs a rework
+def _make_image(tree, image, settings):
+    node = tree.nodes.new(type="ShaderNodeTexImage")
+    node.image = image
+    if "clamp" in settings:
+        node.extension = "EXTEND"
+    return node
 
-    def make_material_complex(self):
-        model_format = self.format
-        texture_name = self.texture_names
-        material_count = self.model_data.data.material_count
-        mat_names = self.mat_names
-        material_list_blender = self.material_list_blender
-        material_list = self.model_data.materials
-        model_name_strip = self.model_name_strip
-        material_in_next_block = self.material_in_next_block
 
-        if model_format != "SonicRiders_X":
-            if not texture_name:
-                for m in material_list:
-                    m.tex_count = 0
-        if texture_name:
-            texture_name = make_bpy_textures(texture_name)
-            if type(texture_name[0]) == str:
-                for m in material_list:
-                    m.tex_count = 0
+def _mix_rgb(tree, input_1, input_2):
+    node = tree.nodes.new(type="ShaderNodeMixRGB")
+    node.inputs[0].default_value = 1
+    node.blend_type = 'MULTIPLY'
+    tree.links.new(node.inputs[1], input_1)
+    tree.links.new(node.inputs[2], input_2)
+    return node.outputs[0]
 
-        for mat_index in range(material_count):
-            # make material - first mat data stored
-            material = bpy.data.materials.new(mat_names[mat_index])
-            material_list_blender.append(material)
-            m = material_list[mat_index]
-            m_texture_count = m.tex_count
-            m_col = m.colour
-            transparency = m_col.rgba_main[3]
-            material.use_nodes = True
-            n_tree = material.node_tree
 
-            # generic stuff
-            final = n_tree.nodes["Material Output"]
-            final.location = 850, 150
+def _mix_colour_reflection(tree, input_1, input_2):
+    node = tree.nodes.new(type="ShaderNodeMixRGB")
+    # node.blend_type = 'MIX'
+    tree.links.new(node.inputs[1], input_1)
+    tree.links.new(node.inputs[2], input_2)
+    return node.outputs[0]
 
-            diffuse = n_tree.nodes["Principled BSDF"]
-            diffuse.name = "diffuse"
-            diffuse.location = 100, 520
 
-            mix_col = n_tree.nodes.new(type="ShaderNodeMixRGB")
-            mix_col.name = "mix_col"
-            mix_col.location = -200, 450
-            n_tree.nodes["mix_col"].inputs[0].default_value = 0
-            n_tree.nodes["mix_col"].blend_type = 'MULTIPLY'
+def _vertex_colours(tree, name):
+    node = tree.nodes.new(type="ShaderNodeVertexColor")
+    node.layer_name = name + "_Vertex_Colours"
+    return node.outputs[0]
 
-            mix_v_col = n_tree.nodes.new(type="ShaderNodeMixRGB")
-            mix_v_col.name = "mix_v_col"
-            mix_v_col.location = -500, 520
-            n_tree.nodes["mix_v_col"].inputs[0].default_value = 0
-            n_tree.nodes["mix_v_col"].blend_type = 'MULTIPLY'
 
-            rgba = n_tree.nodes.new(type="ShaderNodeRGB")
-            rgba.location = -700, 520
-            rgba.name = "RGB"
-            n_tree.nodes["RGB"].outputs[0].default_value = \
-                (m_col.rgba_main[0], m_col.rgba_main[1], m_col.rgba_main[2], 1)
-            if transparency != 1:  # transparency value
-                material.blend_method = "BLEND"
-                n_tree.nodes["diffuse"].inputs[18].default_value = transparency
+def _diffuse_rgba(tree, image, rgba, skip_textures):
+    rbg = tree.nodes.new(type="ShaderNodeRGB")
+    rbg.outputs[0].default_value = (rgba.colour[0], rgba.colour[1], rgba.colour[2], 1)
 
-            attr = n_tree.nodes.new(type="ShaderNodeAttribute")
-            attr.name = "Attr"
-            attr.location = - 850, 330
-            attr.attribute_name = model_name_strip + "_Vertex_Colours"
+    alpha = tree.nodes.new(type="ShaderNodeValue")
+    alpha.outputs[0].default_value = rgba.alpha
 
-            n_tree.links.new(final.inputs[0], diffuse.outputs[0])
-            n_tree.links.new(diffuse.inputs[0], mix_col.outputs[0])
-            n_tree.links.new(mix_col.inputs[1], mix_v_col.outputs[0])
-            n_tree.links.new(mix_v_col.inputs[1], rgba.outputs[0])
-            n_tree.links.new(mix_v_col.inputs[2], attr.outputs[0])
+    # image alpha - (rgba alpha * -1 + 1), clamped
+    multiply_add = tree.nodes.new(type="ShaderNodeMath")
+    multiply_add.operation = 'MULTIPLY_ADD'
 
-            # specialized
-            diffuse_done = False
-            reflection_done = False
-            normal_done = False
-            emission_done = False
-            for t_index in range(m_texture_count):
-                m_tex = m.texture[t_index]
-                m_tex_type = m_tex.tex_type
-                m_tex_set = m_tex.tex_setting
-                m_tex_index = m_tex.tex_index
+    subtract = tree.nodes.new(type="ShaderNodeMath")
+    subtract.operation = 'SUBTRACT'
+    subtract.use_clamp = True
 
-                m_tex_type, tex_name = _get_image_type(model_format, texture_name, m_tex_index, m_tex_type)
+    tree.links.new(multiply_add.inputs[0], alpha.outputs[0])
+    multiply_add.inputs[1].default_value = -1
+    multiply_add.inputs[2].default_value = 1
 
-                if m_tex_type == "diffuse":
-                    if not diffuse_done:
-                        diffuse_done = True
-                        tex_node = n_tree.nodes.new(type="ShaderNodeTexImage")
-                        tex_node.location = - 580, 300
-                        if m_tex_set == 3:
-                            tex_node.extension = "EXTEND"
-                        material.blend_method = "CLIP"
-                        if texture_name:
-                            tex_node.image = tex_name
-                            n_tree.links.new(diffuse.inputs[18], tex_node.outputs[1])
-                        else:
-                            material_in_next_block.append(
-                                [m_tex_index, tex_node, diffuse.inputs[18], tex_node.outputs[1], n_tree])
-                        n_tree.links.new(mix_col.inputs[2], tex_node.outputs[0])
-                        n_tree.nodes["mix_v_col"].inputs[0].default_value = 1
-                        n_tree.nodes["mix_col"].inputs[0].default_value = 1
-                elif m_tex_type == "normal":
-                    if not normal_done:
-                        normal_done = True
-                        tex_node = n_tree.nodes.new(type="ShaderNodeTexImage")
-                        tex_node.location = - 580, 20
-                        tex_node.image = tex_name
-                        tex_node.image.colorspace_settings.name = 'Non-Color'
+    if not skip_textures:
+        tree.links.new(subtract.inputs[0], image.outputs[1])
+    else:
+        subtract.inputs[0].default_value = 1
 
-                        norm_node = n_tree.nodes.new(type="ShaderNodeNormalMap")
-                        norm_node.location = - 200, 20
-                        if model_format == "Sonic2006_X":
-                            norm_node.space = 'WORLD'
+    alpha_invert = tree.nodes.new(type="ShaderNodeInvert")
+    tree.links.new(alpha_invert.inputs[1], subtract.outputs[0])
 
-                        n_tree.links.new(norm_node.inputs[1], tex_node.outputs[0])
-                        n_tree.links.new(diffuse.inputs[-3], norm_node.outputs[0])
+    tree.links.new(subtract.inputs[1], multiply_add.outputs[0])
 
-                elif m_tex_type == "reflection":
-                    if not reflection_done:
-                        reflection_done = True
-                        env_node = n_tree.nodes.new(type="ShaderNodeTexImage")
-                        env_node.location = 100, -130
+    return _mix_rgb(tree, image.outputs[0], rbg.outputs[0]), alpha_invert.outputs[0]
 
-                        spec = n_tree.nodes.new(type="ShaderNodeEeveeSpecular")
-                        spec.name = "spec"
-                        spec.location = 400, -50
 
-                        tex_co = n_tree.nodes.new(type="ShaderNodeTexCoord")
-                        tex_co.name = "tex_co"
-                        tex_co.location = - 120, - 120
+def _rgba(tree, rgba):
+    rbg = tree.nodes.new(type="ShaderNodeRGB")
+    rbg.outputs[0].default_value = (rgba.colour[0], rgba.colour[1], rgba.colour[2], 1)
 
-                        end_node = n_tree.nodes.new(type="ShaderNodeMixShader")
-                        end_node.name = "end_node"
-                        end_node.location = 600, 140
-                        n_tree.nodes["end_node"].inputs[0].default_value = 0.5
+    alpha = tree.nodes.new(type="ShaderNodeValue")
+    alpha.outputs[0].default_value = rgba.alpha
+    alpha_invert = tree.nodes.new(type="ShaderNodeInvert")
+    tree.links.new(alpha_invert.inputs[1], alpha.outputs[0])
 
-                        if model_format == "Sonic2006_X":
-                            material.blend_method = "BLEND"
-                            n_tree.nodes["diffuse"].inputs[18].default_value = 0
+    return rbg.outputs[0], alpha_invert.outputs[0]
 
-                        if m_tex_set == 3:
-                            tex_node.extension = "EXTEND"
-                        if texture_name:
-                            env_node.image = tex_name
-                            n_tree.links.new(env_node.inputs[0], tex_co.outputs[6])
-                        else:
-                            material_in_next_block.append(
-                                [m_tex_index, env_node, env_node.inputs[0], tex_co.outputs[6], n_tree])
 
-                        n_tree.links.remove(diffuse.outputs[0].links[0])
-                        n_tree.links.new(spec.inputs[0], env_node.outputs[0])
-                        n_tree.links.new(end_node.inputs[1], diffuse.outputs[0])
-                        n_tree.links.new(end_node.inputs[2], spec.outputs[0])
-                        n_tree.links.new(final.inputs[0], end_node.outputs[0])
-                elif m_tex_type == "emission":
-                    if not emission_done:
-                        emission_done = True
-                        env_node = n_tree.nodes.new(type="ShaderNodeTexImage")
-                        env_node.location = 100, -130
+def _reflection(tree, image):
+    node = tree.nodes.new(type="ShaderNodeTexCoord")
+    tree.links.new(image.inputs[0], node.outputs[6])
+    return image.outputs[0]
 
-                        emiss = n_tree.nodes.new(type="ShaderNodeEmission")
-                        emiss.name = "emiss"
-                        emiss.location = 400, -50
 
-                        end_node = n_tree.nodes.new(type="ShaderNodeAddShader")
-                        end_node.name = "end_node"
-                        end_node.location = 600, 140
+def _normal(tree, image, settings, skip_textures):
+    if not skip_textures:
+        image.image.colorspace_settings.name = 'Non-Color'
+    node = tree.nodes.new(type="ShaderNodeNormalMap")
+    tree.links.new(node.inputs[1], image.outputs[0])
+    if "world" in settings:
+        node.space = 'WORLD'
+    return node.outputs[0]
 
-                        env_node.image = tex_name
 
-                        n_tree.links.remove(diffuse.outputs[0].links[0])
-                        n_tree.links.new(emiss.inputs[0], env_node.outputs[0])
-                        n_tree.links.new(emiss.inputs[1], env_node.outputs[1])
-                        n_tree.links.new(end_node.inputs[0], diffuse.outputs[0])
-                        n_tree.links.new(end_node.inputs[1], emiss.outputs[0])
-                        n_tree.links.new(final.inputs[0], end_node.outputs[0])
-                else:  # unsupported textures
-                    pass
+def _bump(tree, image):
+    image.image.colorspace_settings.name = 'Non-Color'
+    node = tree.nodes.new(type="ShaderNodeBump")
+    tree.links.new(node.inputs[2], image.outputs[0])
+    return node.outputs[0]
 
-    def make_material_simple(self):  # for exporting to fbx etc, so keep it simple.
-        model_format = self.format
-        texture_name = self.texture_names
-        material_count = self.model_data.data.material_count
-        mat_names = self.mat_names
-        material_list_blender = self.material_list_blender
-        material_list = self.model_data.materials
-        material_in_next_block = self.material_in_next_block
 
-        if model_format != "SonicRiders_X":
-            if not texture_name:
-                for m in material_list:
-                    m.tex_count = 0
-            elif type(texture_name[0]) == str:
-                for m in material_list:
-                    m.tex_count = 0
+def material_complex(self):
+    texture_name = self.texture_names
+    material_count = self.model.info.material_count
+    mat_names = self.mat_names
+    material_list_blender = self.material_list_blender
+    material_list = self.model.materials
+    model_name_strip = self.model_name_strip
 
-        for mat_index in range(material_count):
-            # make material - first mat data stored
-            material = bpy.data.materials.new(mat_names[mat_index])
-            material_list_blender.append(material)
-            m = material_list[mat_index]
-            m_texture_count = m.tex_count
-            material.use_nodes = True
-            n_tree = material.node_tree
+    skip_textures = False
 
-            # generic stuff
-            final = n_tree.nodes["Material Output"]
-            final.location = 850, 150
+    if not texture_name:
+        skip_textures = True
+    elif texture_name:
+        texture_name = make_bpy_textures(texture_name, self.settings.recursive_textures)
+        if type(texture_name[0]) == str:
+            skip_textures = True
 
-            diffuse = n_tree.nodes["Principled BSDF"]
-            diffuse.name = "diffuse"
-            diffuse.location = 100, 520
+    for mat_index in range(material_count):
+        material = bpy.data.materials.new(mat_names[mat_index])
+        material_list_blender.append(material)
 
-            n_tree.links.new(final.inputs[0], diffuse.outputs[0])
+        m = material_list[mat_index]
+        m_texture_count = m.texture_count
+        m_col = m.colour
+        material.use_nodes = True
+        tree = material.node_tree
 
-            # specialized
-            diffuse_done = False
-            normal_done = False
-            for t_index in range(m_texture_count):
-                m_tex = m.texture[t_index]
-                m_tex_type = m_tex.tex_type
-                m_tex_set = m_tex.tex_setting
-                m_tex_index = m_tex.tex_index
+        material.blend_method = "HASHED"
+        material.show_transparent_back = False
+        # ideally transparency would only be used if needed but there isn't a way to tell at the moment
+        # show_transparent_back is usually needed off however if used on shadows 06 model it messes up the normals
+        # if black means transparent and the image has gradients, separate hsv -> image input, v output
+        tree.nodes.remove(tree.nodes["Principled BSDF"])
 
-                m_tex_type, tex_name = _get_image_type(model_format, texture_name, m_tex_index, m_tex_type)
+        # noinspection SpellCheckingInspection
+        n_end = tree.nodes.new(type="ShaderNodeEeveeSpecular")
+        n_end.inputs[2].default_value = 0.5
 
-                if m_tex_type == "diffuse":
-                    if not diffuse_done:
-                        diffuse_done = True
-                        tex_node = n_tree.nodes.new(type="ShaderNodeTexImage")
-                        tex_node.location = - 580, 300
-                        if m_tex_set == 3:
-                            tex_node.extension = "EXTEND"
-                        material.blend_method = "CLIP"
-                        if texture_name:
-                            tex_node.image = tex_name
-                            n_tree.links.new(diffuse.inputs[0], tex_node.outputs[0])
-                        else:
-                            material_in_next_block.append(
-                                [m_tex_index, tex_node, diffuse.inputs[0], tex_node.outputs[0], n_tree])
-                elif m_tex_type == "normal":
-                    if not normal_done:
-                        normal_done = True
-                        tex_node = n_tree.nodes.new(type="ShaderNodeTexImage")
-                        tex_node.location = - 580, 20
-                        tex_node.image = tex_name
-                        tex_node.image.colorspace_settings.name = 'Non-Color'
+        tree.links.new(tree.nodes["Material Output"].inputs[0], n_end.outputs[0])
 
-                        norm_node = n_tree.nodes.new(type="ShaderNodeNormalMap")
-                        norm_node.location = - 200, 20
-                        if model_format == "Sonic2006_X":
-                            norm_node.space = 'WORLD'
+        colour = False
+        alpha = 1
+        reflection = False
 
-                        n_tree.links.new(norm_node.inputs[1], tex_node.outputs[0])
-                        n_tree.links.new(diffuse.inputs[-3], norm_node.outputs[0])
-                else:  # unsupported textures
-                    pass
+        for t_index in range(m_texture_count):
+            m_tex = m.texture[t_index]
+            m_tex_type = m_tex.type
+            m_tex_set = m_tex.setting
+            m_tex_index = m_tex.index
+
+            if m_tex_type == "none":
+                continue
+
+            if skip_textures:
+                image_node = _make_image(tree, None, m_tex_set)
+            else:
+                image_node = _make_image(tree, texture_name[m_tex_index], m_tex_set)
+
+            if m_tex_type == "diffuse":
+                colour, alpha = _diffuse_rgba(tree, image_node, m_col, skip_textures)
+                vertex_colours = _vertex_colours(tree, model_name_strip)
+                colour = _mix_rgb(tree, colour, vertex_colours)
+            elif m_tex_type == "normal":
+                displacement = _normal(tree, image_node, m_tex_set, skip_textures)
+                tree.links.new(n_end.inputs[5], displacement)
+            elif m_tex_type == "emission":
+                tree.links.new(n_end.inputs[3], image_node.outputs[0])
+            elif m_tex_type == "reflection":
+                reflection = _reflection(tree, image_node)
+            elif m_tex_type == "bump":
+                displacement = _bump(tree, image_node)
+                tree.links.new(n_end.inputs[5], displacement)
+            elif m_tex_type == "spectacular":
+                tree.links.new(n_end.inputs[1], image_node.outputs[0])
+
+        if not colour:  # if a diffuse texture hasn't been found
+            colour, alpha = _rgba(tree, m_col)
+            vertex_colours = _vertex_colours(tree, model_name_strip)
+            colour = _mix_rgb(tree, colour, vertex_colours)
+
+        if reflection:
+            colour = _mix_colour_reflection(tree, colour, reflection)
+            # for some reason shadow 06 and probably other character models
+            #  like eye reflection colour output for fac in transparency shader
+            #  there isn't a way to determine if this needs to be set up though
+
+        tree.links.new(n_end.inputs[0], colour)
+        tree.links.new(n_end.inputs[4], alpha)
+
+
+def material_simple(self):  # for exporting to fbx etc, so keep it simple.
+    texture_name = self.texture_names
+    material_count = self.model.info.material_count
+    mat_names = self.mat_names
+    material_list_blender = self.material_list_blender
+    material_list = self.model.materials
+    model_name_strip = self.model_name_strip
+
+    skip_textures = False
+
+    if not texture_name:
+        skip_textures = True
+    elif texture_name:
+        texture_name = make_bpy_textures(texture_name, self.settings.recursive_textures)
+        if type(texture_name[0]) == str:
+            skip_textures = True
+
+    for mat_index in range(material_count):
+        material = bpy.data.materials.new(mat_names[mat_index])
+        material_list_blender.append(material)
+
+        m = material_list[mat_index]
+        m_texture_count = m.texture_count
+        m_col = m.colour
+        material.use_nodes = True
+        tree = material.node_tree
+
+        colour = False
+
+        for t_index in range(m_texture_count):
+            m_tex = m.texture[t_index]
+            m_tex_type = m_tex.type
+            m_tex_set = m_tex.setting
+            m_tex_index = m_tex.index
+
+            diffuse = tree.nodes["Principled BSDF"]
+
+            if m_tex_type == "none":
+                continue
+
+            if skip_textures:
+                image_node = _make_image(tree, None, m_tex_set)
+            else:
+                image_node = _make_image(tree, texture_name[m_tex_index], m_tex_set)
+
+            if m_tex_type == "diffuse":
+                _rgba(tree, m_col)  # generate even if they cant be used
+                _vertex_colours(tree, model_name_strip)
+
+                colour = True
+
+                tree.links.new(diffuse.inputs[0], image_node.outputs[0])
+            elif m_tex_type == "normal":
+                displacement = _normal(tree, image_node, m_tex_set, skip_textures)
+
+                tree.links.new(diffuse.inputs[-3], displacement)
+            elif m_tex_type == "emission":
+
+                tree.links.new(diffuse.inputs[-5], image_node.outputs[0])
+            elif m_tex_type == "bump":
+                displacement = _bump(tree, image_node)
+
+                tree.links.new(diffuse.inputs[-3], displacement)
+
+        if not colour:  # if a diffuse texture hasn't been found
+            _rgba(tree, m_col)
+            _vertex_colours(tree, model_name_strip)
+
+
+def _make_bpy_recursive(texture_names: list):
+    has_png = True  # png shouldn't be used in game but converted image files might be .png
+    has_dds = True
+    path_base = pathlib.Path(bpy.path.abspath(texture_names[0]).rstrip(bpy.path.basename(texture_names[0])))
+
+    path_list_dds = [str(path) for path in path_base.rglob("*.dds")]
+    path_list_png = [str(path) for path in path_base.rglob("*.png")]
+    dds_join = ', '.join(path_list_dds).casefold()
+    png_join = ', '.join(path_list_png).casefold()
+
+    texture_names = [bpy.path.basename(tex.split(".")[0]) for tex in texture_names]
+
+    for name in texture_names:
+        if name.casefold() not in png_join:
+            has_png = False
+            break
+    for name in texture_names:
+        if name.casefold() not in dds_join:
+            has_dds = False
+            break
+
+    img_list = []
+
+    if system() == "Windows":
+        var = "\\"
+    else:
+        var = "/"
+
+    if has_png:
+        for name in texture_names:
+            for path in path_list_png:
+                if (var + name + ".").casefold() in path.casefold():
+                    img_list.append(path)
+                    break
+        return [bpy.data.images.load(tex) for tex in img_list]
+    elif has_dds:
+        for name in texture_names:
+            for path in path_list_dds:
+                if (var + name + ".").casefold() in path.casefold():
+                    img_list.append(path)
+                    break
+        return [bpy.data.images.load(tex) for tex in img_list]
+
+    return texture_names
+
+
+def _make_bpy_non_recursive(texture_names: list):
+    has_png = True  # png shouldn't be used in game but converted image files might be .png
+    has_dds = True
+
+    for tex in texture_names:
+        if not os.path.exists(tex[:-4] + ".png"):
+            has_png = False
+            break
+    for tex in texture_names:
+        if not os.path.exists(tex[:-4] + ".dds"):
+            has_dds = False
+            break
+
+    if has_png:
+        return [bpy.data.images.load(tex[:-4] + ".png") for tex in texture_names]
+    elif has_dds:
+        return [bpy.data.images.load(tex[:-4] + ".dds") for tex in texture_names]
+
+    return texture_names
+
+
+def make_bpy_textures(texture_names: list, recursive: bool):  # get textures if they exist
+    # Imports textures to Blender, returns the loaded texture names.
+    if recursive:
+        return _make_bpy_recursive(texture_names)
+    else:
+        return _make_bpy_non_recursive(texture_names)

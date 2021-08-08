@@ -5,14 +5,16 @@ from ...util import *
 
 @dataclasses.dataclass
 class ArchiveInfo:
+    __slots__ = ["file_count", "sub_file_counts", "sub_file_offsets", "sub_file_additive_counts", "sub_file_types"]
     file_count: int
     sub_file_counts: Tuple[int, ...]
-    sub_file_info: Tuple[int, ...]
     sub_file_offsets: Tuple[int, ...]
+    sub_file_additive_counts: Tuple[int, ...]
+    sub_file_types: Tuple[int, ...]
 
 
 def read_archive(f: BinaryIO) -> ArchiveInfo:
-    """Reads the Archive data in Riders files.
+    """Reads the Archive info in Riders files.
 
     Usage : Required.
 
@@ -26,19 +28,14 @@ def read_archive(f: BinaryIO) -> ArchiveInfo:
     Returns
     -------
     ArchiveInfo :
-        The Archive data.
+        The Archive info.
 
     """
-    start_time = console_out_pre("Reading Archive Info...")
     file_count = read_int(f)
     sub_file_counts = read_byte_tuple(f, file_count)
     offset_count = sum(sub_file_counts)
     read_aligned(f, 4)
-    sub_file_info = read_short_tuple(f, 2 * file_count)
+    sub_shorts = read_short_tuple(f, file_count * 2)
     sub_file_offsets = read_int_tuple(f, offset_count)
     read_aligned(f, 16)
-    console_out_post(start_time)
-    print("File count is " + str(file_count) + ", Overall file count is", len(sub_file_offsets))
-    print("Files sub file counts are", sub_file_counts)
-    print("Files sub file offsets are", sub_file_offsets)
-    return ArchiveInfo(file_count, sub_file_counts, sub_file_info, sub_file_offsets)
+    return ArchiveInfo(file_count, sub_file_counts, sub_file_offsets, sub_shorts[:file_count], sub_shorts[file_count:])

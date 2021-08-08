@@ -1,31 +1,39 @@
+from dataclasses import dataclass
+from sys import stdout
+from time import time
+from typing import Any
+
+import bpy
 from bpy.props import StringProperty, EnumProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 
-from Sega_NN_tools.io.nn_import import *
 from Sega_NN_tools.io.nn_import_data import *
-from Sega_NN_tools.io.nn_import import determine_function
 
 
-# ImportHelper is a helper class, defines filename and
-# invoke() function which calls the file selector.
+from Sega_NN_tools.io.nn_import_data import no_list, determine_bone
+from Sega_NN_tools.modules.blender.model import Model
+from Sega_NN_tools.modules.nn.nn import ReadNn
+from Sega_NN_tools.modules.util import *
 
-class ImportSegaNN(bpy.types.Operator, ImportHelper):
+
+class ImportSegaNO(bpy.types.Operator, ImportHelper):
     """Import a Sega NN file (not necessarily an *.xno, *.zno etc file)"""
-    bl_idname = "import.sega_nn"  # important since its how bpy.ops.import_test.some_data is constructed
+    bl_idname = "import.sega_no"
     bl_label = "Import *no Model"
     bl_options = {'REGISTER', 'UNDO'}
-    filename_ext = ""  # ImportHelper mixin class uses this
+    filename_ext = "*.cno;*.eno;*.lno;*.sno;*.xno;*.zno"
     filter_glob: StringProperty(
-        default="*",
+        default="*.cno;*.eno;*.lno;*.sno;*.xno;*.zno",
         options={'HIDDEN'},
-        maxlen=255)  # Max internal buffer length, longer would be clamped.
+        maxlen=255)
 
     # generic
     no_format: EnumProperty(
         name="Format",
         description="*no variant",
         items=no_list,
-        default="Match__")
+        default=no_list[0][0],
+    )
 
     C: EnumProperty(
         name="Game",
@@ -58,6 +66,11 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
         items=zno_list,
     )
 
+    # other
+    recursive_textures: BoolProperty(
+        name="Recursive texture search",
+        description="Looks for textures in sub folders too",
+        default=False)
     batch: EnumProperty(
         name="Batch usage",
         description="If all files in a folder (non recursive) should be used",
@@ -67,8 +80,8 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
         default='Single')
     simple_mat: BoolProperty(
         name="Simple materials (for export)",
-        description="Keep materials simple for exporting to other formats, meaning not all material data is imported",
-        default=False)
+        description="Keep materials simple for exporting to other formats, meaning not all material info is imported",
+        default=True)
 
     # bones
     length: BoolProperty(
@@ -84,24 +97,7 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
         description="Don't import bone scale - importing may make models appear distorted",
         default=True)
 
-    # riders specific
-    image: EnumProperty(
-        name="Image naming conventions",
-        description="How extracted texture names should be formatted",
-        items=(
-            ('Simple', "Simple Names",
-             "Allows textures with the same name to be replace each other (syntax: Texture_name.dds)"),
-            ('Complex', "Specific Names",
-             "Prevents a texture from being replaced by one with the same name (syntax: Name.file.subfile.index.dds)")),
-        default='Complex')
-    all_blocks: BoolProperty(
-        name="Import models+ (Experimental!!)",
-        description="Imports models, collision, pathfinding, etc. instead of just models",
-        default=False)
-
-    # debug specific
-
-    # dev
+    # dev specific
     clean: BoolProperty(
         name="Clean mesh",
         description="Remove anything that will make blender crash - speeds up importing at the cost of edit mode",
@@ -109,7 +105,7 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
 
     debug: BoolProperty(
         name="Debug mode",
-        description="Print debug data",
+        description="Print debug info",
         default=True)
 
     def draw(self, context):
@@ -117,15 +113,15 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
         preferences = bpy.context.preferences.addons[__package__.partition(".")[0]].preferences
         layout.label(text="Sega NN importer settings:", icon="KEYFRAME_HLT")
 
-        layout.row().prop(self, "no_format")
         no_nn_format = self.no_format
+        layout.row().prop(self, "no_format")
         if not no_nn_format.endswith("_"):
             layout.row().prop(self, no_nn_format)
-        specific(no_nn_format, self)
 
         box = layout.box()
         box.label(text="Generic settings:", icon="KEYFRAME_HLT")
         box.row().prop(self, "batch", expand=True)
+        box.row().prop(self, "recursive_textures")
         box.row().prop(self, "simple_mat")
         box.row().prop(self, "bone")
         box.row().prop(self, "length")
@@ -142,22 +138,84 @@ class ImportSegaNN(bpy.types.Operator, ImportHelper):
             self.clean = True
             self.debug = False
         settings = Settings(
-            "", 0, self.debug,
+            "", 0, self.debug, self.recursive_textures,
             self.batch, self.clean, self.simple_mat,
             self.length, preferences.max_len, self.pose, self.bone,
-            # srpc
-            self.all_blocks, self.image
         )
-        no_nn_format = self.no_format
+        no_nn_format = self.no_format  # "Match__", "E" etc
         no_format = getattr(self, no_nn_format, no_nn_format)
+        # "Match__", "SonicFreeRiders_E" etc defaults to match
         settings.format = no_format
         settings.format_bone_scale = determine_bone[no_format]
 
-        if no_format in determine_function:
-            return determine_function[no_format](self.filepath, settings)
+        # this gives us a game name
+        if no_format != "Match__":
+            pass  # user selected game name
+        elif self.filepath.count(".") > 1 and self.filepath.split(".")[-2] in determine_bone:
+            # dictionary has all game types
+            settings.format = self.filepath.split(".")[-2]
+            # if extracted by these tools game name is in file name
         else:
-            return generic_import_1_type(self.filepath, settings)
+            settings.format = getattr(self, self.filepath[-3].upper())
+            # gets *no type and uses name from * list of games
+        settings.format_bone_scale = determine_bone[settings.format]
+
+        return model_import(self.filepath, settings)
 
 
 def menu_func_import(self, context):  # add to dynamic menu
-    self.layout.operator(ImportSegaNN.bl_idname, text="Sega NN (.xno, .zno, etc.)")
+    self.layout.operator(ImportSegaNO.bl_idname, text="Sega NN Model (.xno, .zno, etc.)")
+
+
+@dataclass
+class Settings:
+    # generic
+    format: str
+    format_bone_scale: int
+    debug: bool
+    recursive_textures: bool
+    batch_import: str
+    clean_mesh: bool
+    simple_materials: bool
+    all_bones_one_length: bool
+    max_bone_length: float
+    ignore_bone_scale: bool
+    hide_null_bones: bool
+
+
+def model_import(filepath, settings):
+    def execute(file_path):
+        f = open(file_path, 'rb')
+        block = read_str_nulls(f, 4)[0]
+        f.seek(0)
+        expected_block = "N" + settings.format[-1] + "IF"
+        print_line()
+        if block == expected_block:  # this catches files that get past name requirements (file.game.xno.texture_names)
+            nn = ReadNn(f, file_path, settings.format, settings.debug).read_file()[1]
+            if nn.model:
+                Model(nn, settings).execute()
+        f.close()
+
+    name_require = "." + settings.format[-1].lower() + "no"
+    batch_handler(filepath, settings.batch_import, execute, name_require=name_require, case_sensitive=False)
+    return {'FINISHED'}
+
+
+def batch_handler(filepath: str, batch_import: str, func: Any, name_ignore: str = False, name_require: str = False,
+                  case_sensitive: bool = True):
+    start_time = time()
+    if batch_import == "Single":
+        func(filepath)
+        stdout.flush()
+    else:
+        toggle_console()
+        file_list = get_files(filepath, name_ignore, name_require, case_sensitive)
+        for filepath in file_list:
+            func(filepath)
+            stdout.flush()
+        toggle_console()
+    print_line()
+
+    print("Done in %f seconds" % (time() - start_time))
+    print_line()
+    stdout.flush()

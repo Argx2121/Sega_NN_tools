@@ -3,71 +3,67 @@ from ...util import *
 
 # read + make textures
 class ExtractImage:
-    def __init__(self, f: BinaryIO, filepath: str, naming_style: str, file_index: int):
+    def __init__(self, f: BinaryIO, filepath: str):
         self.f = f
         self.filepath = filepath
-        self.image_naming = naming_style
-        self.texture_start = None
-        self.image_count = None
-        self.texture_offsets = []
-        self.texture_names = []
         self.texture_path = bpy.path.abspath(filepath).rstrip(bpy.path.basename(filepath))
-        self.tex_y = None
-        self.tex_x = None
-        self.texture_data = None
         self.texture_files = []
-        self.type_byte = None
-        self.file_index = file_index
+
+    def texture_block_info(self):
+        f = self.f
+        tex_start = f.tell()
+        img_count = read_short(f)
+        _, image_pad = read_byte_tuple(f, 2)
+        texture_offsets = read_int_tuple(f, img_count)
+        tex_names_len = (texture_offsets[0] - (4 * img_count + 4 + img_count * image_pad))
+        f.seek(tex_start + 4 + img_count * 4 + img_count * image_pad - 1)
+        type_byte = read_byte(f)
+        texture_bytes = f.read(tex_names_len)
+        f.seek(tex_start + 4 + img_count * 4 + img_count * image_pad)
+        texture_names = read_str_nulls(f, tex_names_len)[:img_count]
+        texture_names = [bpy.path.native_pathsep(t) for t in texture_names]
+        return tex_start, img_count, type_byte, texture_offsets, texture_names, texture_bytes
 
     def execute(self):
-        self.texture_start, self.image_count, self.type_byte, self.texture_offsets, self.texture_names = \
-            le_read_texture_block_info(self.f)
-        self.make_image()
-        return self.texture_files, self.texture_path, self.texture_names, self.type_byte
+        texture_start, image_count, type_byte, texture_offsets, texture_names, texture_bytes = \
+            self.texture_block_info()
+        self.make_image(texture_start, image_count, texture_offsets, texture_names)
+        return self.texture_files, self.texture_path, texture_names, type_byte, texture_bytes
 
-    def make_image(self):
+    def make_image(self, texture_start, image_count, texture_offsets, texture_names):
         f = self.f
         tex_path = self.texture_path
 
         def dxt(dxt_type, tex_mip=1):
-            tex_name_base = tex_path + self.texture_names[texture_index]
-            if self.image_naming == "Complex":
-                file_name = tex_name_base + "." + bpy.path.basename(self.filepath) + \
-                            "." + str(self.file_index) + "." + str(texture_index) + ".dds"
-            else:
-                file_name: str = tex_name_base + ".dds"
-            self.texture_files.append(file_name)
             ft = open(file_name, "wb")
+            pathlib.Path(file_name).parent.mkdir(parents=True, exist_ok=True)
             write_string(ft, b'DDS ')
             # block len, flags, x, y, pitch or linear size, depth, mip map count
-            size = self.tex_y * self.tex_x // 2  # is this right
-            write_integer(ft, 124, 659463, self.tex_y, self.tex_x, size, 1, tex_mip)
+            write_integer(ft, "<", 124, 659463, tex_y, tex_x, tex_y * tex_x // 2, 1, 1)  # stored mip count can be wrong
             # reserved block
+            # noinspection SpellCheckingInspection
             write_string(ft, b'TEXTUREFLAGS')
-            write_byte(ft, texture_type[0], texture_type[1], 0, 0)
-            for _ in range(5):
-                write_integer(ft, 0)
-            write_string(ft, b'PRTF')  # pc riders texture file lol
-            write_integer(ft, 0)
+            write_byte(ft, "<", tex_bin_1, tex_bin_2)
+            ft.write(b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
+            # noinspection SpellCheckingInspection
+            write_string(ft, b'PRTF')  # pc riders texture file
+            ft.write(b"\x00\x00\x00\x00")
             # pixel format block
             # block len, flags, string, bit count, bit masks (RGBA)
-            write_integer(ft, 32, 4)
-            write_string(ft, dxt_type)  # DX10 from nv tools
-            for _ in range(5):
-                write_integer(ft, 0)
+            write_integer(ft, "<", 32, 4)
+            write_string(ft, dxt_type)
+            ft.write(b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
             # caps (1 - 4), reserved 2
-            write_integer(ft, 4198408)
-            for _ in range(4):
-                write_integer(ft, 0)
+            write_integer(ft, "<", 4198408)
+            ft.write(b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
 
-            ft.write(self.texture_data)
+            ft.write(f.read(tex_len))
             ft.close()
 
         def dxt1():
             tex_mip = 1
-            if tex_bin_1 == "00000101":
-                if tex_bin_2 == "01110100":
-                    tex_mip = 4
+            if tex_bin_1 == 5 and tex_bin_2 == 116:
+                tex_mip = 4
             dxt(b'DXT1', tex_mip)
 
         def dxt3():
@@ -101,7 +97,7 @@ class ExtractImage:
 
         def read_pixel(r_bits, g_bits, b_bits, a_bits=0):
             # get colours
-            pixel_count = self.tex_y * self.tex_x
+            pixel_count = tex_y * tex_x
             colour_list = []
             bit_len = r_bits + g_bits + b_bits + a_bits
             byte_len = bit_len // 8  # 1 byte = 8 bits
@@ -132,9 +128,9 @@ class ExtractImage:
             return colour_list
 
         def write_pixel(colour_list):
-            file_name: str = tex_path + self.texture_names[texture_index] + "." + str(texture_index) + ".tiff"
+            # file_name: str = tex_path + texture_names[texture_index] + "." + str(texture_index) + ".tiff"
             self.texture_files.append(file_name)
-            img = bpy.data.images.new(self.texture_names[texture_index], self.tex_x, self.tex_y, alpha=True)
+            img = bpy.data.images.new(texture_names[texture_index], tex_x, tex_y, alpha=True)
             img.pixels = colour_list
             img.update()
             img.file_format = "TIFF"
@@ -142,27 +138,28 @@ class ExtractImage:
             img.save()
 
         dxt_format = {
-            "01110011": dxt1, "01110100": dxt1,
-            "01110101": dxt3, "01110110": dxt3, "01110111": dxt3,
-            "01111001": dxt4,
-            "01111011": dxt5}
+            115: dxt1, 116: dxt1,
+            117: dxt3, 118: dxt3, 119: dxt3,
+            121: dxt4,
+            123: dxt5}
 
         pix_format = {"01110000": pixel, "01110001": pixel}  # pixels still swizzled
 
-        # get the data we need and write image as dds
+        # get the info we need and write image as dds
         # tex index included in case of name double ups
-        for texture_index in range(self.image_count):
-            texture_offset_current = self.texture_offsets[texture_index]
-            f.seek(self.texture_start + texture_offset_current + 20)
+        for texture_index in range(image_count):
+            texture_offset_current = texture_offsets[texture_index]
+            f.seek(texture_start + texture_offset_current + 20)
             tex_len = read_int(f) - 40
-            texture_type = read_byte_tuple(f, 2)
-            tex_bin_1 = format(texture_type[0], "08b")
-            tex_bin_2 = format(texture_type[1], "08b")
-            _, self.tex_x, self.tex_y = read_short_tuple(f, 3)
+            tex_bin_1, tex_bin_2 = read_byte_tuple(f, 2)
+            _, tex_x, tex_y = read_short_tuple(f, 3)
             f.seek(32, 1)
-            if tex_bin_2 not in {"01110000", "01110001"}:
-                self.texture_data = (f.read(tex_len))
+
+            file_name = tex_path + texture_names[texture_index] + ".dds"
+            pathlib.Path(file_name).parent.mkdir(parents=True, exist_ok=True)
+            self.texture_files.append(file_name)
+
+            if tex_bin_2 >> 1 != 56:
                 dxt_format[tex_bin_2]()
             else:
-                self.texture_data = (f.read(tex_len))
                 dxt(b'DXT0')  # BREAKS TEXTURE + SAVES BLENDER FROM CRASH

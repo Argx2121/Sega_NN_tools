@@ -1,23 +1,6 @@
-from dataclasses import dataclass
 from itertools import chain
 
-
-@dataclass
-class VertexData:
-    positions: list
-    weights: list
-    bone_list_indices: list
-    normals: list
-    uvs: list
-    wxs: list
-    colours: list
-    normals2: list
-    normals3: list
-
-
-@dataclass
-class FaceList:
-    faces: list
+from .vertices import VertexData
 
 
 def implicit_faces_fix_mesh_size(vertex_info):
@@ -42,7 +25,7 @@ def implicit_faces_fix_mesh_size(vertex_info):
                 face_mesh_list.append((net_count - 1, net_count, net_count + 1))
             count += len(info.positions)
 
-        face_mesh.append(FaceList(face_mesh_list))
+        face_mesh.append(face_mesh_list)
         # this generates a list of non relative face indices
     vertex_list = []
     for data in vertex_info:
@@ -54,10 +37,5 @@ def implicit_faces_fix_mesh_size(vertex_info):
             list(chain.from_iterable([info.uvs for info in data])),
             list(chain.from_iterable([info.wxs for info in data])),
             list(chain.from_iterable([info.colours for info in data])),
-            list(chain.from_iterable([info.normals2 for info in data])),
-            list(chain.from_iterable([info.normals3 for info in data])),
         ))  # flat list
-    vertex_info = None
-    import gc
-    gc.collect()
     return face_mesh, vertex_list

@@ -2,6 +2,8 @@ from ..util import *
 
 
 class Read:
+    __slots__ = ["f", "post_info"]
+
     def __init__(self, f: BinaryIO, post_info: int):
         """Reads a N*NN block.
 
@@ -25,27 +27,24 @@ class Read:
         self.f = f
         self.post_info = post_info
 
-    def type_1(self):
+    def le(self):
         f = self.f
-        start_nxnn = f.tell() - 4
-        block_len, to_count = read_int_tuple(f, 2)
-        f.seek(self.post_info + to_count + 4)
+        start_block = f.tell() - 4
+        end_of_block = start_block + read_int(f) + 8
+        f.seek(self.post_info + read_int(f) + 4)
         bone_count = read_int(f)
-        f.seek(start_nxnn + bone_count * 8 + 16 + 12)
-        name_len = start_nxnn + block_len + 8 - f.tell()
-        bone_names = read_str_nulls(f, name_len)[:bone_count]
-        f.seek(start_nxnn + block_len + 8)
+        f.seek(start_block + bone_count * 8 + 28)
+        bone_names = read_str_nulls(f, end_of_block - f.tell())[:bone_count]
+        f.seek(end_of_block)
         return bone_names
 
-    def type_2(self):  # assumed to exist
+    def be(self):
         f = self.f
-        start_nxnn = f.tell() - 4
-        block_len = read_int(f)
-        to_count = read_int(f, ">")
-        f.seek(self.post_info + to_count + 4)
+        start_block = f.tell() - 4
+        end_of_block = start_block + read_int(f) + 8
+        f.seek(self.post_info + read_int(f, ">") + 4)
         bone_count = read_int(f, ">")
-        f.seek(start_nxnn + bone_count * 8 + 16 + 12)
-        name_len = start_nxnn + block_len + 8 - f.tell()
-        bone_names = read_str_nulls(f, name_len)[:bone_count]
-        f.seek(start_nxnn + block_len + 8)
+        f.seek(start_block + bone_count * 8 + 28)
+        bone_names = read_str_nulls(f, end_of_block - f.tell())[:bone_count]
+        f.seek(end_of_block)
         return bone_names

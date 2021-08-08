@@ -2,6 +2,8 @@ from ..util import *
 
 
 class Read:
+    __slots__ = ["f"]
+
     def __init__(self, f: BinaryIO):
         """Reads a N*IF block.
 
@@ -23,7 +25,5 @@ class Read:
 
     def type_1(self):  # we don't need most info, just the end of the block
         f = self.f
-        block_len = read_int(f)
-        f.seek(block_len, 1)
-        post_info = f.tell()
-        return post_info
+        f.seek(read_int(f), 1)
+        return f.tell()
