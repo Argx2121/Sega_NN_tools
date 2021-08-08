@@ -211,7 +211,7 @@ class Read:
                     MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
                              self.vertex_mesh_offset[i], bone_count_list[i], ()))
 
-    def _xno_vertices(self):
+    def _cno_vertices(self):
         f = self.f
         vertex_data = []
 
@@ -221,6 +221,24 @@ class Read:
                     i = (i * block_len + off) // 4
                     v_positions.append(data_float[i:i + 3])
                 return off + 12
+
+            def get_normals(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_normals.append(data_float[i:i + 3])
+                return off + 12
+
+            def get_uvs(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_uvs.append((data_float[i], - data_float[i + 1] + 1))
+                return off + 8
+
+            def get_wxs(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_wxs.append((data_float[i], - data_float[i + 1] + 1))
+                return off + 8
 
             def get_weights(off):
                 for i in range(vertex_count):
@@ -248,59 +266,7 @@ class Read:
                         v_weights.append((1,))
                 return off + 16
 
-            def get_normals(off):
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 4
-                    v_normals.append(data_float[i:i + 3])
-                return off + 12
-
-            def get_uvs(off):
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 4
-                    v_uvs.append((data_float[i], - data_float[i + 1] + 1))
-                return off + 8
-
-            def get_wxs(off):
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 4
-                    v_wxs.append((data_float[i], - data_float[i + 1] + 1))
-                return off + 8
-
-            def get_colours_short(off):  # colours stored as b g r a
-                div_by = 65535
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 2
-                    v = data_short[i:i + 4]
-                    v_colours.append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
-                return off + 8
-
-            def get_colours_byte(off):  # colours stored as b g r a
-                div_by = 255
-                for i in range(vertex_count):
-                    i = i * block_len + off
-                    v = data_byte[i:i + 4]
-                    v_colours.append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
-                return off + 4
-
-            def sonic_riders_x():
-                off = 0
-                if BitFlags.position:
-                    off = get_positions(off)
-                if BitFlags.wx:  # unknown float
-                    off += 4
-                if BitFlags.weights:
-                    off = get_weights(off)
-                if BitFlags.normal:
-                    off = get_normals(off)
-
-                if BitFlags.colour_short:
-                    off = get_colours_short(off)
-                elif BitFlags.colour_byte:
-                    off = get_colours_byte(off)
-                if BitFlags.uv:
-                    off = get_uvs(off)
-
-            def phantasy_star_universe_x():
+            def house_of_the_dead_4_c():
                 off = 0
                 if BitFlags.position:
                     off = get_positions(off)
@@ -310,50 +276,20 @@ class Read:
                 elif BitFlags.weights:
                     off = get_weights(off)
 
-                if BitFlags.normal:
+                if BitFlags.normals:
                     off = get_normals(off)
 
-                if BitFlags.colour_short:
-                    off = get_colours_short(off)
-                elif BitFlags.colour_byte:
-                    off = get_colours_byte(off)
+                if BitFlags.colours:
+                    off += 8
 
                 if BitFlags.wx:
-                    off = get_wxs(off)
-                elif BitFlags.uv:
-                    off = get_uvs(off)
-
-            def sonic_2006_x():
-                off = 0
-                if BitFlags.position:
-                    off = get_positions(off)
-
-                if BitFlags.weight_indices:
-                    off = get_weights_with_indices(off)
-                elif BitFlags.weights:
-                    off = get_weights(off)
-
-                if BitFlags.normal:
-                    off = get_normals(off)
-                if BitFlags.colour_byte:
-                    off += 4
-
-                if BitFlags.wx and BitFlags.uv:
-                    off = get_uvs(off)
-                    off += 8
-                    off = get_wxs(off)
-                elif BitFlags.wx:
                     off = get_uvs(off)
                     off = get_wxs(off)
                 elif BitFlags.uv:
                     off = get_uvs(off)
-
-                if BitFlags.unnamed:
-                    off += 24
 
             format_dict = {
-                "SonicRiders_X": sonic_riders_x, "PhantasyStarUniverse_X": phantasy_star_universe_x,
-                "Sonic2006_X": sonic_2006_x,
+                "HouseOfTheDead4_C": house_of_the_dead_4_c,
             }
             format_dict[self.format_type]()
 
@@ -366,321 +302,24 @@ class Read:
             vertex_buffer_len = vertex_count * block_len
 
             class BitFlags(Flag):
-                # 000KC0NP 0WWW0000 000000QU 00000000 KC0NW0P0 000000QU 00000000 00000000 SR PC
-                #  K = colours as shorts, not bytes Q = unknown, in psu Q is wx but srpc has only one float(?)
-                #  block order: POS Q WEIGH NORM COL UV SR PC
-                # 0M00C0NP 0WWW0I02 000000XU 00000000 0C0NW0P0 000W00XU 00000000 00000000 06
-                # X is wx - if both U and X are on its a different thing
-                #  M = 2 extra normal sets, I = bone indices
-                # 00000001 00000000 00000011 00000000 00000010 00000011 00000000 00000000 s4e1
-                # p, uw,
+                # 00000000 000?00XU 0000IW0? 0?0??0/P house of the dead 4
+                # 00000000 00010010 00001101 01011011
+                # either have U or X on - you shouldn't have both
+                # order:
+                # Pos Weights boneIndices ? Uvs wX ?
 
+                position = block_type & 1
+                colours = block_type >> 3 & 1
                 uv = block_type >> 16 & 1
-                position = block_type >> 25 & 1
-                normal = block_type >> 28 & 1
-                colour_short = block_type >> 31 & 1
-                colour_byte = block_type >> 30 & 1
-                weights = block_type >> 27 & 1
-                weight_indices = block_type >> 50 & 1
                 wx = block_type >> 17 & 1
-                unnamed = block_type >> 48 & 1
+                weights = block_type >> 10 & 1
+                weight_indices = block_type >> 11 & 1
+                normals = block_type >> 1 & 1
 
             vertex_buffer = f.read(vertex_buffer_len)
-            data_float = unpack(str(vertex_buffer_len // 4) + "f", vertex_buffer)
+            data_float = unpack(">" + str(vertex_buffer_len // 4) + "f", vertex_buffer)
 
-            if BitFlags.colour_short:
-                data_short = unpack(str(vertex_buffer_len // 2) + "H", vertex_buffer)
-
-            if BitFlags.weight_indices or BitFlags.colour_byte:
-                data_byte = unpack(str(vertex_buffer_len) + "B", vertex_buffer)
-
-            del vertex_buffer
-
-            vert_block()
-            vertex_data.append(
-                VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
-                ))
-        return vertex_data, self.mesh_info
-
-    def _uno_vertices(self):
-        f = self.f
-        vertex_data = []
-
-        def vert_block():
-            def get_positions(off):
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 4
-                    v_positions.append(data_float[i:i + 3])
-                return off + 12
-
-            def get_uvs(off):
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 4
-                    v_uvs.append((data_float[i], - data_float[i + 1] + 1))
-                return off + 8
-
-            def get_weights_short(off):
-                div_by = 65535
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 2
-                    v = data_short[i:i + 4]
-                    v_weights.append([v[0] / div_by, v[1] / div_by, v[2] / div_by, v[3] / div_by])
-                return off + 8
-
-            def k_on_after_school_live_u():
-                off = 0
-
-                off = get_weights_short(off)
-                off = get_uvs(off)
-                off = get_positions(off)
-
-            format_dict = {
-                "KOnAfterSchoolLive_U": k_on_after_school_live_u,
-            }
-            format_dict[self.format_type]()
-
-        for var in range(self.vertex_buffer_count):  # for all sub meshes
-            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
-            f.seek(self.vertex_mesh_offset[var] + self.start)
-            vertex_count = self.mesh_info[var].vertex_count
-            block_len = self.mesh_info[var].vertex_block_size
-            block_type = self.mesh_info[var].vertex_block_type
-            vertex_buffer_len = vertex_count * block_len
-            print(vertex_count, block_len, block_type, f.tell())
-
-            class BitFlags(Flag):  # not enough samples for this
-
-                uv = block_type >> 16 & 1
-                position = block_type >> 25 & 1
-                normal = block_type >> 28 & 1
-                colour_short = block_type >> 31 & 1
-                colour_byte = block_type >> 30 & 1
-                weights = block_type >> 27 & 1
-                weight_indices = block_type >> 50 & 1
-                wx = block_type >> 17 & 1
-                unnamed = block_type >> 48 & 1
-
-            vertex_buffer = f.read(vertex_buffer_len)
-            data_float = unpack(str(vertex_buffer_len // 4) + "f", vertex_buffer)
-
-            data_short = unpack(str(vertex_buffer_len // 2) + "H", vertex_buffer)
-
-            del vertex_buffer
-
-            vert_block()
-            vertex_data.append(
-                VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
-                ))
-        return vertex_data, self.mesh_info
-
-    def _zno_vertices(self):
-        f = self.f
-        vertex_data = []
-
-        def vert_block():
-            def get_positions(off):
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 4
-                    v_positions.append(data_float[i:i + 3])
-                return off + 12
-
-            def get_weights(off):
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 4
-                    w = data_float[i:i + 3]
-                    v_weights.append((w[0], w[1], w[2], 1 - w[0] - w[1] - w[2]))
-                return off + 12
-
-            def get_weights_with_indices(off):
-                for i in range(vertex_count):
-                    b = (i * block_len + off) // 4
-                    w = data_float[b:b + 3]
-
-                    a = i * block_len + off + 12
-                    b1, b2, b3, b4 = data_byte[a:a + 4]
-                    v_bones.append((b1, b2, b3, b4))
-
-                    if b4:
-                        v_weights.append((w[0], w[1], w[2], 1 - w[0] - w[1] - w[2]))
-                    elif b3:
-                        v_weights.append((w[0], w[1], 1 - w[0] - w[1]))
-                    elif b2:
-                        v_weights.append((w[0], 1 - w[0]))
-                    else:
-                        v_weights.append((1,))
-                return off + 16
-
-            def get_normals(off):
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 4
-                    v_normals.append(data_float[i:i + 3])
-                return off + 12
-
-            def get_uvs(off):
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 4
-                    v_uvs.append((data_float[i], - data_float[i + 1] + 1))
-                return off + 8
-
-            def get_wxs(off):
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 4
-                    v_wxs.append((data_float[i], - data_float[i + 1] + 1))
-                return off + 8
-
-            def get_colours_short(off):  # colours stored as b g r a
-                div_by = 65535
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 2
-                    v = data_short[i:i + 4]
-                    v_colours.append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
-                return off + 8
-
-            def get_colours_byte(off):  # colours stored as b g r a
-                div_by = 255
-                for i in range(vertex_count):
-                    i = i * block_len + off
-                    v = data_byte[i:i + 4]
-                    v_colours.append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
-                return off + 4
-
-            def sonic_4_episode_1_z():
-                off = 0
-                if BitFlags.position:
-                    off = get_positions(off)
-
-                if BitFlags.weight_indices:
-                    off = get_weights_with_indices(off)
-                elif BitFlags.weights:
-                    off = get_weights(off)
-
-                if BitFlags.normal:
-                    off = get_normals(off)
-
-                if BitFlags.colour_short:
-                    off = get_colours_short(off)
-                elif BitFlags.colour_byte:
-                    off = get_colours_byte(off)
-
-                if BitFlags.wx and BitFlags.uv:
-                    off = get_uvs(off)
-                    off += 8
-                    off = get_wxs(off)
-                elif BitFlags.wx:
-                    off = get_uvs(off)
-                    off = get_wxs(off)
-                elif BitFlags.uv:
-                    off = get_uvs(off)
-
-                if BitFlags.unnamed:
-                    off += 24
-
-            def transformers_human_alliance_z():
-                off = 0
-                if BitFlags.position:
-                    off = get_positions(off)
-
-                if BitFlags.weight_indices:
-                    off = get_weights_with_indices(off)
-                elif BitFlags.weights:
-                    off = get_weights(off)
-
-                if BitFlags.normal:
-                    off = get_normals(off)
-
-                if BitFlags.colour_short:
-                    off = get_colours_short(off)
-                elif BitFlags.colour_byte:
-                    off = get_colours_byte(off)
-
-                if BitFlags.wx and BitFlags.uv:
-                    off = get_uvs(off)
-                    off += 8
-                    off = get_wxs(off)
-                elif BitFlags.wx:
-                    off = get_uvs(off)
-                    off = get_wxs(off)
-                elif BitFlags.uv:
-                    off = get_uvs(off)
-
-                if BitFlags.unnamed:
-                    off += 24
-
-            def sega_golden_gun_z():
-                off = 0
-                if BitFlags.position:
-                    off = get_positions(off)
-
-                if BitFlags.weight_indices:
-                    off = get_weights_with_indices(off)
-                elif BitFlags.weights:
-                    off = get_weights(off)
-
-                if BitFlags.normal:
-                    off = get_normals(off)
-
-                if BitFlags.colour_short:
-                    off = get_colours_short(off)
-                elif BitFlags.colour_byte:
-                    off = get_colours_byte(off)
-
-                if BitFlags.wx and BitFlags.uv:
-                    off = get_uvs(off)
-                    off += 8
-                    off = get_wxs(off)
-                elif BitFlags.wx:
-                    off = get_uvs(off)
-                    off = get_wxs(off)
-                elif BitFlags.uv:
-                    off = get_uvs(off)
-
-                if BitFlags.unnamed:
-                    off += 24
-
-            format_dict = {
-                "Sonic4Episode1_Z": sonic_4_episode_1_z,
-                "TransformersHumanAlliance_Z": transformers_human_alliance_z,
-                "SegaGoldenGun_Z": sega_golden_gun_z,
-            }
-            format_dict[self.format_type]()
-
-        for var in range(self.vertex_buffer_count):  # for all sub meshes
-            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
-            f.seek(self.vertex_mesh_offset[var] + self.start)
-            vertex_count = self.mesh_info[var].vertex_count
-            block_len = self.mesh_info[var].vertex_block_size
-            block_type = self.mesh_info[var].vertex_block_type
-            vertex_buffer_len = vertex_count * block_len
-
-            class BitFlags(Flag):
-                # 000KC0NP 0WWW0000 000000QU 00000000 KC0NW0P0 000000QU 00000000 00000000 SR PC
-                #  K = colours as shorts, not bytes Q = unknown, in psu Q is wx but srpc has only one float(?)
-                #  block order: POS Q WEIGH NORM COL UV SR PC
-                # 0M00C0NP 0WWW0I02 000000XU 00000000 0C0NW0P0 000W00XU 00000000 00000000 06
-                # X is wx - if both U and X are on its a different thing
-                #  M = 2 extra normal sets, I = bone indices
-                # 00000001 00000000 00000011 00000000 00000010 00000011 00000000 00000000 s4e1
-                # p, uw,
-
-                uv = block_type >> 16 & 1
-                position = block_type >> 25 & 1
-                normal = block_type >> 28 & 1
-                colour_short = block_type >> 31 & 1
-                colour_byte = block_type >> 30 & 1
-                weights = block_type >> 27 & 1
-                weight_indices = block_type >> 50 & 1
-                wx = block_type >> 17 & 1
-                unnamed = block_type >> 48 & 1
-
-            vertex_buffer = f.read(vertex_buffer_len)
-            data_float = unpack(str(vertex_buffer_len // 4) + "f", vertex_buffer)
-
-            if BitFlags.colour_short:
-                data_short = unpack(str(vertex_buffer_len // 2) + "H", vertex_buffer)
-
-            if BitFlags.weight_indices or BitFlags.colour_byte:
+            if BitFlags.weight_indices:
                 data_byte = unpack(str(vertex_buffer_len) + "B", vertex_buffer)
 
             del vertex_buffer
@@ -1019,7 +658,7 @@ class Read:
             vertex_data.append(v_data)
         return vertex_data, mesh_info
 
-    def _cno_vertices(self):
+    def _uno_vertices(self):
         f = self.f
         vertex_data = []
 
@@ -1030,23 +669,77 @@ class Read:
                     v_positions.append(data_float[i:i + 3])
                 return off + 12
 
-            def get_normals(off):
-                for i in range(vertex_count):
-                    i = (i * block_len + off) // 4
-                    v_normals.append(data_float[i:i + 3])
-                return off + 12
-
             def get_uvs(off):
                 for i in range(vertex_count):
                     i = (i * block_len + off) // 4
                     v_uvs.append((data_float[i], - data_float[i + 1] + 1))
                 return off + 8
 
-            def get_wxs(off):
+            def get_weights_short(off):
+                div_by = 65535
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 2
+                    v = data_short[i:i + 4]
+                    v_weights.append([v[0] / div_by, v[1] / div_by, v[2] / div_by, v[3] / div_by])
+                return off + 8
+
+            def k_on_after_school_live_u():
+                off = 0
+
+                off = get_weights_short(off)
+                off = get_uvs(off)
+                off = get_positions(off)
+
+            format_dict = {
+                "KOnAfterSchoolLive_U": k_on_after_school_live_u,
+            }
+            format_dict[self.format_type]()
+
+        for var in range(self.vertex_buffer_count):  # for all sub meshes
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
+            f.seek(self.vertex_mesh_offset[var] + self.start)
+            vertex_count = self.mesh_info[var].vertex_count
+            block_len = self.mesh_info[var].vertex_block_size
+            block_type = self.mesh_info[var].vertex_block_type
+            vertex_buffer_len = vertex_count * block_len
+            print(vertex_count, block_len, block_type, f.tell())
+
+            class BitFlags(Flag):  # not enough samples for this
+
+                uv = block_type >> 16 & 1
+                position = block_type >> 25 & 1
+                normal = block_type >> 28 & 1
+                colour_short = block_type >> 31 & 1
+                colour_byte = block_type >> 30 & 1
+                weights = block_type >> 27 & 1
+                weight_indices = block_type >> 50 & 1
+                wx = block_type >> 17 & 1
+                unnamed = block_type >> 48 & 1
+
+            vertex_buffer = f.read(vertex_buffer_len)
+            data_float = unpack(str(vertex_buffer_len // 4) + "f", vertex_buffer)
+
+            data_short = unpack(str(vertex_buffer_len // 2) + "H", vertex_buffer)
+
+            del vertex_buffer
+
+            vert_block()
+            vertex_data.append(
+                VertexData(
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
+                ))
+        return vertex_data, self.mesh_info
+
+    def _xno_vertices(self):
+        f = self.f
+        vertex_data = []
+
+        def vert_block():
+            def get_positions(off):
                 for i in range(vertex_count):
                     i = (i * block_len + off) // 4
-                    v_wxs.append((data_float[i], - data_float[i + 1] + 1))
-                return off + 8
+                    v_positions.append(data_float[i:i + 3])
+                return off + 12
 
             def get_weights(off):
                 for i in range(vertex_count):
@@ -1074,7 +767,59 @@ class Read:
                         v_weights.append((1,))
                 return off + 16
 
-            def house_of_the_dead_4_c():
+            def get_normals(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_normals.append(data_float[i:i + 3])
+                return off + 12
+
+            def get_uvs(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_uvs.append((data_float[i], - data_float[i + 1] + 1))
+                return off + 8
+
+            def get_wxs(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_wxs.append((data_float[i], - data_float[i + 1] + 1))
+                return off + 8
+
+            def get_colours_short(off):  # colours stored as b g r a
+                div_by = 65535
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 2
+                    v = data_short[i:i + 4]
+                    v_colours.append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
+                return off + 8
+
+            def get_colours_byte(off):  # colours stored as b g r a
+                div_by = 255
+                for i in range(vertex_count):
+                    i = i * block_len + off
+                    v = data_byte[i:i + 4]
+                    v_colours.append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
+                return off + 4
+
+            def sonic_riders_x():
+                off = 0
+                if BitFlags.position:
+                    off = get_positions(off)
+                if BitFlags.wx:  # unknown float
+                    off += 4
+                if BitFlags.weights:
+                    off = get_weights(off)
+                if BitFlags.normal:
+                    off = get_normals(off)
+
+                if BitFlags.colour_short:
+                    off = get_colours_short(off)
+                elif BitFlags.colour_byte:
+                    off = get_colours_byte(off)
+                if BitFlags.uv:
+                    off = get_uvs(off)
+
+            def phantasy_star_universe_x():
                 off = 0
                 if BitFlags.position:
                     off = get_positions(off)
@@ -1084,20 +829,50 @@ class Read:
                 elif BitFlags.weights:
                     off = get_weights(off)
 
-                if BitFlags.normals:
+                if BitFlags.normal:
                     off = get_normals(off)
 
-                if BitFlags.colours:
-                    off += 8
+                if BitFlags.colour_short:
+                    off = get_colours_short(off)
+                elif BitFlags.colour_byte:
+                    off = get_colours_byte(off)
 
                 if BitFlags.wx:
+                    off = get_wxs(off)
+                elif BitFlags.uv:
+                    off = get_uvs(off)
+
+            def sonic_2006_x():
+                off = 0
+                if BitFlags.position:
+                    off = get_positions(off)
+
+                if BitFlags.weight_indices:
+                    off = get_weights_with_indices(off)
+                elif BitFlags.weights:
+                    off = get_weights(off)
+
+                if BitFlags.normal:
+                    off = get_normals(off)
+                if BitFlags.colour_byte:
+                    off += 4
+
+                if BitFlags.wx and BitFlags.uv:
+                    off = get_uvs(off)
+                    off += 8
+                    off = get_wxs(off)
+                elif BitFlags.wx:
                     off = get_uvs(off)
                     off = get_wxs(off)
                 elif BitFlags.uv:
                     off = get_uvs(off)
 
+                if BitFlags.unnamed:
+                    off += 24
+
             format_dict = {
-                "HouseOfTheDead4_C": house_of_the_dead_4_c,
+                "SonicRiders_X": sonic_riders_x, "PhantasyStarUniverse_X": phantasy_star_universe_x,
+                "Sonic2006_X": sonic_2006_x,
             }
             format_dict[self.format_type]()
 
@@ -1110,24 +885,32 @@ class Read:
             vertex_buffer_len = vertex_count * block_len
 
             class BitFlags(Flag):
-                # 00000000 000?00XU 0000IW0? 0?0??0/P house of the dead 4
-                # 00000000 00010010 00001101 01011011
-                # either have U or X on - you shouldn't have both
-                # order:
-                # Pos Weights boneIndices ? Uvs wX ?
+                # 000KC0NP 0WWW0000 000000QU 00000000 KC0NW0P0 000000QU 00000000 00000000 SR PC
+                #  K = colours as shorts, not bytes Q = unknown, in psu Q is wx but srpc has only one float(?)
+                #  block order: POS Q WEIGH NORM COL UV SR PC
+                # 0M00C0NP 0WWW0I02 000000XU 00000000 0C0NW0P0 000W00XU 00000000 00000000 06
+                # X is wx - if both U and X are on its a different thing
+                #  M = 2 extra normal sets, I = bone indices
+                # 00000001 00000000 00000011 00000000 00000010 00000011 00000000 00000000 s4e1
+                # p, uw,
 
-                position = block_type & 1
-                colours = block_type >> 3 & 1
                 uv = block_type >> 16 & 1
+                position = block_type >> 25 & 1
+                normal = block_type >> 28 & 1
+                colour_short = block_type >> 31 & 1
+                colour_byte = block_type >> 30 & 1
+                weights = block_type >> 27 & 1
+                weight_indices = block_type >> 50 & 1
                 wx = block_type >> 17 & 1
-                weights = block_type >> 10 & 1
-                weight_indices = block_type >> 11 & 1
-                normals = block_type >> 1 & 1
+                unnamed = block_type >> 48 & 1
 
             vertex_buffer = f.read(vertex_buffer_len)
-            data_float = unpack(">" + str(vertex_buffer_len // 4) + "f", vertex_buffer)
+            data_float = unpack(str(vertex_buffer_len // 4) + "f", vertex_buffer)
 
-            if BitFlags.weight_indices:
+            if BitFlags.colour_short:
+                data_short = unpack(str(vertex_buffer_len // 2) + "H", vertex_buffer)
+
+            if BitFlags.weight_indices or BitFlags.colour_byte:
                 data_byte = unpack(str(vertex_buffer_len) + "B", vertex_buffer)
 
             del vertex_buffer
@@ -1139,15 +922,227 @@ class Read:
                 ))
         return vertex_data, self.mesh_info
 
-    def xno(self):
-        self._le_offsets()
-        self._le_info_1()
-        return self._xno_vertices()
+    def _zno_vertices(self):
+        f = self.f
+        vertex_data = []
 
-    def zno(self):
-        self._le_offsets()
-        self._le_info_1()
-        return self._zno_vertices()
+        def vert_block():
+            def get_positions(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_positions.append(data_float[i:i + 3])
+                return off + 12
+
+            def get_weights(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    w = data_float[i:i + 3]
+                    v_weights.append((w[0], w[1], w[2], 1 - w[0] - w[1] - w[2]))
+                return off + 12
+
+            def get_weights_with_indices(off):
+                for i in range(vertex_count):
+                    b = (i * block_len + off) // 4
+                    w = data_float[b:b + 3]
+
+                    a = i * block_len + off + 12
+                    b1, b2, b3, b4 = data_byte[a:a + 4]
+                    v_bones.append((b1, b2, b3, b4))
+
+                    if b4:
+                        v_weights.append((w[0], w[1], w[2], 1 - w[0] - w[1] - w[2]))
+                    elif b3:
+                        v_weights.append((w[0], w[1], 1 - w[0] - w[1]))
+                    elif b2:
+                        v_weights.append((w[0], 1 - w[0]))
+                    else:
+                        v_weights.append((1,))
+                return off + 16
+
+            def get_normals(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_normals.append(data_float[i:i + 3])
+                return off + 12
+
+            def get_uvs(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_uvs.append((data_float[i], - data_float[i + 1] + 1))
+                return off + 8
+
+            def get_wxs(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_wxs.append((data_float[i], - data_float[i + 1] + 1))
+                return off + 8
+
+            def get_colours_short(off):  # colours stored as b g r a
+                div_by = 65535
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 2
+                    v = data_short[i:i + 4]
+                    v_colours.append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
+                return off + 8
+
+            def get_colours_byte(off):  # colours stored as b g r a
+                div_by = 255
+                for i in range(vertex_count):
+                    i = i * block_len + off
+                    v = data_byte[i:i + 4]
+                    v_colours.append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
+                return off + 4
+
+            def sonic_4_episode_1_z():
+                off = 0
+                if BitFlags.position:
+                    off = get_positions(off)
+
+                if BitFlags.weight_indices:
+                    off = get_weights_with_indices(off)
+                elif BitFlags.weights:
+                    off = get_weights(off)
+
+                if BitFlags.normal:
+                    off = get_normals(off)
+
+                if BitFlags.colour_short:
+                    off = get_colours_short(off)
+                elif BitFlags.colour_byte:
+                    off = get_colours_byte(off)
+
+                if BitFlags.wx and BitFlags.uv:
+                    off = get_uvs(off)
+                    off += 8
+                    off = get_wxs(off)
+                elif BitFlags.wx:
+                    off = get_uvs(off)
+                    off = get_wxs(off)
+                elif BitFlags.uv:
+                    off = get_uvs(off)
+
+                if BitFlags.unnamed:
+                    off += 24
+
+            def transformers_human_alliance_z():
+                off = 0
+                if BitFlags.position:
+                    off = get_positions(off)
+
+                if BitFlags.weight_indices:
+                    off = get_weights_with_indices(off)
+                elif BitFlags.weights:
+                    off = get_weights(off)
+
+                if BitFlags.normal:
+                    off = get_normals(off)
+
+                if BitFlags.colour_short:
+                    off = get_colours_short(off)
+                elif BitFlags.colour_byte:
+                    off = get_colours_byte(off)
+
+                if BitFlags.wx and BitFlags.uv:
+                    off = get_uvs(off)
+                    off += 8
+                    off = get_wxs(off)
+                elif BitFlags.wx:
+                    off = get_uvs(off)
+                    off = get_wxs(off)
+                elif BitFlags.uv:
+                    off = get_uvs(off)
+
+                if BitFlags.unnamed:
+                    off += 24
+
+            def sega_golden_gun_z():
+                off = 0
+                if BitFlags.position:
+                    off = get_positions(off)
+
+                if BitFlags.weight_indices:
+                    off = get_weights_with_indices(off)
+                elif BitFlags.weights:
+                    off = get_weights(off)
+
+                if BitFlags.normal:
+                    off = get_normals(off)
+
+                if BitFlags.colour_short:
+                    off = get_colours_short(off)
+                elif BitFlags.colour_byte:
+                    off = get_colours_byte(off)
+
+                if BitFlags.wx and BitFlags.uv:
+                    off = get_uvs(off)
+                    off += 8
+                    off = get_wxs(off)
+                elif BitFlags.wx:
+                    off = get_uvs(off)
+                    off = get_wxs(off)
+                elif BitFlags.uv:
+                    off = get_uvs(off)
+
+                if BitFlags.unnamed:
+                    off += 24
+
+            format_dict = {
+                "Sonic4Episode1_Z": sonic_4_episode_1_z,
+                "TransformersHumanAlliance_Z": transformers_human_alliance_z,
+                "SegaGoldenGun_Z": sega_golden_gun_z,
+            }
+            format_dict[self.format_type]()
+
+        for var in range(self.vertex_buffer_count):  # for all sub meshes
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
+            f.seek(self.vertex_mesh_offset[var] + self.start)
+            vertex_count = self.mesh_info[var].vertex_count
+            block_len = self.mesh_info[var].vertex_block_size
+            block_type = self.mesh_info[var].vertex_block_type
+            vertex_buffer_len = vertex_count * block_len
+
+            class BitFlags(Flag):
+                # 000KC0NP 0WWW0000 000000QU 00000000 KC0NW0P0 000000QU 00000000 00000000 SR PC
+                #  K = colours as shorts, not bytes Q = unknown, in psu Q is wx but srpc has only one float(?)
+                #  block order: POS Q WEIGH NORM COL UV SR PC
+                # 0M00C0NP 0WWW0I02 000000XU 00000000 0C0NW0P0 000W00XU 00000000 00000000 06
+                # X is wx - if both U and X are on its a different thing
+                #  M = 2 extra normal sets, I = bone indices
+                # 00000001 00000000 00000011 00000000 00000010 00000011 00000000 00000000 s4e1
+                # p, uw,
+
+                uv = block_type >> 16 & 1
+                position = block_type >> 25 & 1
+                normal = block_type >> 28 & 1
+                colour_short = block_type >> 31 & 1
+                colour_byte = block_type >> 30 & 1
+                weights = block_type >> 27 & 1
+                weight_indices = block_type >> 50 & 1
+                wx = block_type >> 17 & 1
+                unnamed = block_type >> 48 & 1
+
+            vertex_buffer = f.read(vertex_buffer_len)
+            data_float = unpack(str(vertex_buffer_len // 4) + "f", vertex_buffer)
+
+            if BitFlags.colour_short:
+                data_short = unpack(str(vertex_buffer_len // 2) + "H", vertex_buffer)
+
+            if BitFlags.weight_indices or BitFlags.colour_byte:
+                data_byte = unpack(str(vertex_buffer_len) + "B", vertex_buffer)
+
+            del vertex_buffer
+
+            vert_block()
+            vertex_data.append(
+                VertexData(
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
+                ))
+        return vertex_data, self.mesh_info
+
+    def cno(self):
+        self._be_offsets()
+        self._be_info_2()
+        return self._cno_vertices()
 
     def eno(self):
         self._be_offsets()
@@ -1164,12 +1159,17 @@ class Read:
         self._le_info_3()
         return self._sno_vertices()
 
-    def cno(self):
-        self._be_offsets()
-        self._be_info_2()
-        return self._cno_vertices()
-
     def uno(self):
         self._le_offsets()
         self._le_info_4()
         return self._uno_vertices()
+
+    def xno(self):
+        self._le_offsets()
+        self._le_info_1()
+        return self._xno_vertices()
+
+    def zno(self):
+        self._le_offsets()
+        self._le_info_1()
+        return self._zno_vertices()
