@@ -37,6 +37,9 @@ A Python library for Blender for games using Sega's NN libraries.
 ### Eno
 #### Sonic Free Riders
 
+### Ino
+#### Sonic 4 Episode 1
+
 ### Lno
 #### The House of the Dead 4
 #### Loving Deads: The House of the Dead EX
@@ -44,6 +47,9 @@ A Python library for Blender for games using Sega's NN libraries.
 ### Sno
  - Sno file importing is imperfect and may have issues.
 #### Sonic Riders Zero Gravity
+
+### Uno
+#### K-On! After School Live!!
 
 ### Xno
 #### Sonic Riders
