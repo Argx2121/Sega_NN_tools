@@ -22,19 +22,24 @@ class ReadNn:
             # specific
             "NCIF": self._info_1, "NEIF": self._info_1, "NGIF": self._info_1,
             "NLIF": self._info_1, "NSIF": self._info_1, "NXIF": self._info_1, "NZIF": self._info_1,
+            "NUIF": self._info_1,
 
             "NCTL": self._tex_2, "NETL": self._tex_2, "NGTL": self._tex_2,
             "NLTL": self._tex_1, "NSTL": self._tex_1, "NXTL": self._tex_1, "NZTL": self._tex_1,
+            "NUTL": self._tex_1,
 
             "NCNN": self._node_2, "NENN": self._node_2, "NGNN": self._node_2,
             "NLNN": self._node_1, "NSNN": self._node_1, "NXNN": self._node_1, "NZNN": self._node_1,
+            "NUNN": self._node_1,
 
             "NCOB": self._obj_c, "NEOB": self._obj_e,
             "NLOB": self._obj_l, "NSOB": self._obj_s, "NXOB": self._obj_x, "NZOB": self._obj_z,
+            "NUOB": self._obj_u,
 
             # Data isn't applicable
             "NCEF": self._eff_1, "NEEF": self._eff_1, "NGEF": self._eff_1,
             "NLEF": self._eff_1, "NSEF": self._eff_1, "NXEF": self._eff_1, "NZEF": self._eff_1,
+            "NUEF": self._eff_1,
 
             # generic
             "NOF0": self._nof0, "NFN0": self._nfn0, "NEND": self._nend
@@ -189,6 +194,10 @@ class ReadNn:
 
     def _obj_c(self):
         self.nn.model = nn_object.ReadModel(self.f, self.nn.start, self.format_type, self.debug).cno()
+        console_out_pre("")
+
+    def _obj_u(self):
+        self.nn.model = nn_object.ReadModel(self.f, self.nn.start, self.format_type, self.debug).uno()
         console_out_pre("")
 
     # generic

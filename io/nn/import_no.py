@@ -21,9 +21,9 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
     bl_idname = "import.sega_no"
     bl_label = "Import *no Model"
     bl_options = {'REGISTER', 'UNDO'}
-    filename_ext = "*.cno;*.eno;*.lno;*.sno;*.xno;*.zno"
+    filename_ext = "*.cno;*.eno;*.lno;*.sno;*.uno;*.xno;*.zno"
     filter_glob: StringProperty(
-        default="*.cno;*.eno;*.lno;*.sno;*.xno;*.zno",
+        default="*.cno;*.eno;*.lno;*.sno;*.uno;*.xno;*.zno",
         options={'HIDDEN'},
         maxlen=255)
 
@@ -54,6 +54,11 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         name="Game",
         description="Game the model is from (to get the correct sno variant)",
         items=sno_list,
+    )
+    U: EnumProperty(
+        name="Game",
+        description="Game the model is from (to get the correct sno variant)",
+        items=uno_list,
     )
     X: EnumProperty(
         name="Game",

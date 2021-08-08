@@ -8,6 +8,7 @@ no_list = (
     ("E", "ENO", "Eno"),
     ("L", "LNO", "Lno"),
     ("S", "SNO", "Sno (Experimental!!)"),
+    ("U", "UNO", "Uno"),
     ("X", "XNO", "Xno"),
     ("Z", "ZNO", "Zno"),
 )
@@ -45,6 +46,10 @@ sno_list = (
     ("SonicRidersZeroGravity_S", "Sonic Riders Zero Gravity", "Sonic Riders Zero Gravity Model | 8 Jan 2008"),
 )
 
+uno_list = (
+    ("KOnAfterSchoolLive_U", "K-On! After School Live!!", "K-ON! Hokago Live!! Model | 30 Sep 2010"),
+)
+
 xno_list = (
     ("Sonic2006_X", "Sonic 2006", "Sonic '06 Model | 14 Nov 2006"),
     ("PhantasyStarUniverse_X", "Phantasy Star Universe", "Phantasy Star Universe Model | 31 Aug 2006"),
@@ -70,6 +75,8 @@ determine_bone = {
     "HouseOfTheDead4_L": 5,
 
     "SonicRidersZeroGravity_S": 1,
+
+    "KOnAfterSchoolLive_U": 20,
 
     "Sonic2006_X": 10,
     "PhantasyStarUniverse_X": 1,

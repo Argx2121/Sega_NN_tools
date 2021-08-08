@@ -70,6 +70,13 @@ class Read:
             f.seek(2, 1)
             self.texture_offset.append(read_int(f))
 
+    def _le_offsets_4(self):
+        f = self.f
+        material_count = self.material_count
+        for _ in range(material_count):
+            self.texture_count.append(read_int(f))
+            self.texture_offset.append(read_int(f))
+
     def _le_info_1(self):
         f = self.f
         for offset in self.info_offset:
@@ -248,6 +255,47 @@ class Read:
 
                     texture_list.append(self.Texture(var, tex_set, read_int(f)))
                     f.seek(56, 1)
+            self.texture_list.append(texture_list)
+
+    def _uno_texture(self):
+        def k_on_after_school_live_u():
+            t_type = "none"
+            t_settings = []
+            if TextureFlags.byte1bit1:
+                t_type = "diffuse"
+
+            return t_type, t_settings
+
+        format_dict = {
+            "KOnAfterSchoolLive_U": k_on_after_school_live_u,
+        }
+        f = self.f
+        material_count = self.material_count
+        for texture_value in range(material_count):
+            texture_list = []
+            texture_offset = self.texture_offset[texture_value]
+            if texture_offset:
+                f.seek(texture_offset + self.start + 184)
+                for _ in range(self.texture_count[texture_value]):
+                    texture_flags = read_int(f, ">")
+
+                    class TextureFlags(Flag):
+                        # byte 1
+                        byte1bit4 = texture_flags >> 27 & 1  # 00001000
+                        byte1bit3 = texture_flags >> 26 & 1  # 00000100
+                        byte1bit2 = texture_flags >> 25 & 1  # 00000010
+                        byte1bit1 = texture_flags >> 24 & 1  # 00000001
+
+                        # byte 2
+
+                        # byte 3
+
+                        # byte 4
+
+                    var, tex_set = format_dict[self.format_type]()
+
+                    texture_list.append(self.Texture(var, tex_set, read_int(f)))
+                    f.seek(16, 1)
             self.texture_list.append(texture_list)
 
     def _zno_texture(self):
@@ -512,6 +560,11 @@ class Read:
         self._le_offsets_1()
         self._le_info_2()
         self._lno_texture()
+        return self._return_data_2()
+
+    def uno(self):
+        self._le_offsets_4()
+        self._uno_texture()
         return self._return_data_2()
 
     def sno(self):

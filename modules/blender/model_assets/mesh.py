@@ -109,7 +109,9 @@ def make_mesh(self):
         else:
             make_weights_simple()
 
-        if self.settings.clean_mesh:
+        if model_name[-3] == "u" and self.settings.clean_mesh:  # problematic fave
+            model_util.clean_mesh_strict(obj)
+        elif self.settings.clean_mesh:
             model_util.clean_mesh(obj)
 
     for i in range(len(build_mesh1)):  # for each mesh

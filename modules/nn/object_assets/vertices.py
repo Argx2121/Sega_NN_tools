@@ -147,6 +147,39 @@ class Read:
             self.f.seek(offset + self.start)
             self.vertex_mesh_offset.append(read_int_tuple(self.f, 5))
 
+    def _le_info_4(self):
+        f = self.f
+        start = self.start
+        block_type_list = []
+        block_size_list = []
+        vertex_count_list = []
+        bone_count_list = []
+        bone_offset_complex = []
+        for offset in self.vert_info_offset:
+            f.seek(offset + start + 8)
+            block_type_list.append(read_int(f, ">"))
+            f.seek(1, 1)
+            size = read_byte(f)
+            f.seek(6, 1)
+            offset, b_offset, b_count, count = read_int_tuple(f, 4)
+            block_size_list.append(size)
+            vertex_count_list.append(count)
+            self.vertex_mesh_offset.append(offset)
+            bone_count_list.append(b_count)  # if > 1 bone its stored here
+            bone_offset_complex.append(b_offset)
+        for i in range(len(bone_offset_complex)):
+            offset = bone_offset_complex[i] + start
+            if offset:  # get bones for meshes with >1 bone
+                f.seek(offset)
+                self.mesh_info.append(
+                    MeshData(
+                        block_type_list[i], block_size_list[i], vertex_count_list[i],
+                        self.vertex_mesh_offset[i], bone_count_list[i], read_int_tuple(f, bone_count_list[i])))
+            else:
+                self.mesh_info.append(
+                    MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
+                             self.vertex_mesh_offset[i], bone_count_list[i], ()))
+
     def _be_info_2(self):
         f = self.f
         start = self.start
@@ -360,6 +393,78 @@ class Read:
 
             if BitFlags.weight_indices or BitFlags.colour_byte:
                 data_byte = unpack(str(vertex_buffer_len) + "B", vertex_buffer)
+
+            del vertex_buffer
+
+            vert_block()
+            vertex_data.append(
+                VertexData(
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
+                ))
+        return vertex_data, self.mesh_info
+
+    def _uno_vertices(self):
+        f = self.f
+        vertex_data = []
+
+        def vert_block():
+            def get_positions(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_positions.append(data_float[i:i + 3])
+                return off + 12
+
+            def get_uvs(off):
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_uvs.append((data_float[i], - data_float[i + 1] + 1))
+                return off + 8
+
+            def get_weights_short(off):
+                div_by = 65535
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 2
+                    v = data_short[i:i + 4]
+                    v_weights.append([v[0] / div_by, v[1] / div_by, v[2] / div_by, v[3] / div_by])
+                return off + 8
+
+            def k_on_after_school_live_u():
+                off = 0
+
+                off = get_weights_short(off)
+                off = get_uvs(off)
+                off = get_positions(off)
+
+            format_dict = {
+                "KOnAfterSchoolLive_U": k_on_after_school_live_u,
+            }
+            format_dict[self.format_type]()
+
+        for var in range(self.vertex_buffer_count):  # for all sub meshes
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
+            f.seek(self.vertex_mesh_offset[var] + self.start)
+            vertex_count = self.mesh_info[var].vertex_count
+            block_len = self.mesh_info[var].vertex_block_size
+            block_type = self.mesh_info[var].vertex_block_type
+            vertex_buffer_len = vertex_count * block_len
+            print(vertex_count, block_len, block_type, f.tell())
+
+            class BitFlags(Flag):  # not enough samples for this
+
+                uv = block_type >> 16 & 1
+                position = block_type >> 25 & 1
+                normal = block_type >> 28 & 1
+                colour_short = block_type >> 31 & 1
+                colour_byte = block_type >> 30 & 1
+                weights = block_type >> 27 & 1
+                weight_indices = block_type >> 50 & 1
+                wx = block_type >> 17 & 1
+                unnamed = block_type >> 48 & 1
+
+            vertex_buffer = f.read(vertex_buffer_len)
+            data_float = unpack(str(vertex_buffer_len // 4) + "f", vertex_buffer)
+
+            data_short = unpack(str(vertex_buffer_len // 2) + "H", vertex_buffer)
 
             del vertex_buffer
 
@@ -1063,3 +1168,8 @@ class Read:
         self._be_offsets()
         self._be_info_2()
         return self._cno_vertices()
+
+    def uno(self):
+        self._le_offsets()
+        self._le_info_4()
+        return self._uno_vertices()

@@ -23,3 +23,29 @@ def clean_mesh(obj):  # removing illegal faces is done in mesh generation
     bmesh.ops.delete(bm, geom=verts, context="VERTS")
     bm.to_mesh(obj.data)
     bm.free()
+
+
+def clean_mesh_strict(obj):
+    import bmesh
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.verts.ensure_lookup_table()
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.00001)
+    bm.to_mesh(obj.data)
+    bm.free()
+
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.faces.ensure_lookup_table()
+    verts = [v for v in bm.verts if not v.link_faces]
+    bmesh.ops.delete(bm, geom=verts, context="VERTS")
+    bm.to_mesh(obj.data)
+    bm.free()
+
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.edges.ensure_lookup_table()
+    edges = [e for e in bm.edges if not e.link_faces]
+    bmesh.ops.delete(bm, geom=edges, context="EDGES")
+    bm.to_mesh(obj.data)
+    bm.free()
