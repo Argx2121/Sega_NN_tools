@@ -57,7 +57,7 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
     )
     U: EnumProperty(
         name="Game",
-        description="Game the model is from (to get the correct sno variant)",
+        description="Game the model is from (to get the correct uno variant)",
         items=uno_list,
     )
     X: EnumProperty(
