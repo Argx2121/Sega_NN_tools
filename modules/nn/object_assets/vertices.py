@@ -180,6 +180,51 @@ class Read:
                     MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
                              self.vertex_mesh_offset[i], bone_count_list[i], ()))
 
+    def _le_info_5(self):
+        f = self.f
+        start = self.start
+        block_type_list = []
+        block_size_list = []
+        vertex_count_list = []
+        bone_count_list = []
+        bone_offset_complex = []
+        for offset in self.vert_info_offset:
+            f.seek(offset + start + 4)
+            count = read_int(f)
+            vert_info_count = read_int(f)
+            to_vert_info = read_int(f)
+            vert_info = []
+            f.seek(4, 1)
+            offset = read_int(f)
+            b_count = read_int(f)
+            b_offset = read_int(f)
+
+            f.seek(to_vert_info + start + 12)
+            block_size_list.append(read_int(f))
+
+            f.seek(to_vert_info + start)
+            for i in range(vert_info_count):
+                vert_info.append(read_int_tuple(f, 2))
+                f.seek(12, 1)
+
+            block_type_list.append(vert_info)
+            vertex_count_list.append(count)
+            self.vertex_mesh_offset.append(offset)
+            bone_count_list.append(b_count)  # if > 1 bone its stored here
+            bone_offset_complex.append(b_offset)
+        for i in range(len(bone_offset_complex)):
+            offset = bone_offset_complex[i] + start
+            if offset:  # get bones for meshes with >1 bone
+                f.seek(offset)
+                self.mesh_info.append(
+                    MeshData(
+                        block_type_list[i], block_size_list[i], vertex_count_list[i],
+                        self.vertex_mesh_offset[i], bone_count_list[i], read_short_tuple(f, bone_count_list[i])))
+            else:
+                self.mesh_info.append(
+                    MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
+                             self.vertex_mesh_offset[i], bone_count_list[i], ()))
+
     def _be_info_2(self):
         f = self.f
         start = self.start
@@ -520,6 +565,92 @@ class Read:
                 ))
         return vertex_data, self.mesh_info
 
+    def _ino_vertices(self):
+        f = self.f
+        vertex_data = []
+
+        def vert_block():
+            def get_positions(b_var):
+                off, b_count = b_var
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_positions.append(data_float[i:i + 3])
+                return off + 12
+
+            def get_normals(b_var):
+                off, b_count = b_var
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_normals.append(data_float[i:i + 3])
+                return off + 12
+
+            def get_uvs(b_var):
+                off, b_count = b_var
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_uvs.append((data_float[i], - data_float[i + 1] + 1))
+                return off + 8
+
+            def get_wxs(b_var):
+                off, b_count = b_var
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    v_wxs.append((data_float[i], - data_float[i + 1] + 1))
+                return off + 8
+
+            def get_weights(b_var):
+                off, b_count = b_var
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 4
+                    w_list = []
+                    for b_i in range(b_count):
+                        w_list.append(data_float[i + b_i])
+                    v_weights.append(w_list)
+                return off + b_count * 4
+
+            def get_indices(b_var):
+                off, b_count = b_var
+                for i in range(vertex_count):
+                    a = i * block_len + off
+                    v_bones.append(data_byte[a:a + b_count])
+                return off + 4
+
+            def sonic_4_episode_1_i():
+                b_func = {
+                    1: get_positions, 2: get_weights, 4: get_indices, 8: get_normals,
+                    256: get_uvs
+                }
+                off = 0
+                for b_type, b_count in block_type:
+                    b_var = off, b_count
+                    off = b_func[b_type](b_var)
+
+            format_dict = {
+                "Sonic4Episode1_I": sonic_4_episode_1_i,
+            }
+            format_dict[self.format_type]()
+
+        for var in range(self.vertex_buffer_count):  # for all sub meshes
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
+            f.seek(self.vertex_mesh_offset[var] + self.start)
+            vertex_count = self.mesh_info[var].vertex_count
+            block_len = self.mesh_info[var].vertex_block_size
+            block_type = self.mesh_info[var].vertex_block_type
+            vertex_buffer_len = vertex_count * block_len
+
+            vertex_buffer = f.read(vertex_buffer_len)
+            data_float = unpack(str(vertex_buffer_len // 4) + "f", vertex_buffer)
+            data_byte = unpack(str(vertex_buffer_len) + "B", vertex_buffer)
+
+            del vertex_buffer
+
+            vert_block()
+            vertex_data.append(
+                VertexData(
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
+                ))
+        return vertex_data, self.mesh_info
+
     def _lno_vertices(self):
         def pos():
             data = read_float_tuple(f, 3 * vertex_count)
@@ -702,7 +833,6 @@ class Read:
             block_len = self.mesh_info[var].vertex_block_size
             block_type = self.mesh_info[var].vertex_block_type
             vertex_buffer_len = vertex_count * block_len
-            print(vertex_count, block_len, block_type, f.tell())
 
             class BitFlags(Flag):  # not enough samples for this
 
@@ -1148,6 +1278,11 @@ class Read:
         self._be_offsets()
         self._be_info_1()
         return self._eno_vertices()
+
+    def ino(self):
+        self._le_offsets()
+        self._le_info_5()
+        return self._ino_vertices()
 
     def lno(self):
         self._le_offsets()

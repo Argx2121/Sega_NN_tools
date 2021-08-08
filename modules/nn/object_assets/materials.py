@@ -94,6 +94,15 @@ class Read:
             self.texture_count.append(var2)
             self.texture_offset.append(var3)
 
+    def _le_info_3(self):
+        f = self.f
+        for offset in self.info_offset:
+            f.seek(offset + self.start)
+            _, _, var1, _, var2, var3 = read_int_tuple(f, 6)
+            self.colour_offset.append(var1)
+            self.texture_count.append(var2)
+            self.texture_offset.append(var3)
+
     def _be_info_1(self):
         f = self.f
         for offset in self.info_offset:
@@ -208,6 +217,44 @@ class Read:
 
                     texture_list.append(self.Texture(var, tex_set, read_int(f, ">")))
                     f.seek(56, 1)
+            self.texture_list.append(texture_list)
+
+    def _ino_texture(self):
+        def sonic_4_episode_1_i():
+            t_type = "none"
+            t_settings = []
+            if TextureFlags.byte2bit1:
+                t_type = "diffuse"
+
+            return t_type, t_settings
+
+        format_dict = {
+            "Sonic4Episode1_I": sonic_4_episode_1_i,
+        }
+        f = self.f
+        material_count = self.material_count
+        for texture_value in range(material_count):
+            texture_list = []
+            texture_offset = self.texture_offset[texture_value]
+            if texture_offset:
+                f.seek(texture_offset + self.start)
+                for _ in range(self.texture_count[texture_value]):
+                    texture_flags = read_int(f, ">")
+
+                    class TextureFlags(Flag):
+                        # byte 1
+
+                        # byte 2
+                        byte2bit1 = texture_flags >> 16 & 1
+
+                        # byte 3
+
+                        # byte 4
+
+                    var, tex_set = format_dict[self.format_type]()
+
+                    texture_list.append(self.Texture(var, tex_set, read_int(f)))
+                    f.seek(44, 1)
             self.texture_list.append(texture_list)
 
     def _lno_texture(self):
@@ -555,6 +602,12 @@ class Read:
         self._be_colour_1()
         self._eno_texture()
         return self._return_data_1()
+
+    def ino(self):
+        self._le_offsets_1()
+        self._le_info_3()
+        self._ino_texture()
+        return self._return_data_2()
 
     def lno(self):
         self._le_offsets_1()

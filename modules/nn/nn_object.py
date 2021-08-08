@@ -100,6 +100,27 @@ class ReadModel:
         f.seek(-4, 1)
         return m
 
+    def ino(self) -> ModelData:
+        start_block, len_block = self._start()
+        f = self.f
+        m = ModelData()
+
+        d, self.start = self._run(read_int(f), 0, model_data.Read(self._info_gen(), start_block).le_semi)
+
+        m.info = d
+        self._debug_1(d)
+        info = self._info_gen()
+
+        m.bones = self._run(d.bone_offset, 1, bones.Read(info, d.bone_count).le_full)
+        m.materials = self._run(d.material_offset, 2, materials.Read(info, d.material_count).ino)
+        m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).le_3)
+        m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).ino)
+        m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_12)
+
+        self._debug_2(m.build_mesh)
+        f.seek(start_block + len_block + 8)  # seek end of block
+        return m
+
     def lno(self) -> ModelData:
         start_block, len_block = self._start()
         f = self.f

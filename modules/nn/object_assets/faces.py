@@ -49,6 +49,17 @@ class Read:
             data = read_int_tuple(f, 8)
             self.face_info.append(self.FaceInfo(data[5], 0, 0, data[6]))
 
+    def _le_info_3(self, info_offset):
+        f = self.f
+        for offset in info_offset:
+            f.seek(offset + self.start + 4)
+            face_len_off, _, face_off_off, face_off_count = read_int_tuple(f, 4)
+            f.seek(face_len_off + self.start)
+            face_len = read_int_tuple(f, face_off_count)
+            f.seek(face_off_off + self.start)
+            face_off = read_int_tuple(f, face_off_count)
+            self.face_info.append(self.FaceInfo(face_len, 0, 0, face_off))
+
     def _be_info_2(self, info_offset):
         f = self.f
         for offset in info_offset:
@@ -142,6 +153,23 @@ class Read:
                     face_list_mesh.append((face_list[- 3], face_list[- 2], face_list[- 1]))
             self.face_list.append(face_list_mesh)
 
+    def _le_indices_3(self):
+        f = self.f
+        for info in self.face_info:  # for all sub meshes
+            face_list_mesh = []
+            for i in range(len(info.face_short_count)):  # for each tri strip
+                f.seek(info.face_offset[i] + self.start)
+                face_count = info.face_short_count[i]
+                face_list = read_short_tuple(f, face_count)
+                face_count -= 2
+                for loop in range(face_count // 2):
+                    loop *= 2
+                    face_list_mesh.append((face_list[loop], face_list[loop + 1], face_list[loop + 2]))
+                    face_list_mesh.append((face_list[loop + 2], face_list[loop + 1], face_list[loop + 3]))
+                if face_count % 2 != 0:
+                    face_list_mesh.append((face_list[- 3], face_list[- 2], face_list[- 1]))
+            self.face_list.append(face_list_mesh)
+
     def le_1(self):
         info_offset = self._le_offsets()
         self._le_info_1(info_offset)
@@ -160,6 +188,12 @@ class Read:
         info_offset = self._le_offsets()
         self._le_info_2(info_offset)
         self._le_indices_2()
+        return self.face_list
+
+    def le_3(self):
+        info_offset = self._le_offsets()
+        self._le_info_3(info_offset)
+        self._le_indices_3()
         return self.face_list
 
     def be_2(self):
