@@ -12,7 +12,7 @@ A Python library for Blender for games using Sega's NN libraries.
     1. In the top bar: Edit > Preferences
     2. In Preferences: Addons > Install
     3. In Blender File view: Navigate to where you downloaded the zip file, select the file and select Install Add-on.
-    4. In Preferences: Make sure the box for Sega NN tools is checked.
+    4. In Preferences: Check the box for Sega NN tools.
  - On updating you need to install the new version and restart Blender.
  - If downloading a zip from GitHub before release, you'll have to rename the folder from "Sega NN Tools (version number)" to "Sega_NN_tools" inside the zip.
 
@@ -21,12 +21,12 @@ A Python library for Blender for games using Sega's NN libraries.
    - 3d view > Sidebar (press n on your keyboard!) > Sega NN tools > import
    - Top bar > file > import 
 2. Choose the correct *no format and game that the file originates from.
- - Importing large files or files in batch opens the console to print data on windows, to show the user that files are being processed.
+ - Importing files in batch opens the console on Windows and prints file information while processing files.
 
 ## Games
 
- - With all games files are expected to be extracted. Files without the appropriate file extension (.cno, .eno, lno, etc.) will not be read.
- - All games have a slightly different file format, so it's preferable if you specify the game so the tool will import the model correctly. If no game is specified the tool may import the model incorrectly.
+ - With all games files should be extracted. Files without the appropriate file extension (.cno, .eno, lno, etc.) will not be read.
+ - All games have a slightly different file format - please specify the game for the tool so it can import the model correctly. If no game is specified the tool may import the model incorrectly.
  - The tool comes with some file extractors. Please use them when applicable. 
 
 ## Supported Game Formats
