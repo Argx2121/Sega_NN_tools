@@ -2,7 +2,7 @@ bl_info = {
     "name": "Sega NN tools",
     "description": "Tools to import models using the NN libraries and some",
     "author": "Arg!! (Special thanks to Sewer56, Yacker, firegodjr and Shadowth117!)",
-    "version": (0, 6, 0),
+    "version": (0, 7, 0),
     "blender": (2, 83, 0),
     "location": "3d View > Sidebar",
     "warning": "",
@@ -11,7 +11,7 @@ bl_info = {
     "category": "Import-Export",
 }
 
-# todo update version number when ready
+
 # import all and reload all if loaded
 
 import glob
