@@ -42,7 +42,7 @@ class EXTRACT_PT_Panel(GENERIC_panel, bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         layout.operator("sfr.extract", text="Sonic Free Riders .pac / .pas")
-        layout.operator("s4e1.extract", text="Sonic 4 Episode 1 PC .AMB")
+        layout.operator("amb.extract", text="Sonic 4 .AMB")
         layout.operator("bnk.extract", text="Bank file .bnk")
         layout.operator("srpc.extract", text="Sonic Riders PC (NO EXTENSION)")
 

@@ -1,7 +1,7 @@
 from Sega_NN_tools.modules.util import *
 
 
-class ExtractS4E1:
+class ExtractAmb:
     def __init__(self, context, file_path, set_batch):
         self.file = file_path
         self.file_name = None
@@ -15,27 +15,46 @@ class ExtractS4E1:
     def amb_block(self):
         f = self.f
         start_offset = f.tell()
-        f.seek(16, 1)
-        count = read_int(f)
-        str_len = read_int(f)
-        f.seek(4, 1)
-        names_offset = read_int(f)
-        data = read_int_tuple(f, count * 4)
-        offsets = data[::4]
-        offset_sizes = data[1::4]
+        block_len = read_int_tuple(f, 2)[1] // 8
+        endian = "<"
+        if block_len > 4194304:
+            endian = ">"
+            f.seek(start_offset + 4)
+            block_len = read_int(f, endian) // 8
+        f.seek(8, 1)
+        count = read_int(f, endian)
+        str_len = 32
+        f.seek(8, 1)
+        names_offset = [read_int(f, endian)]
+        if block_len == 6:
+            f.seek(8, 1)
+        data = read_int_tuple(f, count * block_len, endian)
+        if block_len == 4:
+            offsets = data[0::4]
+            offset_sizes = data[1::4]
+        elif block_len == 5:
+            names_offset = data[0::5]
+            offsets = data[2::5]
+            offset_sizes = data[4::5]
+        elif block_len == 6:
+            names_offset = data[0::6]
+            offsets = data[2::6]
+            offset_sizes = data[5::6]
+
         self.file_count = count
 
         for off, size in zip(offsets, offset_sizes):
             self.f.seek(off + start_offset)
             self.file_data.append(self.f.read(size))
 
-        self.f.seek(names_offset)
-        for i, off in enumerate(offsets):
-            var = read_str_nulls(self.f, str_len)[0]
-            if off == 0:
-                self.file_names.append(var)
-                continue
-            self.file_names.append(var)
+        if len(names_offset) == 1:
+            self.f.seek(names_offset[0])
+            [self.file_names.append(read_str_nulls(self.f, str_len)[0]) for a in list(range(count))]
+        elif len(names_offset) > 1:
+            for off in names_offset:
+                if off != 4294967295:
+                    self.f.seek(off)
+                self.file_names.append(read_str_nulls(self.f, str_len)[0])
 
         if "#AMB " in self.file_names:
             if self.file_names[0] == "#AMB ":
@@ -48,9 +67,6 @@ class ExtractS4E1:
                     self.file_names.append(self.file_name + "_" + str(a) + ".AMB")
                     a += 1
         self.index += 1
-
-        self.file_names = [
-            file[:-4] + ".Sonic4Episode1_Z" + file[-4:] if ".zn" in file.lower() else file for file in self.file_names]
 
     def execute(self):
         def run_file():
@@ -93,9 +109,9 @@ from bpy.types import Operator
 
 
 # all texture things are defined here
-class Sonic4E1Tools(Operator, ImportHelper):
+class Sonic4Tools(Operator, ImportHelper):
     """Extract from an AMB archive"""
-    bl_idname = "s4e1.extract"
+    bl_idname = "amb.extract"
     bl_label = "Extract AMB files"
     filename_ext = ".AMB"
     filter_glob: StringProperty(
@@ -116,8 +132,8 @@ class Sonic4E1Tools(Operator, ImportHelper):
     def draw(self, context):
         layout = self.layout
         box = layout.box()
-        box.label(text="Sonic 4 Episode 1 Extractor Settings:", icon="KEYFRAME_HLT")
+        box.label(text="Sonic 4 AMB Extractor Settings:", icon="KEYFRAME_HLT")
         box.row().prop(self, "set_batch", expand=True)
 
     def execute(self, context):
-        return ExtractS4E1(context, self.filepath, self.set_batch).execute()
+        return ExtractAmb(context, self.filepath, self.set_batch).execute()

@@ -34,7 +34,7 @@ import bpy
 from .io.nn import import_no
 from .io.other import import_collision, import_splines, import_pathfinding, import_objects
 from .ui import panels, preferences
-from Sega_NN_tools.extract import srpc, s4e1, sfr
+from Sega_NN_tools.extract import srpc, amb, sfr
 from .extract import bnk
 
 # classes
@@ -42,7 +42,7 @@ classes = (
     import_no.ImportSegaNO, preferences.ImportSegaNN,
     import_collision.ImportSegaNNCollision, import_splines.ImportSegaNNSplines,
     import_pathfinding.ImportSegaNNPathfinding, import_objects.ImportSegaNNObjects,
-    srpc.SonicRPCTools, s4e1.Sonic4E1Tools, sfr.ExtractSfrTools, bnk.ExtractBnkTools,
+    srpc.SonicRPCTools, amb.Sonic4Tools, sfr.ExtractSfrTools, bnk.ExtractBnkTools,
     panels.NN_PT_ModelPanel,
     panels.EXTRACT_PT_Panel,
     panels.NN_PT_About,
