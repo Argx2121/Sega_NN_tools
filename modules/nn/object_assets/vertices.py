@@ -807,7 +807,7 @@ class Read:
                 return off + 8
 
             def get_weights_short(off):
-                div_by = 65535
+                div_by = 32767
                 for i in range(vertex_count):
                     i = (i * block_len + off) // 2
                     v = data_short[i:i + 4]
