@@ -9,7 +9,7 @@ import Sega_NN_tools.io.nn_import_data as nn_data
 
 
 class ReadNn:
-    __slots__ = ["f", "filepath", "format_type", "debug", "nn", "det_n"]
+    __slots__ = ["f", "filepath", "format_type", "debug", "nn", "big_endian", "det_n"]
 
     def __init__(self, f, filepath, format_type, debug):
         self.f = f
@@ -18,6 +18,7 @@ class ReadNn:
         self.debug = debug
         self.nn = self.NnFile()
         # noinspection SpellCheckingInspection
+        self.big_endian = {"C", "E", "G"}
         self.det_n = {
             # specific
             "NCIF": self._info_1, "NEIF": self._info_1, "NGIF": self._info_1,
@@ -73,19 +74,49 @@ class ReadNn:
         while not self.nn.end:
             self._read_block()
         if not self.nn.textures:
-            print("Trying external textures")
-            self.nn.textures = self.read_texture_names()
-            print(self.nn.textures)
+            self.read_texture_names()
+        if not self.nn.bones:
+            self.read_bone_names()
         return self.format_type, self.nn
 
     def read_texture_names(self):
+        if self.debug:
+            print("Trying external texture names")
+
         if os.path.exists(self.filepath + ".texture_names"):
             f = open(self.filepath + ".texture_names", "rb")
             texture_count = read_int(f)
             texture_names = read_str_nulls(f, os.path.getsize(self.filepath) - 4)[:texture_count]
             filepath = self.filepath.rstrip(bpy.path.basename(self.filepath))
-            return [filepath + t + ".dds" for t in texture_names]
-        return False
+            self.nn.textures = [filepath + t + ".dds" for t in texture_names]
+
+            if self.debug:
+                print(self.nn.textures)
+            f.close()
+
+    def read_bone_names(self):
+        if self.debug:
+            print("Trying external bone names")
+
+        final_letter = "a"
+        if self.filepath[-3:].isupper():
+            final_letter = "A"
+
+        if os.path.exists(self.filepath[:-1] + final_letter):
+            f = open(self.filepath[:-1] + final_letter, "rb")
+            f.seek(4, 1)
+            f.seek(read_int(f), 1)
+            block_name = read_str(f, 4)
+
+            if block_name[0] == block_name[2] == block_name[3]:  # N*NN
+                if block_name[1] in self.big_endian:
+                    self.nn.bones = nn_node_names.Read(f, f.tell() - 4).be()
+                else:
+                    self.nn.bones = nn_node_names.Read(f, f.tell() - 4).le()
+
+            if self.debug:
+                stdout.write("Bone names: " + str(self.nn.bones) + "\n")
+            f.close()
 
     def find_file_name(self, index: int, insert_filetype=True):
         """Reads NN file until NEND in search of file name.
@@ -103,11 +134,11 @@ class ReadNn:
         self._info_1()
         block = read_str(f, 4)
 
-        block_type = block[1].lower()
+        block_type = block[1]
         block = block[:1] + "_" + block[2:]
         block = block_types[block]
 
-        if block_type in {"c", "e", "g"}:
+        if block_type in self.big_endian:
             endian = ">"
         else:
             endian = "<"
@@ -132,7 +163,7 @@ class ReadNn:
                 b_name = read_str(f, 4)
             f.seek(read_int(f), 1)
         else:
-            file_name = "Unnamed_File_" + str(index) + "." + block_type + block
+            file_name = "Unnamed_File_" + str(index) + "." + block_type.lower() + block
             index += 1
         if insert_filetype:
             file_name = file_name[:-4] + "." + self.format_type + file_name[-4:]
