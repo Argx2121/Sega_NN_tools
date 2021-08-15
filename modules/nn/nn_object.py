@@ -11,6 +11,10 @@ class ModelData:
     bones: Any = None
     materials: Any = None
     faces: Any = None
+    uvs: Any = False
+    wxs: Any = False
+    norm: Any = False
+    col: Any = False
     vertices: Any = None
     mesh_info: Any = None
     build_mesh: Any = None
@@ -98,6 +102,27 @@ class ReadModel:
         while var:
             var = read_int(f)
         f.seek(-4, 1)
+        return m
+
+    def gno(self) -> ModelData:
+        start_block, len_block = self._start()
+        f = self.f
+        m = ModelData()
+
+        d, self.start = self._run(read_int(f, ">"), 0, model_data.Read(self._info_gen(), start_block).be_semi)
+
+        m.info = d
+        self._debug_1(d)
+        info = self._info_gen()
+
+        m.bones = self._run(d.bone_offset, 1, bones.Read(info, d.bone_count).be_semi)
+        m.materials = self._run(d.material_offset, 2, materials.Read(info, d.material_count).gno)
+        m.faces, m.uvs, m.wxs, m.norm, m.col = self._run(d.face_offset, 3, faces.Read(info, d.face_count).be_3)
+        m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).gno)
+        m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).be_9)
+
+        self._debug_2(m.build_mesh)
+        f.seek(start_block + len_block + 8)  # seek end of block
         return m
 
     def ino(self) -> ModelData:

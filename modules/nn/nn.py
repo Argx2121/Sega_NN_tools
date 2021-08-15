@@ -33,7 +33,7 @@ class ReadNn:
             "NINN": self._node_1, "NLNN": self._node_1, "NSNN": self._node_1, "NUNN": self._node_1,
             "NXNN": self._node_1, "NZNN": self._node_1,
 
-            "NCOB": self._obj_c, "NEOB": self._obj_e,
+            "NCOB": self._obj_c, "NEOB": self._obj_e, "NGOB": self._obj_g,
             "NIOB": self._obj_i, "NLOB": self._obj_l, "NSOB": self._obj_s, "NUOB": self._obj_u,
             "NXOB": self._obj_x, "NZOB": self._obj_z,
 
@@ -210,6 +210,10 @@ class ReadNn:
 
     def _obj_e(self):
         self.nn.model = nn_object.ReadModel(self.f, self.nn.start, self.format_type, self.debug).eno()
+        console_out_pre("")
+
+    def _obj_g(self):
+        self.nn.model = nn_object.ReadModel(self.f, self.nn.start, self.format_type, self.debug).gno()
         console_out_pre("")
 
     def _obj_i(self):

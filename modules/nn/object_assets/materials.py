@@ -65,7 +65,7 @@ class Read:
         f = self.f
         material_count = self.material_count
         for _ in range(material_count):
-            var = len(format(read_short(f, ">") >> 2, "b"))
+            var = format(read_short(f, ">") >> 2, "b").count("1")
             self.texture_count.append(var)
             f.seek(2, 1)
             self.texture_offset.append(read_int(f))
@@ -76,6 +76,14 @@ class Read:
         for _ in range(material_count):
             self.texture_count.append(read_int(f))
             self.texture_offset.append(read_int(f))
+
+    def _be_offsets_2(self):
+        f = self.f
+        material_count = self.material_count
+        for _ in range(material_count):
+            a = format(read_int(f, ">") >> 17, "b").count("1")
+            self.texture_count.append(a)
+            self.texture_offset.append(read_int(f, ">"))
 
     def _le_info_1(self):
         f = self.f
@@ -217,6 +225,59 @@ class Read:
 
                     texture_list.append(self.Texture(var, tex_set, read_int(f, ">")))
                     f.seek(56, 1)
+            self.texture_list.append(texture_list)
+
+    def _gno_texture(self):
+        def sonic_and_the_black_knight_g():
+            t_type = "none"
+            t_settings = []
+            if TextureFlags.byte4bit4:
+                t_type = "none"  # "spectacular"
+            elif TextureFlags.byte4bit2:
+                t_type = "none"  # "reflection"
+            elif TextureFlags.byte4bit1:
+                t_type = "diffuse"
+
+            if not TextureFlags.byte4bit1:
+                t_type = "none"
+
+            return t_type, t_settings
+
+        format_dict = {
+            "SonicAndTheBlackKnight_G": sonic_and_the_black_knight_g,
+        }
+        f = self.f
+
+        for offset, count in zip(self.texture_offset, self.texture_count):
+            texture_list = []
+            f.seek(offset + self.start + 4)
+            self.colour_list.append(self.Colour(read_float_tuple(f, 3, ">"), read_float(f, ">")))
+            f.seek(72, 1)
+
+            for _ in range(count):
+                texture_flags = read_int(f, ">")
+
+                class TextureFlags(Flag):
+                    # byte 1
+
+                    # byte 2
+
+                    # byte 3
+
+                    # byte 4
+                    byte4bit4 = texture_flags >> 3 & 1
+                    byte4bit2 = texture_flags >> 1 & 1
+                    byte4bit1 = texture_flags >> 0 & 1
+
+                var, tex_set = format_dict[self.format_type]()
+
+                texture_list.append(self.Texture(var, tex_set, read_int(f, ">")))
+                f.seek(12, 1)
+
+            if self.format_type == "SonicAndTheBlackKnight_G":
+                tex_formats = [a.type for a in texture_list]
+                if tex_formats.count("diffuse") > 1:
+                    texture_list[::-1][tex_formats[::-1].index("diffuse")].type = "none"
             self.texture_list.append(texture_list)
 
     def _ino_texture(self):
@@ -477,6 +538,9 @@ class Read:
                     if tex_formats.count("spectacular") > 1:
                         texture_list[tex_formats.index("spectacular") + 1].type = "normal"
                         texture_list[tex_formats.index("spectacular") + 1].setting.append("world")
+                    while tex_formats.count("spectacular") > 0:
+                        texture_list[tex_formats.index("spectacular")].type = "none"
+                        tex_formats = [a.type for a in texture_list]
             self.texture_list.append(texture_list)
 
     def _zno_texture(self):
@@ -560,22 +624,6 @@ class Read:
                         f.seek(56, 1)
             self.texture_list.append(texture_list)
 
-    def _be_colour_texture_type_1(self):
-        f = self.f
-        texture_type = {1: "diffuse", 2: "diffuse", 3: "diffuse", 4: "reflection", 5: "diffuse", 6: "diffuse"}
-        for offset in self.colour_offset:
-            f.seek(offset + self.start + 4)
-            self.colour_list.append(self.Colour(read_float_tuple(f, 3, ">"), read_float(f, ">")))
-            f.seek(68, 1)
-            texture_list = []
-            for t_count in self.texture_count:
-                for _ in range(t_count):
-                    _, tex_set, _, tex_type = read_byte_tuple(f, 4)
-                    tex_index = read_int(f, ">")
-                    f.seek(12, 1)
-                    texture_list.append(self.Texture(texture_type[tex_type], [], tex_index))
-            self.texture_list.append(texture_list)
-
     def _return_data_1(self):
         material_list = []
         for i in range(self.material_count):
@@ -601,6 +649,11 @@ class Read:
         self._be_info_1()
         self._be_colour_1()
         self._eno_texture()
+        return self._return_data_1()
+
+    def gno(self):
+        self._be_offsets_2()
+        self._gno_texture()
         return self._return_data_1()
 
     def ino(self):

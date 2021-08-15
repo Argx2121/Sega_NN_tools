@@ -24,7 +24,6 @@ A Python library for Blender for games using Sega's NN libraries.
  - Importing files in batch opens the console on Windows and prints file information while processing files.
 
 ## Games
-
  - With all games files should be extracted. Files without the appropriate file extension (.cno, .eno, lno, etc.) will not be read.
  - All games have a slightly different file format - please specify the game for the tool so it can import the model correctly. If no game is specified the tool may import the model incorrectly.
  - The tool comes with some file extractors. Please use them when applicable. 
@@ -36,6 +35,9 @@ A Python library for Blender for games using Sega's NN libraries.
 
 ### Eno
 #### Sonic Free Riders
+
+### Gno
+#### Sonic and the Black Knight
 
 ### Ino
 #### Sonic 4 Episode 1
@@ -54,17 +56,15 @@ A Python library for Blender for games using Sega's NN libraries.
 ### Xno
 #### Sonic Riders
  - Some textures may be pink in blender - this is a known issue that doesn't otherwise influence how the addon functions.
-
 #### Sonic (2006)
-
 #### Phantasy Star Universe
 
 ### Zno
 #### Sega Golden Gun
 #### Sonic 4 Episode 1
  - The extractor included may have to be run multiple times as there may be AMB files stored in AMB files.
-### Transformers: Human Alliance
- - Textures that are extracted to subfolders will need you to select Recursive texture search to import them.
+#### Transformers: Human Alliance
+
 ## About
 
 ### Developers

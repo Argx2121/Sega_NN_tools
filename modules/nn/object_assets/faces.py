@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Flag
 
 from ...util import *
 
@@ -6,7 +7,7 @@ from ...util import *
 class Read:
     __slots__ = [
         "f", "start", "format_type", "debug",
-        "face_set_count", "face_info", "face_strip_list", "face_list"
+        "face_set_count", "face_info", "face_strip_list", "face_list", "uv_list", "wx_list", "norm_list", "col_list"
     ]
 
     def __init__(self, var, face_set_count: int):
@@ -15,6 +16,10 @@ class Read:
         self.face_info = []
         self.face_strip_list = []
         self.face_list = []
+        self.uv_list = []
+        self.wx_list = []
+        self.norm_list = []
+        self.col_list = []
 
     @dataclass
     class FaceInfo:
@@ -69,6 +74,13 @@ class Read:
             face_len = read_int_tuple(f, face_off_count, ">")
             f.seek(face_off_off + self.start)
             face_off = read_int_tuple(f, face_off_count, ">")
+            self.face_info.append(self.FaceInfo(face_len, 0, 0, face_off))
+
+    def _be_info_3(self, info_offset):
+        f = self.f
+        for offset in info_offset:
+            f.seek(offset + self.start + 4)
+            face_off, face_len = read_int_tuple(f, 2, ">")
             self.face_info.append(self.FaceInfo(face_len, 0, 0, face_off))
 
     def _le_strip_1(self):
@@ -170,6 +182,141 @@ class Read:
                     face_list_mesh.append((face_list[- 3], face_list[- 2], face_list[- 1]))
             self.face_list.append(face_list_mesh)
 
+    def _be_indices_3(self):
+        f = self.f
+        for info in self.face_info:  # for all sub meshes
+            f.seek(info.face_offset + self.start + 20)
+            face_list_mesh = []
+            uv_list_mesh = []
+            wx_list_mesh = []
+            norm_list_mesh = []
+            col_list_mesh = []
+            face_flags = read_byte(f, ">")
+            face_start = read_byte(f, ">")
+
+            class FaceFlags(Flag):
+                # byte 1
+                col = face_flags >> 0 & 1
+                byte1bit2 = face_flags >> 1 & 1
+                norm = face_flags >> 2 & 1
+                byte1bit4 = face_flags >> 3 & 1
+                uvs = face_flags >> 4 & 1
+                wxs = face_flags >> 5 & 1
+                byte1bit7 = face_flags >> 6 & 1
+                byte1bit8 = face_flags >> 7 & 1
+
+                # byte 2
+
+            while face_start == 153:
+                face_count = read_short(f, ">")
+                multi = 1
+
+                if FaceFlags.norm:
+                    multi += 1
+                if FaceFlags.uvs:
+                    multi += 1
+                if FaceFlags.wxs:
+                    multi += 2
+                if FaceFlags.col:
+                    multi += 1
+
+                count = face_count * multi
+                face_list = read_short_tuple(f, count, ">")
+                face_start = read_byte(f, ">")
+                off = 0
+
+                for face in range(face_count - 2):
+                    f1, f2, f3 = \
+                        face_list[(face + 0) * multi], \
+                        face_list[(face + 1) * multi], \
+                        face_list[(face + 2) * multi]
+                    if face & 1:
+                        face_list_mesh.append((f1, f2, f3))
+                    else:
+                        face_list_mesh.append((f2, f1, f3))
+                off += 1
+
+                if FaceFlags.col:
+                    for face in range(face_count - 2):
+                        f1, f2, f3 = \
+                            face_list[(face + 0) * multi + off], \
+                            face_list[(face + 1) * multi + off], \
+                            face_list[(face + 2) * multi + off]
+                        if face & 1:
+                            col_list_mesh.append((f1, f2, f3))
+                        else:
+                            col_list_mesh.append((f2, f1, f3))
+                    off += 1
+
+                if FaceFlags.norm:
+                    for face in range(face_count - 2):
+                        f1, f2, f3 = \
+                            face_list[(face + 0) * multi + off], \
+                            face_list[(face + 1) * multi + off], \
+                            face_list[(face + 2) * multi + off]
+                        if face & 1:
+                            norm_list_mesh.append((f1, f2, f3))
+                        else:
+                            norm_list_mesh.append((f2, f1, f3))
+                    off += 1
+
+                if FaceFlags.uvs:
+                    for face in range(face_count - 2):
+                        f1, f2, f3 = \
+                            face_list[(face + 0) * multi + off], \
+                            face_list[(face + 1) * multi + off], \
+                            face_list[(face + 2) * multi + off]
+                        if face & 1:
+                            uv_list_mesh.append((f1, f2, f3))
+                        else:
+                            uv_list_mesh.append((f2, f1, f3))
+                    off += 1
+
+                if FaceFlags.wxs:
+                    for face in range(face_count - 2):
+                        f1, f2, f3 = \
+                            face_list[(face + 0) * multi + off], \
+                            face_list[(face + 1) * multi + off], \
+                            face_list[(face + 2) * multi + off]
+                        if face & 1:
+                            uv_list_mesh.append((f1, f2, f3))
+                        else:
+                            uv_list_mesh.append((f2, f1, f3))
+                    off += 1
+
+                    for face in range(face_count - 2):
+                        f1, f2, f3 = \
+                            face_list[(face + 0) * multi + off], \
+                            face_list[(face + 1) * multi + off], \
+                            face_list[(face + 2) * multi + off]
+                        if face & 1:
+                            wx_list_mesh.append((f1, f2, f3))
+                        else:
+                            wx_list_mesh.append((f2, f1, f3))
+                    off += 1
+
+            self.face_list.append(face_list_mesh)
+
+            if FaceFlags.col:
+                self.col_list.append(col_list_mesh)
+            else:
+                self.col_list.append([])
+
+            if FaceFlags.norm:
+                self.norm_list.append(norm_list_mesh)
+            else:
+                self.norm_list.append([])
+
+            if FaceFlags.wxs:
+                self.uv_list.append(uv_list_mesh)
+                self.wx_list.append(wx_list_mesh)
+            elif FaceFlags.uvs:
+                self.uv_list.append(uv_list_mesh)
+                self.wx_list.append([])
+            else:
+                self.uv_list.append([])
+                self.wx_list.append([])
+
     def le_1(self):
         info_offset = self._le_offsets()
         self._le_info_1(info_offset)
@@ -201,3 +348,9 @@ class Read:
         self._be_info_2(info_offset)
         self._be_indices_2()
         return self.face_list
+
+    def be_3(self):
+        info_offset = self._be_offsets()
+        self._be_info_3(info_offset)
+        self._be_indices_3()
+        return self.face_list, self.uv_list, self.wx_list, self.norm_list, self.col_list

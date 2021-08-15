@@ -6,6 +6,7 @@ no_list = (
     # Formats
     ("C", "CNO", "Cno"),
     ("E", "ENO", "Eno"),
+    ("G", "GNO", "Gno"),
     ("I", "INO", "Ino"),
     ("L", "LNO", "Lno"),
     ("S", "SNO", "Sno (Experimental!!)"),
@@ -35,6 +36,7 @@ eno_list = (
 )
 
 gno_list = (
+    ("SonicAndTheBlackKnight_G", "Sonic and the Black Knight", "Sonic and the Black Knight Model | 3 Mar 2009"),
 )
 
 ino_list = (
@@ -75,6 +77,8 @@ determine_bone = {
     "HouseOfTheDead4_C": 2,
 
     "SonicFreeRiders_E": 0.5,
+
+    "SonicAndTheBlackKnight_G": 1,
 
     "Sonic4Episode1_I": 1,
 

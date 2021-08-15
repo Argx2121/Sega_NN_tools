@@ -30,6 +30,32 @@ class MeshData:
     bone_list_complex: tuple
 
 
+@dataclass
+class MeshDataGno:
+    __slots__ = [
+        "vertex_type", "vertex_count", "vertex_offset",
+        "norm_type", "norm_count", "norm_offset",
+        "col_type", "col_count", "col_offset",
+        "uv_type", "uv_count", "uv_offset",
+        "bone_type", "bone_count", "bone_offset",
+    ]
+    vertex_type: int
+    vertex_count: int
+    vertex_offset: int
+    norm_type: int
+    norm_count: int
+    norm_offset: int
+    col_type: int
+    col_count: int
+    col_offset: int
+    uv_type: int
+    uv_count: int
+    uv_offset: int
+    bone_type: int
+    bone_count: int
+    bone_offset: int
+
+
 class Read:
     __slots__ = [
         "f", "start", "format_type", "debug",
@@ -255,6 +281,32 @@ class Read:
                 self.mesh_info.append(
                     MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
                              self.vertex_mesh_offset[i], bone_count_list[i], ()))
+
+    def _be_info_3(self):
+        f = self.f
+        start = self.start
+        for offset in self.vert_info_offset:
+            f.seek(offset + start)
+            vert_type, vert_count = read_short_tuple(f, 2, ">")
+            vert_offset = read_int(f, ">")
+            norm_type, norm_total = read_short_tuple(f, 2, ">")
+            norm_offset = read_int(f, ">")
+            col_type, col_total = read_short_tuple(f, 2, ">")
+            col_offset = read_int(f, ">")
+            uv_type, uv_total = read_short_tuple(f, 2, ">")
+            uv_offset = read_int(f, ">")
+            f.seek(8, 1)
+            bone_type, bone_total = read_short_tuple(f, 2, ">")
+            bone_offset = read_int(f, ">")
+            # data_bone_type, data_bone_total = read_short_tuple(f, 2, ">")
+            # data_bone_offset = read_int(f, ">")
+            # stores (as shorts) [bone count, bone offset (for use in previous data list)]
+            # not included as its not necessary
+
+            self.mesh_info.append(
+                MeshDataGno(vert_type, vert_count, vert_offset, norm_type, norm_total, norm_offset,
+                            col_type, col_total, col_offset, uv_type, uv_total, uv_offset,
+                            bone_type, bone_total, bone_offset))
 
     def _cno_vertices(self):
         f = self.f
@@ -559,6 +611,104 @@ class Read:
             del vertex_buffer
 
             vert_block()
+            vertex_data.append(
+                VertexData(
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
+                ))
+        return vertex_data, self.mesh_info
+
+    def _gno_vertices(self):
+        f = self.f
+        vertex_data = []
+
+        def get_verts(d_type, count):
+            if d_type == 1:
+                data = read_float_tuple(f, 3 * count, ">")
+                for v in range(count):
+                    v_positions.append(data[v * 3: v * 3 + 3])
+
+        def get_norms(d_type, count):
+            if d_type == 3:
+                data_byte = unpack(">" + str(count * 3) + "b", f.read(count * 3))
+                for v in range(count):
+                    v_normals.append(
+                        (data_byte[v * 3] / 64, data_byte[v * 3 + 1] / 64, data_byte[v * 3 + 2] / 64))
+
+        def get_colours(d_type, count):  # colours seem broken
+            if d_type == 1:
+                data_byte = unpack(">" + str(count * 4) + "b", f.read(count * 4))
+                div_by = 255
+                for v in range(count):
+                    v_colours.append((
+                        data_byte[v * 4 + 3] / div_by, data_byte[v * 4 + 1] / div_by,
+                        data_byte[v * 4 + 0] / div_by, data_byte[v * 4 + 3] / div_by))
+
+        def get_uvs(d_type, count):
+            if d_type == 2:
+                data = unpack(">" + str(2 * count) + "H", f.read(2 * count * 2))
+                for v in range(count):
+                    v_u = data[v * 2] / 256
+                    v_v = - data[v * 2 + 1] / 256 + 1
+                    if v_u >= 128:
+                        v_u -= 256
+                    if v_v >= 128:
+                        v_v -= 256
+
+                    if v_u <= - 128:
+                        v_u += 256
+                    if v_v <= - 128:
+                        v_v += 256
+                    v_uvs.append((v_u, v_v))
+            elif d_type == 3:
+                data = unpack(">" + str(2 * count) + "H", f.read(2 * count * 2))
+                for v in range(count):
+                    v_u = data[v * 2] / 1024
+                    v_v = - data[v * 2 + 1] / 1024 + 1
+                    v_uvs.append((v_u, v_v))
+
+        def get_bones(d_type, count):
+            start = f.tell()
+            if d_type == 1:
+                data_byte = read_byte_tuple(f, 4 * count, ">")
+                f.seek(start + 2)
+                data_short = read_short_tuple(f, 2 * count, ">")
+                for v in range(count):
+                    v_bones.append((data_byte[v * 4], data_byte[v * 4 + 1]))
+                    v_weights.append((data_short[v * 2] / 16384, 1 - data_short[v * 2] / 16384))
+            if d_type == 8:
+                data_short = read_short_tuple(f, 2 * count, ">")
+                d_bone = data_short[0::2]
+                d_wei = data_short[1::2]
+                off = 0
+                while off < count:
+                    bone_l = []
+                    bone_wei_l = []
+                    while sum(bone_wei_l) < 0.999:
+                        bone_l.append(d_bone[off])
+                        bone_wei_l.append(d_wei[off] / 16384)
+                        off += 1
+                    v_bones.append(bone_l)
+                    v_weights.append(bone_wei_l)
+
+        for m in self.mesh_info:  # for all sub meshes
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
+
+            if m.vertex_offset:
+                f.seek(m.vertex_offset + self.start)
+                get_verts(m.vertex_type, m.vertex_count)
+            if m.norm_offset:
+                f.seek(m.norm_offset + self.start)
+                get_norms(m.norm_type, m.norm_count)
+            if m.col_offset:
+                f.seek(m.col_offset + self.start)
+                get_colours(m.col_type, m.col_count)
+            if m.uv_offset:
+                f.seek(m.uv_offset + self.start)
+                get_uvs(m.uv_type, m.uv_count)
+            if m.bone_offset:
+                f.seek(m.bone_offset + self.start)
+                get_bones(m.bone_type, m.bone_count)
+
             vertex_data.append(
                 VertexData(
                     v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
@@ -1278,6 +1428,11 @@ class Read:
         self._be_offsets()
         self._be_info_1()
         return self._eno_vertices()
+
+    def gno(self):
+        self._be_offsets()
+        self._be_info_3()
+        return self._gno_vertices()
 
     def ino(self):
         self._le_offsets()
