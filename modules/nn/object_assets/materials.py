@@ -238,13 +238,77 @@ class Read:
             elif TextureFlags.byte4bit1:
                 t_type = "diffuse"
 
+            if not TextureFlags.byte4bit1 and TextureFlags.byte4bit2:
+                t_type = "wx_alpha"
+
+            return t_type, t_settings
+
+        def sonic_and_the_secret_rings_g():
+            t_type = "none"
+            t_settings = []
+            if TextureFlags.byte4bit4:
+                t_type = "none"  # "spectacular"
+            elif TextureFlags.byte4bit2:
+                t_type = "wx_alpha"
+            elif TextureFlags.byte3bit6:
+                t_type = "reflection"
+            elif TextureFlags.byte4bit1:
+                t_type = "diffuse"
+
             if not TextureFlags.byte4bit1:
                 t_type = "none"
 
             return t_type, t_settings
 
+        def sonic_riders_zero_gravity_g():
+            t_type = "none"
+            t_settings = []
+            if TextureFlags.byte4bit2:
+                t_type = "reflection"
+            elif TextureFlags.byte4bit1:
+                t_type = "diffuse"
+
+            return t_type, t_settings
+
+        def bleach_shattered_blade_g():
+            t_type = "none"
+            t_settings = []
+            if TextureFlags.byte4bit1:
+                t_type = "diffuse"
+
+            return t_type, t_settings
+
+        def sonic_riders_g():
+            t_type = "none"
+            t_settings = []
+            if TextureFlags.byte4bit1:
+                t_type = "diffuse"
+            elif TextureFlags.byte4bit3:
+                t_type = "reflection"
+            elif TextureFlags.byte4bit4:
+                t_type = "none"
+            return t_type, t_settings
+
+        def sonic_unleashed_g():
+            t_type = "none"
+            t_settings = []
+            if TextureFlags.byte4bit1 and not TextureFlags.byte4bit4 and not TextureFlags.byte4bit2:
+                t_type = "diffuse"
+            elif TextureFlags.byte4bit2 and TextureFlags.byte4bit4:
+                t_type = "none"  # "reflection"
+            elif TextureFlags.byte4bit2:
+                t_type = "none"
+            elif TextureFlags.byte4bit4:
+                t_type = "none"
+            return t_type, t_settings
+
         format_dict = {
             "SonicAndTheBlackKnight_G": sonic_and_the_black_knight_g,
+            "SonicAndTheSecretRings_G": sonic_and_the_secret_rings_g,
+            "SonicRidersZeroGravity_G": sonic_riders_zero_gravity_g,
+            "BleachShatteredBlade_G": bleach_shattered_blade_g,
+            "SonicRiders_G": sonic_riders_g,
+            "SonicUnleashed_G": sonic_unleashed_g,
         }
         f = self.f
 
@@ -263,9 +327,11 @@ class Read:
                     # byte 2
 
                     # byte 3
+                    byte3bit6 = texture_flags >> 13 & 1
 
                     # byte 4
                     byte4bit4 = texture_flags >> 3 & 1
+                    byte4bit3 = texture_flags >> 2 & 1
                     byte4bit2 = texture_flags >> 1 & 1
                     byte4bit1 = texture_flags >> 0 & 1
 
@@ -618,10 +684,7 @@ class Read:
                     var, tex_set = format_dict[self.format_type]()
 
                     texture_list.append(self.Texture(var, tex_set, read_int(f)))
-                    if self.format_type == "Sonic4Episode1_Z":
-                        f.seek(40, 1)
-                    else:
-                        f.seek(56, 1)
+                    f.seek(56, 1)
             self.texture_list.append(texture_list)
 
     def _return_data_1(self):

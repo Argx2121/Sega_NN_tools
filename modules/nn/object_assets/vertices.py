@@ -622,10 +622,50 @@ class Read:
         vertex_data = []
 
         def get_verts(d_type, count):
+            print(d_type, count)
             if d_type == 1:
                 data = read_float_tuple(f, 3 * count, ">")
                 for v in range(count):
                     v_positions.append(data[v * 3: v * 3 + 3])
+            elif d_type == 6:
+                data = read_short_tuple(f, 3 * count, ">")
+                for v in range(count):
+                    v1 = data[v * 3] / 256
+                    v2 = data[v * 3 + 1] / 256
+                    v3 = data[v * 3 + 2] / 256
+                    if v1 > 255:
+                        v1 -= 256
+                    if v2 > 255:
+                        v2 -= 256
+                    if v3 > 255:
+                        v3 -= 256
+                    v_positions.append((v1, v2, v3))
+            elif d_type == 7:
+                data = read_short_tuple(f, 3 * count, ">")
+                for v in range(count):
+                    v1 = data[v * 3] / 1024
+                    v2 = data[v * 3 + 1] / 1024
+                    v3 = data[v * 3 + 2] / 1024
+                    if v1 > 63:
+                        v1 -= 64
+                    if v2 > 63:
+                        v2 -= 64
+                    if v3 > 63:
+                        v3 -= 64
+                    v_positions.append((v1, v2, v3))
+            elif d_type == 8:
+                data = read_short_tuple(f, 3 * count, ">")
+                for v in range(count):
+                    v1 = data[v * 3] / 1024
+                    v2 = data[v * 3 + 1] / 1024
+                    v3 = data[v * 3 + 2] / 1024
+                    if v1 > 60:
+                        v1 -= 64
+                    if v2 > 60:
+                        v2 -= 64
+                    if v3 > 60:
+                        v3 -= 64
+                    v_positions.append((v1, v2, v3))
 
         def get_norms(d_type, count):
             if d_type == 3:
@@ -649,14 +689,14 @@ class Read:
                 for v in range(count):
                     v_u = data[v * 2] / 256
                     v_v = - data[v * 2 + 1] / 256 + 1
-                    if v_u >= 128:
+                    if v_u > 127:
                         v_u -= 256
-                    if v_v >= 128:
+                    if v_v > 127:
                         v_v -= 256
 
-                    if v_u <= - 128:
+                    if v_u < - 127:
                         v_u += 256
-                    if v_v <= - 128:
+                    if v_v < - 127:
                         v_v += 256
                     v_uvs.append((v_u, v_v))
             elif d_type == 3:

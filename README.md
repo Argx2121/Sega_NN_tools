@@ -38,6 +38,11 @@ A Python library for Blender for games using Sega's NN libraries.
 
 ### Gno
 #### Sonic and the Black Knight
+#### Sonic Unleashed
+#### Sonic Riders Zero Gravity
+#### Sonic and the Secret Rings
+#### Bleach: Shattered Blade
+#### Sonic Riders
 
 ### Ino
 #### Sonic 4 Episode 1
@@ -62,7 +67,6 @@ A Python library for Blender for games using Sega's NN libraries.
 ### Zno
 #### Sega Golden Gun
 #### Sonic 4 Episode 1
- - The extractor included may have to be run multiple times as there may be AMB files stored in AMB files.
 #### Transformers: Human Alliance
 
 ## About

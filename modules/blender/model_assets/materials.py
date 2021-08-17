@@ -4,6 +4,16 @@ import pathlib
 from platform import system
 
 
+def sort_list(material_list):
+    for mat in material_list:
+        tex_formats = [a.type for a in mat.texture]
+        if tex_formats.count("diffuse") > 0:
+            pop = tex_formats.index("diffuse")
+            pop = mat.texture.pop(pop)
+            mat.texture.insert(0, pop)
+    return material_list
+
+
 def _make_image(tree, image, settings):
     node = tree.nodes.new(type="ShaderNodeTexImage")
     node.image = image
@@ -102,6 +112,21 @@ def _bump(tree, image):
     return node.outputs[0]
 
 
+def _wx_alpha(tree, colour, image, model_name_strip):
+    node = tree.nodes.new(type="ShaderNodeUVMap")
+    node.uv_map = model_name_strip + "_WX_Map"
+    tree.links.new(image.inputs[0], node.outputs[0])
+
+    multi = tree.nodes.new(type="ShaderNodeMixRGB")
+    multi.blend_type = 'MULTIPLY'
+
+    tree.links.new(multi.inputs[0], image.outputs[1])
+    tree.links.new(multi.inputs[1], colour)
+    tree.links.new(multi.inputs[2], image.outputs[0])
+
+    return multi.outputs[0]
+
+
 def material_complex(self):
     texture_name = self.texture_names
     material_count = self.model.info.material_count
@@ -109,6 +134,8 @@ def material_complex(self):
     material_list_blender = self.material_list_blender
     material_list = self.model.materials
     model_name_strip = self.model_name_strip
+
+    material_list = sort_list(material_list)
 
     skip_textures = False
 
@@ -176,6 +203,8 @@ def material_complex(self):
                 tree.links.new(n_end.inputs[5], displacement)
             elif m_tex_type == "spectacular":
                 tree.links.new(n_end.inputs[1], image_node.outputs[0])
+            elif m_tex_type == "wx_alpha":
+                colour = _wx_alpha(tree, colour, image_node, model_name_strip)
 
         if not colour:  # if a diffuse texture hasn't been found
             colour, alpha = _rgba(tree, m_col)
@@ -199,6 +228,8 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
     material_list_blender = self.material_list_blender
     material_list = self.model.materials
     model_name_strip = self.model_name_strip
+
+    material_list = sort_list(material_list)
 
     skip_textures = False
 
