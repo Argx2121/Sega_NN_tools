@@ -118,12 +118,11 @@ class ReadNn:
                 stdout.write("Bone names: " + str(self.nn.bones) + "\n")
             f.close()
 
-    def find_file_name(self, index: int, insert_filetype=True):
+    def find_file_name(self, index: int):
         """Reads NN file until NEND in search of file name.
         If no file name block is found,
         a generic name with the filetype based of the file contents + the file index is returned.
-        The game name is also inserted into the file name.
-        Run this function after a N*IF as been read."""
+        Run this function after a N*IF string as been read."""
         f = self.f
         block_types = {
             "N_OB": "no", "N_TL": "no",
@@ -165,8 +164,6 @@ class ReadNn:
         else:
             file_name = "Unnamed_File_" + str(index) + "." + block_type.lower() + block
             index += 1
-        if insert_filetype:
-            file_name = file_name[:-4] + "." + self.format_type + file_name[-4:]
         return file_name, index
 
     # block definitions

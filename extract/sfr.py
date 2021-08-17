@@ -31,7 +31,7 @@ class ExtractSFR:
             f.seek(offset)
             if block_type == "NEIF":
                 f.seek(4, 1)
-                file_name, _ = ReadNn(f, self.file_path, "SonicFreeRiders_E", False).find_file_name(i)
+                file_name, _ = ReadNn(f, self.file_path, "SonicFreeRiders_E").find_file_name(i)
 
                 f.seek(offset)
 

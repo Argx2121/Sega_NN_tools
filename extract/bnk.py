@@ -49,7 +49,7 @@ class ExtractBnk:
         f = self.f
         start = f.tell()
         f.seek(4, 1)
-        name, index = ReadNn(f, self.file_path, "", False).find_file_name(index, False)
+        name, index = ReadNn(f, self.file_path, "", False).find_file_name(index)
 
         f.seek(start)
         data = f.read(block_len)
