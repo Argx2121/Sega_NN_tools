@@ -68,7 +68,7 @@ class ReadModel:
 
         m.bones = self._run(d.bone_offset, 1, bones.Read(info, d.bone_count).be_full)
         m.materials = self._run(d.material_offset, 2, materials.Read(info, d.material_count).cno)
-        m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).be_2)
+        m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).cno)
         m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).cno)
         m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).be_12)
 
@@ -90,7 +90,7 @@ class ReadModel:
 
         m.bones = self._run(d.bone_offset, 1, bones.Read(info, d.bone_count).be_full)
         m.materials = self._run(d.material_offset, 2, materials.Read(info, d.material_count).eno)
-        m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).be_1)
+        m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).eno)
 
         m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).be_10)
 
@@ -138,7 +138,7 @@ class ReadModel:
 
         m.bones = self._run(d.bone_offset, 1, bones.Read(info, d.bone_count).le_full)
         m.materials = self._run(d.material_offset, 2, materials.Read(info, d.material_count).ino)
-        m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).le_3)
+        m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).ino)
         m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).ino)
         m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_12)
 
@@ -159,7 +159,7 @@ class ReadModel:
 
         m.bones = self._run(d.bone_offset, 1, bones.Read(info, d.bone_count).le_full)
         m.materials = self._run(d.material_offset, 2, materials.Read(info, d.material_count).lno)
-        m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).le_2)
+        m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).lno)
         m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).lno)
         m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_12)
 

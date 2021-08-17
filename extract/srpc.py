@@ -171,7 +171,7 @@ class ExtractSRPC:
                             file_name = "Unnamed_File_" + str(index) + ".SonicRiders_X.scene_render"
                             index += 1
                         else:
-                            file_name = "Unnamed_File_" + str(index) + ".SonicRiders_X." + str(start_int)
+                            file_name = "Unnamed_File_" + str(index)
                             index += 1
 
                     f.seek(i)

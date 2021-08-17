@@ -57,8 +57,13 @@ class ExtractSFR:
                     sample3 = f.read(8)
                     if sample == sample2 == sample3:
                         block_type = "objects"
+                    else:
+                        block_type = False
 
-                file_name = "Unnamed_File_" + str(i) + ".SonicFreeRiders_E." + str(block_type)
+                if block_type:
+                    file_name = "Unnamed_File_" + str(i) + ".SonicFreeRiders_E." + str(block_type)
+                else:
+                    file_name = "Unnamed_File_" + str(i)
 
                 f.seek(offset)
 
