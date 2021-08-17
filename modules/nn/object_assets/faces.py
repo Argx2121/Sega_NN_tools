@@ -351,39 +351,39 @@ class Read:
             self.uv_list.append(uv_list_mesh)
             self.wx_list.append(wx_list_mesh)
 
-    def le_1(self):
+    def xno_zno(self):
         info_offset = self._le_offsets()
         self._le_info_1(info_offset)
         self._le_strip_1()
         self._le_indices_1()
         return self.face_list
 
-    def be_1(self):
+    def eno(self):
         info_offset = self._be_offsets()
         self._be_info_1(info_offset)
         self._be_strip_1()
         self._be_indices_1()
         return self.face_list
 
-    def le_2(self):
+    def lno(self):
         info_offset = self._le_offsets()
         self._le_info_2(info_offset)
         self._le_indices_2()
         return self.face_list
 
-    def le_3(self):
+    def ino(self):
         info_offset = self._le_offsets()
         self._le_info_3(info_offset)
         self._le_indices_3()
         return self.face_list
 
-    def be_2(self):
+    def cno(self):
         info_offset = self._be_offsets()
         self._be_info_2(info_offset)
         self._be_indices_2()
         return self.face_list
 
-    def be_3(self):
+    def gno(self):
         info_offset, info_flag = self._be_offsets_flags()
         self._be_info_3(info_offset)
         self._be_indices_3(info_flag)
