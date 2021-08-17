@@ -25,6 +25,17 @@ def clean_mesh(obj):  # removing illegal faces is done in mesh generation
     bm.free()
 
 
+def clean_mesh_lazy(obj):
+    import bmesh
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.faces.ensure_lookup_table()
+    verts = [v for v in bm.verts if not v.link_faces]
+    bmesh.ops.delete(bm, geom=verts, context="VERTS")
+    bm.to_mesh(obj.data)
+    bm.free()
+
+
 def clean_mesh_strict(obj):
     import bmesh
     bm = bmesh.new()

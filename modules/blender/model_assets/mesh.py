@@ -186,10 +186,13 @@ def make_mesh(self):
             else:
                 make_weights_simple()
 
-        if model_name[-3].lower() == "u" and self.settings.clean_mesh:  # problematic
-            model_util.clean_mesh_strict(obj)
-        elif self.settings.clean_mesh:
-            model_util.clean_mesh(obj)
+        if self.settings.clean_mesh:
+            if self.format == "KOnAfterSchoolLive_U":  # problematic games
+                model_util.clean_mesh_strict(obj)
+            elif self.format == "SonicFreeRiders_E":
+                model_util.clean_mesh_lazy(obj)
+            else:
+                model_util.clean_mesh(obj)
 
     def face_clean_gno(face_clean, face_high):
         for ind in face_broke:
