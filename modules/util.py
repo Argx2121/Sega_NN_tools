@@ -120,6 +120,13 @@ def show_finished(tool_name):
     bpy.context.window_manager.popup_menu(draw, tool_name, "INFO")
 
 
+def show_not_read(tool_name):
+    """Shows a pop-up to tell the user the file couldn't be read"""
+    def draw(self, context):
+        self.layout.label(text="File could not be read!")
+    bpy.context.window_manager.popup_menu(draw, tool_name, "ERROR")
+
+
 def toggle_console():
     """Toggles Blenders console if on windows"""
     from platform import system

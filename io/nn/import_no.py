@@ -200,15 +200,19 @@ class Settings:
 
 def model_import(filepath, settings):
     def execute(file_path):
+        if "texture_names" in file_path:
+            return
         f = open(file_path, 'rb')
         block = read_str_nulls(f, 4)[0]
         f.seek(0)
         expected_block = "N" + settings.format[-1] + "IF"
         print_line()
-        if block == expected_block:  # this catches files that get past name requirements (file.game.xno.texture_names)
+        if block == expected_block:
             nn = ReadNn(f, file_path, settings.format, settings.debug).read_file()[1]
             if nn.model:
                 Model(nn, settings).execute()
+        else:
+            show_not_read("NN Model Importer")
         f.close()
 
     name_require = "." + settings.format[-1].lower() + "no"
