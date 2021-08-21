@@ -173,10 +173,6 @@ def make_mesh(self):
             else:
                 make_weights_simple()
         else:
-            if uv_short_hand:
-                make_uvs()
-                if wx_short_hand:
-                    make_wxs()
             if col_short_hand:
                 make_colours()
             if norm_short_hand:
