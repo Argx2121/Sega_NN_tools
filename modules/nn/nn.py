@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from Sega_NN_tools.modules.nn import nn_unknown, nn_information_file, nn_texture_library, nn_effects, nn_node_names, \
-    nn_object, nn_offset_file, nn_file_name, nn_end
+    nn_object, nn_offset_file, nn_file_name, nn_end, nn_camera
 from Sega_NN_tools.modules.nn.nn_object import ModelData
 from Sega_NN_tools.modules.util import *
 
@@ -17,7 +17,6 @@ class ReadNn:
         self.format_type = format_type
         self.debug = debug
         self.nn = self.NnFile()
-        # noinspection SpellCheckingInspection
         self.big_endian = {"C", "E", "G"}
         self.det_n = {
             # specific
@@ -41,6 +40,10 @@ class ReadNn:
             "NCEF": self._eff_1, "NEEF": self._eff_1, "NGEF": self._eff_1,
             "NIEF": self._eff_1, "NLEF": self._eff_1, "NSEF": self._eff_1, "NUEF": self._eff_1,
             "NXEF": self._eff_1, "NZEF": self._eff_1,
+
+            "NCCA": self._cam_1, "NECA": self._cam_1, "NGCA": self._cam_1,
+            "NICA": self._cam_1, "NLCA": self._cam_1, "NSCA": self._cam_1, "NUCA": self._cam_1,
+            "NXCA": self._cam_1, "NZCA": self._cam_1,
 
 
             # generic
@@ -188,6 +191,9 @@ class ReadNn:
 
     def _eff_1(self):
         nn_effects.Read(self.f).type_1()
+
+    def _cam_1(self):
+        nn_camera.Read(self.f).type_1()
 
     def _node_1(self):
         self.nn.bones = nn_node_names.Read(self.f, self.nn.start).le()
