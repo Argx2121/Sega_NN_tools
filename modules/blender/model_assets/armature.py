@@ -14,7 +14,8 @@ def make_bones(self):
         if b.parent != 65535:
             bone.parent = armature.edit_bones[b.parent]
         bone.tail = b.relative  # they store the position relative to parent bone
-        bone.transform(b.position)  # it's not the correct usage but its aesthetically nice for most bones
+        # it's not the correct usage but its aesthetically nice for most bones
+        bone.transform(b.position)
 
         if not 0.0001 < bone.length < tail_var * max_len:  # blender rounds bone len
             bone.length = tail_var  # 0 = bone isn't made, too big = can't see anything in blender
