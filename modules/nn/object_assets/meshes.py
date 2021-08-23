@@ -38,6 +38,18 @@ class Read:
                 build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
         return build_mesh
 
+    def le_9_sno(self):
+        f = self.f
+        build_mesh = []
+        for var in range(self.sets_count):
+            f.seek(self.data_offset[var] + self.start)
+            for _ in range(self.data_count[var]):
+                pos = read_float_tuple(f, 3)
+                scale = read_float(f)
+                var = read_int_tuple(f, 5)
+                build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[3]))
+        return build_mesh
+
     def be_9(self):
         f = self.f
         build_mesh = []

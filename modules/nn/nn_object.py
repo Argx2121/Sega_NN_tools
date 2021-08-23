@@ -186,7 +186,7 @@ class ReadModel:
         m.faces, m.vertices = implicit_faces_fix_mesh_size(m.vertices)
         console_out_post(var)
 
-        m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_9)
+        m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_9_sno)
 
         self._debug_2(m.build_mesh)
         f.seek(start_block + len_block + 8)  # seek end of block
