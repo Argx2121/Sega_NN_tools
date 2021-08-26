@@ -45,6 +45,7 @@ class EXTRACT_PT_Panel(GENERIC_panel, bpy.types.Panel):
         layout.operator("amb.extract", text="Sonic 4 .AMB")
         layout.operator("bnk.extract", text="Bank file .bnk")
         layout.operator("srpc.extract", text="Sonic Riders PC (NO EXTENSION)")
+        layout.operator("pkg.extract", text="Sega Superstars .DIR and .PKG")
 
 
 class NN_PT_About(GENERIC_panel, bpy.types.Panel):
