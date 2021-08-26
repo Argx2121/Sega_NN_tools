@@ -230,6 +230,34 @@ def read_str(file: BinaryIO, count: int) -> str:
     return file.read(count).decode("utf-8", "ignore")
 
 
+def read_str_terminated(file: BinaryIO) -> str:
+    """Reads and returns a null terminated string.
+
+        Parameters
+        ----------
+        file : BinaryIO
+            The file read.
+
+        Returns
+        -------
+        str
+            The string read.
+
+    """
+    ret_str = ""
+    read_len = 0
+    while u"\x00" not in ret_str and u"\xFF" not in ret_str:
+        ret_str = ret_str + file.read(8).decode("utf-8", "ignore")
+        read_len += 8
+    ret_str = ret_str.split(u"\x00", 1)
+    if ret_str[0] != "":
+        read_len = read_len - len(ret_str[0])
+        file.seek(- read_len + 1, 1)
+    else:
+        ret_str[0] = False
+    return ret_str[0]
+
+
 def read_float(file: BinaryIO, endian="<") -> float:
     """Reads and returns a float.
 
