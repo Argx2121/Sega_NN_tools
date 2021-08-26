@@ -80,6 +80,8 @@ class ReadNn:
             self.read_texture_names()
         if not self.nn.bones:
             self.read_bone_names()
+        if self.nn.name == "Unnamed_File":
+            self.nn.name = bpy.path.basename(self.filepath)
         return self.format_type, self.nn
 
     def read_texture_names(self):

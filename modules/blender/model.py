@@ -13,8 +13,6 @@ class Model:
         self.bone_groups = [bone.group for bone in self.model.bones]
         self.bone_names = nn.bones
         self.model_name = nn.name
-        if self.model_name[-4] != "." and self.model_name[-2:] != "no":
-            self.model_name = self.model_name + "." + self.format[-1].lower() + "no"
         self.model_name_strip = self.model_name[:-4]
         self.texture_names = nn.textures
         self.armature = None
