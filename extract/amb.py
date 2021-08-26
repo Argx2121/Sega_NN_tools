@@ -84,6 +84,7 @@ class ExtractAmb:
                     pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
                     fn = open(file_path, "wb")
                     fn.write(data)
+                    fn.close()
 
         if self.set_batch == "Single":
             self.f = open(self.file, "rb")

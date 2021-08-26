@@ -59,6 +59,7 @@ class ExtractBnk:
 
         fn = open(file_path, "wb")
         fn.write(data)
+        fn.close()
         return index
 
     @staticmethod
