@@ -127,6 +127,20 @@ def _wx_alpha(tree, colour, image, model_name_strip):
     return multi.outputs[0]
 
 
+def _wx(tree, colour, image, model_name_strip):
+    node = tree.nodes.new(type="ShaderNodeUVMap")
+    node.uv_map = model_name_strip + "_WX_Map"
+    tree.links.new(image.inputs[0], node.outputs[0])
+
+    multi = tree.nodes.new(type="ShaderNodeMixRGB")
+    multi.blend_type = 'MULTIPLY'
+
+    tree.links.new(multi.inputs[1], image.outputs[0])
+    tree.links.new(multi.inputs[2], colour)
+
+    return multi.outputs[0]
+
+
 def material_complex(self):
     texture_name = self.texture_names
     material_count = self.model.info.material_count
@@ -205,6 +219,8 @@ def material_complex(self):
                 tree.links.new(n_end.inputs[1], image_node.outputs[0])
             elif m_tex_type == "wx_alpha":
                 colour = _wx_alpha(tree, colour, image_node, model_name_strip)
+            elif m_tex_type == "wx":
+                colour = _wx(tree, colour, image_node, model_name_strip)
 
         if not colour:  # if a diffuse texture hasn't been found
             colour, alpha = _rgba(tree, m_col)
