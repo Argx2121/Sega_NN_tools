@@ -183,7 +183,7 @@ def make_mesh(self):
                 make_weights_simple()
 
         if self.settings.clean_mesh:
-            if self.format == "KOnAfterSchoolLive_U":  # problematic games
+            if self.format == "KOnAfterSchoolLive_U" or self.format == "SegaSuperstars_S":  # problematic games
                 model_util.clean_mesh_strict(obj)
             elif self.format == "SonicFreeRiders_E":
                 model_util.clean_mesh_lazy(obj)
