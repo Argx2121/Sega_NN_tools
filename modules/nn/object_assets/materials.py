@@ -65,8 +65,7 @@ class Read:
         f = self.f
         material_count = self.material_count
         for _ in range(material_count):
-            var = format(read_short(f, ">") >> 2, "b").count("1")
-            self.texture_count.append(var)
+            self.texture_count.append(read_short(f, ">") // 4)
             f.seek(2, 1)
             self.texture_offset.append(read_int(f))
 
@@ -457,6 +456,8 @@ class Read:
             t_settings = []
             if TextureFlags.byte2bit1:
                 t_type = "diffuse"
+            if TextureFlags.byte2bit2:
+                t_type = "wx"
             elif TextureFlags.byte2bit3:
                 t_type = "reflection"
 
@@ -481,6 +482,7 @@ class Read:
 
                         # byte 2
                         byte2bit3 = texture_flags >> 18 & 1
+                        byte2bit2 = texture_flags >> 17 & 1
                         byte2bit1 = texture_flags >> 16 & 1
 
                         # byte 3
