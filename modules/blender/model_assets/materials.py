@@ -321,11 +321,11 @@ def _make_bpy_recursive(texture_names: list):
     texture_names = [bpy.path.basename(tex.split(".")[0]) for tex in texture_names]
 
     for name in texture_names:
-        if name.casefold() not in png_join:
+        if (name + ".png").casefold() not in png_join:
             has_png = False
             break
     for name in texture_names:
-        if name.casefold() not in dds_join:
+        if (name + ".dds").casefold() not in dds_join:
             has_dds = False
             break
 
