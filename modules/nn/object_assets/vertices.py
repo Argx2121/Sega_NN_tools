@@ -907,132 +907,249 @@ class Read:
         return vertex_data, self.mesh_info
 
     def _sno_vertices(self):
-        def pos():
-            data = read_float_tuple(f, 3 * vertex_count)
-            for v in range(vertex_count):
-                v_pos_list.append(data[v * 3: v * 3 + 3])
+        def type_common():
+            def pos():
+                data = read_float_tuple(f, 3 * vertex_count)
+                for v in range(vertex_count):
+                    v_pos_list.append(data[v * 3: v * 3 + 3])
 
-        def norm():
-            data = read_float_tuple(f, 3 * vertex_count)
-            for v in range(vertex_count):
-                v_norms_list.append(data[v * 3: v * 3 + 3])
+            def norm():
+                data = read_float_tuple(f, 3 * vertex_count)
+                for v in range(vertex_count):
+                    v_norms_list.append(data[v * 3: v * 3 + 3])
 
-        def uv():
-            data = read_float_tuple(f, 2 * vertex_count)
-            for v in range(vertex_count):
-                v_uvs_list.append((data[v * 2], - data[v * 2 + 1] + 1))
+            def uv():
+                data = read_float_tuple(f, 2 * vertex_count)
+                for v in range(vertex_count):
+                    v_uvs_list.append((data[v * 2], - data[v * 2 + 1] + 1))
 
-        def unk1():
-            f.seek(vertex_count * 6, 1)
+            def uv_short():
+                data = read_short_tuple(f, 2 * vertex_count)
+                data = [a / 4095 for a in data]
+                for v in range(vertex_count):
+                    v_uvs_list.append((data[v * 2], - data[v * 2 + 1] + 1))
 
-        def unk2():
-            f.seek(vertex_count * 4, 1)
+            def norm_short():
+                count = vertex_count * 3
+                data = unpack(str(count) + "h", f.read(count * 2))
+                data = [a / 4096 for a in data]
+                for v in range(vertex_count):
+                    v_norms_list.append(data[v * 3: v * 3 + 3])
+
+            def unk4():
+                f.seek(vertex_count * 4, 1)  # colours?
+
+            def uv_short_2():
+                data = read_short_tuple(f, 4 * vertex_count)
+                data = [a / 4095 for a in data]
+                for v in range(vertex_count):
+                    v_uvs_list.append((data[v * 4], - data[v * 4 + 1] + 1))
+                    v_wxs_list.append((data[v * 4 + 2], - data[v * 4 + 3] + 1))
+
+            det_v_type = {
+                (2, 120): pos, (3, 120): norm, (4, 116): uv,
+                (3, 121): norm_short, (4, 117): uv_short, (3, 126): unk4, (4, 125): uv_short_2,
+            }
+
+            while final_pos > f.tell():
+                v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
+                v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
+
+                var = read_int(f)
+                while var != 16778244:
+                    var = read_int(f)
+                f.seek(4, 1)
+
+                vertex_count = read_int(f)
+                if vertex_count == 0:
+                    break
+
+                f.seek(28, 1)
+                var = read_byte_tuple(f, 4)
+                for _ in range(var[0]):
+                    v_type = read_byte_tuple(f, 4)
+                    if (v_type[0], v_type[1]) == (0, 0):
+                        f.seek(-4, 1)
+                        read_aligned(f, 4)
+                        v_type = read_byte_tuple(f, 4)
+                    det_v_type[(v_type[0], v_type[-1])]()
+
+                v_data.append(
+                    VertexData(
+                        v_pos_list, v_b_wei_list, v_b_index_list,
+                        v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
+                    ))
+
+        def type_1():
+            while final_pos > f.tell():
+                v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
+                v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
+
+                var = read_int(f)
+                while var != 16778244:
+                    var = read_int(f)
+                f.seek(12, 1)
+
+                vertex_count = read_int(f)
+                if vertex_count == 0:
+                    break
+                f.seek(28, 1)
+                for _ in range(vertex_count):
+                    v_pos_list.append(read_float_tuple(f, 3))
+                    f.seek(4, 1)
+                    v_norms_list.append(read_float_tuple(f, 3))
+                    f.seek(20, 1)
+
+                v_data.append(
+                    VertexData(
+                        v_pos_list, v_b_wei_list, v_b_index_list,
+                        v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
+                    ))
+
+        def type_2():
+            while final_pos > f.tell():
+                v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
+                v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
+
+                var = read_int(f)
+                while var != 16778244:
+                    var = read_int(f)
+                f.seek(12, 1)
+
+                vertex_count = read_int(f)
+                if vertex_count == 0:
+                    break
+                for _ in range(vertex_count):
+                    v_pos_list.append(read_float_tuple(f, 3))
+                    f.seek(20, 1)
+                    v_uvs_list.append((read_float(f), - read_float(f) + 1))
+                    f.seek(8, 1)
+
+                v_data.append(
+                    VertexData(
+                        v_pos_list, v_b_wei_list, v_b_index_list,
+                        v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
+                    ))
+
+        def type_17():
+            while final_pos > f.tell():
+                v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
+                v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
+
+                var = read_int(f)
+                while var != 16778244:
+                    var = read_int(f)
+                f.seek(12, 1)
+
+                vertex_count = read_int(f)
+                if vertex_count == 0:
+                    break
+                f.seek(28, 1)
+                for _ in range(vertex_count):
+                    v_pos_list.append(read_float_tuple(f, 3))
+                    w1 = read_float(f)
+                    v_norms_list.append(read_float_tuple(f, 3))
+                    f.seek(4, 1)
+                    v_uvs_list.append((read_float(f), - read_float(f) + 1))
+                    b1 = read_int(f) // 4
+                    b2 = read_int(f) // 4
+                    w2 = 1 - w1
+                    v_b_wei_list.append((w1, w2))
+                    v_b_index_list.append((b1, b2))
+
+                v_data.append(
+                    VertexData(
+                        v_pos_list, v_b_wei_list, v_b_index_list,
+                        v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
+                    ))
+
+        def type_33():
+            while final_pos > f.tell():
+                v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
+                v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
+
+                var = read_int(f)
+                while var != 16778244:
+                    var = read_int(f)
+                f.seek(12, 1)
+
+                vertex_count = read_int(f)
+                if vertex_count == 0:
+                    break
+                f.seek(28, 1)
+                for _ in range(vertex_count):
+                    v_pos_list.append(read_float_tuple(f, 3))
+                    w1 = read_float(f)
+                    v_norms_list.append(read_float_tuple(f, 3))
+                    f.seek(4, 1)
+                    v_uvs_list.append((read_float(f), - read_float(f) + 1))
+                    b1 = read_int(f) // 4
+                    b2 = read_int(f) // 4
+                    w2, w3 = read_float_tuple(f, 2)
+                    b3 = read_int(f) // 4
+                    b4 = read_int(f) // 4
+                    w4 = 1 - w1 - w2 - w3
+                    v_b_wei_list.append((w1, w2, w3, w4))
+                    v_b_index_list.append((b1, b2, b3, b4))
+
+                v_data.append(
+                    VertexData(
+                        v_pos_list, v_b_wei_list, v_b_index_list,
+                        v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
+                    ))
+
+        def type_273():
+            while final_pos > f.tell():
+                v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
+                v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
+
+                var = read_int(f)
+                while var != 16778244:
+                    var = read_int(f)
+                f.seek(12, 1)
+
+                vertex_count = read_int(f)
+                if vertex_count == 0:
+                    break
+                f.seek(28, 1)
+                for _ in range(vertex_count):
+                    v_pos_list.append(read_float_tuple(f, 3))
+                    w1 = read_float(f)
+                    v_norms_list.append(read_float_tuple(f, 3))
+                    f.seek(4, 1)
+                    v_uvs_list.append((read_float(f), - read_float(f) + 1))
+                    b1 = read_int(f) // 4
+                    b2 = read_int(f) // 4
+                    w2 = 1 - w1
+                    v_b_wei_list.append((w1, w2))
+                    v_b_index_list.append((b1, b2))
+                    v_wxs_list.append((read_float(f), - read_float(f) + 1))
+                    f.seek(8, 1)
+
+                v_data.append(
+                    VertexData(
+                        v_pos_list, v_b_wei_list, v_b_index_list,
+                        v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
+                    ))
 
         f = self.f
         post_info = self.start
-        det_v_type = {
-            (2, 120): pos, (3, 120): norm, (4, 116): uv,
-            (3, 121): unk1, (4, 117): unk2, (3, 126): unk2,
-        }
+        d_type_list = {1: type_1, 2: type_2, 17: type_17, 33: type_33, 273: type_273}
         vertex_data = []
         mesh_info = []
 
         for info in self.vertex_mesh_offset:
-            d_type, v_len, pos, bone_count_complex, b_off = info
+            d_type, v_len, fpos, bone_count_complex, b_off = info
             f.seek(b_off + post_info)
             bone_list_complex = read_int_tuple(f, bone_count_complex)
-            pos = pos + post_info
-            f.seek(pos)
-            final_pos = v_len * 16 + pos - 32
+            fpos = fpos + post_info
+            f.seek(fpos)
+            final_pos = v_len * 16 + fpos - 32
             v_data = []
-            if d_type == 5 or d_type == 6:
-                while final_pos > f.tell():
-                    v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
-                    v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
-
-                    var = read_int(f)
-                    while var != 16778244:
-                        var = read_int(f)
-                    f.seek(4, 1)
-
-                    vertex_count = read_int(f)
-                    if vertex_count == 0:
-                        break
-
-                    f.seek(28, 1)
-                    var = read_byte_tuple(f, 4)
-                    for _ in range(var[0]):
-                        v_type = read_byte_tuple(f, 4)
-                        if (v_type[0], v_type[1]) == (0, 0):
-                            f.seek(-4, 1)
-                            read_aligned(f, 4)
-                            v_type = read_byte_tuple(f, 4)
-                        det_v_type[(v_type[0], v_type[-1])]()
-
-                    v_data.append(
-                        VertexData(
-                            v_pos_list, v_b_wei_list, v_b_index_list,
-                            v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
-                        ))
-            elif d_type == 1 or d_type == 2 or d_type == 17 or d_type == 33:
-                while final_pos > f.tell():
-                    v_pos_list, v_norms_list, v_uvs_list, v_wxs_list, v_b_wei_list, v_cols_list = [], [], [], [], [], []
-                    v_b_index_list, v_norms2_list, v_norms3_list = [], [], []
-
-                    var = read_int(f)
-                    while var != 16778244:
-                        var = read_int(f)
-                    f.seek(12, 1)
-
-                    vertex_count = read_int(f)
-                    if vertex_count == 0:
-                        break
-                    f.seek(28, 1)
-                    if d_type == 1:
-                        for _ in range(vertex_count):
-                            v_pos_list.append(read_float_tuple(f, 3))
-                            f.seek(4, 1)
-                            v_norms_list.append(read_float_tuple(f, 3))
-                            f.seek(20, 1)
-                    elif d_type == 2:
-                        for _ in range(vertex_count):
-                            v_pos_list.append(read_float_tuple(f, 3))
-                            f.seek(20, 1)
-                            v_uvs_list.append((read_float(f), - read_float(f) + 1))
-                            f.seek(8, 1)
-                    elif d_type == 17:
-                        for _ in range(vertex_count):
-                            v_pos_list.append(read_float_tuple(f, 3))
-                            w1 = read_float(f)
-                            v_norms_list.append(read_float_tuple(f, 3))
-                            f.seek(4, 1)
-                            v_uvs_list.append((read_float(f), - read_float(f) + 1))
-                            b1 = read_int(f) // 4
-                            b2 = read_int(f) // 4
-                            w2 = 1 - w1
-                            v_b_wei_list.append((w1, w2))
-                            v_b_index_list.append((b1, b2))
-                    elif d_type == 33:
-                        for _ in range(vertex_count):
-                            v_pos_list.append(read_float_tuple(f, 3))
-                            w1 = read_float(f)
-                            v_norms_list.append(read_float_tuple(f, 3))
-                            f.seek(4, 1)
-                            v_uvs_list.append((read_float(f), - read_float(f) + 1))
-                            b1 = read_int(f) // 4
-                            b2 = read_int(f) // 4
-                            w2, w3 = read_float_tuple(f, 2)
-                            b3 = read_int(f) // 4
-                            b4 = read_int(f) // 4
-                            w4 = 1 - w1 - w2 - w3
-                            v_b_wei_list.append((w1, w2, w3, w4))
-                            v_b_index_list.append((b1, b2, b3, b4))
-
-                    v_data.append(
-                        VertexData(
-                            v_pos_list, v_b_wei_list, v_b_index_list,
-                            v_norms_list, v_uvs_list, v_wxs_list, v_cols_list,
-                        ))
+            if d_type in {5, 6, 9, 10, 265}:
+                type_common()
+            elif d_type in d_type_list:
+                d_type_list[d_type]()
 
             mesh_info.append(
                 MeshData(None, None, 0, None, bone_count_complex, bone_list_complex))
