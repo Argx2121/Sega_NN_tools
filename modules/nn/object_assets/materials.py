@@ -195,8 +195,21 @@ class Read:
 
             return t_type, t_settings
 
+        def sonic_the_hedgehog_4_episode_i_prototype_e():
+            t_type = "none"
+            t_settings = []
+            if TextureFlags.norm:
+                t_type = "normal"
+            elif TextureFlags.diff:
+                t_type = "diffuse"
+            elif TextureFlags.ref:
+                t_type = "reflection"
+
+            return t_type, t_settings
+
         format_dict = {
             "SonicFreeRiders_E": sonic_free_riders_e,
+            "SonicTheHedgehog4EpisodeIPrototype_E": sonic_the_hedgehog_4_episode_i_prototype_e,
         }
         f = self.f
         material_count = self.material_count

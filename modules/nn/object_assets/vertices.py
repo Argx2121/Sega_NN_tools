@@ -392,8 +392,40 @@ class Read:
                 if BitFlags.unk1:
                     off += 8
 
+            def sonic_the_hedgehog_4_episode_i_prototype_e():
+                off = 0
+                if BitFlags.position:
+                    off = get_positions(off)
+
+                if BitFlags.weights_bit_compressed and BitFlags.weight_indices:
+                    off = get_weights_bit_index(off)
+                elif BitFlags.weights_bit_compressed:
+                    off = get_weights_bit(off)
+                elif BitFlags.weight_indices:
+                    off = get_weights_with_indices(off)
+                elif BitFlags.weights:
+                    off = get_weights(off)
+
+                if BitFlags.normal:
+                    if BitFlags.normal_float:
+                        off = get_normals_float(off)
+                    else:
+                        off = get_normals(off)
+                if BitFlags.unk3:
+                    off += 4
+                if BitFlags.unk4:
+                    off += 4
+                if BitFlags.uv:
+                    if BitFlags.uv_half:
+                        off = get_uvs(off)
+                    else:
+                        off = get_uvs_float(off)
+                if BitFlags.unk1:
+                    off += 8
+
             format_dict = {
                 "SonicFreeRiders_E": sonic_free_riders_e,
+                "SonicTheHedgehog4EpisodeIPrototype_E": sonic_the_hedgehog_4_episode_i_prototype_e,
             }
             format_dict[self.format_type]()
 

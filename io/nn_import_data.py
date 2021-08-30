@@ -33,6 +33,8 @@ cno_list = (
 
 eno_list = (
     ("SonicFreeRiders_E", "Sonic Free Riders", "Sonic Free Riders Model | 4 Nov 2010"),
+    ("SonicTheHedgehog4EpisodeIPrototype_E", "Sonic the Hedgehog 4: Episode I (Prototype)",
+     "Sonic the Hedgehog 4: Episode I (Prototype) Model | 9 Feb 2010"),
 )
 
 gno_list = (
@@ -85,6 +87,7 @@ determine_bone = {
     "HouseOfTheDead4_C": 2,
 
     "SonicFreeRiders_E": 0.5,
+    "SonicTheHedgehog4EpisodeIPrototype_E": 2,
 
     "SonicAndTheBlackKnight_G": 1,
     "SonicUnleashed_G": 1,

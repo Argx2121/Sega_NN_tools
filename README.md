@@ -35,6 +35,7 @@ A Python library for Blender for games using Sega's NN libraries.
 
 ### Eno
 #### Sonic Free Riders
+#### Sonic the Hedgehog 4: Episode I (Prototype)
 
 ### Gno
 #### Sonic and the Black Knight
