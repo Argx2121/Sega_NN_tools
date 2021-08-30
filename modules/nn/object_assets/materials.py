@@ -463,9 +463,20 @@ class Read:
 
             return t_type, t_settings
 
+        def sega_ages_2500_series_vol_5_golden_axe_s():
+            t_type = "none"
+            t_settings = []
+            if TextureFlags.byte2bit1:
+                t_type = "diffuse"
+            elif TextureFlags.byte2bit3:
+                t_type = "reflection"
+
+            return t_type, t_settings
+
         format_dict = {
             "SonicRidersZeroGravity_S": sonic_riders_zero_gravity_s,
             "SegaSuperstars_S": sega_superstars_s,
+            "SegaAges2500SeriesVol5GoldenAxe_S": sega_ages_2500_series_vol_5_golden_axe_s,
         }
         f = self.f
         material_count = self.material_count

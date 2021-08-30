@@ -899,17 +899,29 @@ class Read:
 
                 vertex_count = read_int(f)
                 if vertex_count == 0:
-                    break
+                    f.seek(4, 1)
+                    vertex_count = read_int(f)
+                    if vertex_count == 0:
+                        break
+                    f.seek(36, 1)
+                else:
+                    f.seek(28, 1)
 
-                f.seek(28, 1)
                 var = read_byte_tuple(f, 4)
                 for _ in range(var[0]):
                     v_type = read_byte_tuple(f, 4)
+                    if v_type[0] == v_type[1] == v_type[2] == 0 and v_type[3] == 32:
+                        f.seek(4, 1)
+                        v_type = read_byte_tuple(f, 4)
                     if (v_type[0], v_type[1]) == (0, 0):
                         f.seek(-4, 1)
                         read_aligned(f, 4)
                         v_type = read_byte_tuple(f, 4)
                     det_v_type[(v_type[0], v_type[-1])]()
+
+                read_int(f)  # should be 23
+
+                read_aligned(f, 16)
 
                 v_data.append(
                     VertexData(

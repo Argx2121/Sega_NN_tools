@@ -55,6 +55,7 @@ A Python library for Blender for games using Sega's NN libraries.
  - Sno file importing is imperfect and may have issues.
 #### Sonic Riders Zero Gravity
 #### Sega Superstars
+#### Sega Ages 2500 Series Vol. 5: Golden Axe
 
 ### Uno
 #### K-On! After School Live!!

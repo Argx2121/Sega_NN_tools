@@ -57,6 +57,8 @@ lno_list = (
 sno_list = (
     ("SonicRidersZeroGravity_S", "Sonic Riders Zero Gravity", "Sonic Riders Zero Gravity Model | 8 Jan 2008"),
     ("SegaSuperstars_S", "Sega Superstars", "Sega Superstars Model | 22 Oct 2004"),
+    ("SegaAges2500SeriesVol5GoldenAxe_S", "Sega Ages 2500 Series Vol. 5: Golden Axe",
+     "Sega Ages 2500 Golden Axe Model | 25 Sep 2003"),
 )
 
 uno_list = (
@@ -98,6 +100,7 @@ determine_bone = {
 
     "SonicRidersZeroGravity_S": 1,
     "SegaSuperstars_S": 1,
+    "SegaAges2500SeriesVol5GoldenAxe_S": 1,
 
     "KOnAfterSchoolLive_U": 20,
 
