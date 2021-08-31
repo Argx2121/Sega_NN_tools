@@ -566,11 +566,16 @@ class Read:
                 div_by = 255
                 for v in range(count):
                     v_colours.append((
-                        data_byte[v * 4 + 3] / div_by, data_byte[v * 4 + 1] / div_by,
+                        data_byte[v * 4 + 2] / div_by, data_byte[v * 4 + 1] / div_by,
                         data_byte[v * 4 + 0] / div_by, data_byte[v * 4 + 3] / div_by))
 
         def get_uvs(d_type, count):
-            if d_type == 2:
+            if d_type == 1:
+                data = read_float_tuple(f, 2 * count, ">")
+                for v in range(count):
+                    v = v * 2
+                    v_uvs.append((data[v], - data[v + 1] + 1))
+            elif d_type == 2:
                 data = unpack(">" + str(2 * count) + "H", f.read(2 * count * 2))
                 for v in range(count):
                     v_u = data[v * 2] / 256

@@ -234,18 +234,6 @@ class Read:
                         face_list_mesh.append((f2, f1, f3))
                 off += 1
 
-                if FaceFlags.col:
-                    for face in range(face_count - 2):
-                        f1, f2, f3 = \
-                            face_list[(face + 0) * multi + off], \
-                            face_list[(face + 1) * multi + off], \
-                            face_list[(face + 2) * multi + off]
-                        if face & 1:
-                            col_list_mesh.append((f1, f2, f3))
-                        else:
-                            col_list_mesh.append((f2, f1, f3))
-                    off += 1
-
                 if FaceFlags.norm:
                     for face in range(face_count - 2):
                         f1, f2, f3 = \
@@ -256,6 +244,18 @@ class Read:
                             norm_list_mesh.append((f1, f2, f3))
                         else:
                             norm_list_mesh.append((f2, f1, f3))
+                    off += 1
+
+                if FaceFlags.col:
+                    for face in range(face_count - 2):
+                        f1, f2, f3 = \
+                            face_list[(face + 0) * multi + off], \
+                            face_list[(face + 1) * multi + off], \
+                            face_list[(face + 2) * multi + off]
+                        if face & 1:
+                            col_list_mesh.append((f1, f2, f3))
+                        else:
+                            col_list_mesh.append((f2, f1, f3))
                     off += 1
 
                 if FaceFlags.uvs:
