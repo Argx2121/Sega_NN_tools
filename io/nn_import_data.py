@@ -47,7 +47,8 @@ gno_list = (
 )
 
 ino_list = (
-    ("Sonic4Episode1_I", "Sonic 4 Ep 1", "Sonic 4 Episode 1 Model | 7 Oct 2010"),
+    ("SonicTheHedgehog4EpisodeIPre2016_I", "Sonic the Hedgehog 4: Episode I (Pre 2016)",
+     "Sonic the Hedgehog 4: Episode I (Pre 2016) Model | 7 Oct 2010"),
 )
 
 lno_list = (
@@ -96,7 +97,7 @@ determine_bone = {
     "BleachShatteredBlade_G": 1,
     "SonicRiders_G": 0.5,
 
-    "Sonic4Episode1_I": 1,
+    "SonicTheHedgehog4EpisodeIPre2016_I": 1,
 
     "LovingDeadsHouseOfTheDeadEX_L": 5,
     "HouseOfTheDead4_L": 5,

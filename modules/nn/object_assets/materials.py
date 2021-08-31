@@ -368,7 +368,7 @@ class Read:
             return t_type, t_settings
 
         format_dict = {
-            "Sonic4Episode1_I": sonic_4_episode_1_i,
+            "SonicTheHedgehog4EpisodeIPre2016_I": sonic_4_episode_1_i,
         }
         f = self.f
         material_count = self.material_count

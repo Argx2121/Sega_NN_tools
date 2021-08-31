@@ -752,7 +752,7 @@ class Read:
                     off = b_func[b_type](b_var)
 
             format_dict = {
-                "Sonic4Episode1_I": sonic_4_episode_1_i,
+                "SonicTheHedgehog4EpisodeIPre2016_I": sonic_4_episode_1_i,
             }
             format_dict[self.format_type]()
 
