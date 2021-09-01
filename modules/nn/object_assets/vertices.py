@@ -72,8 +72,11 @@ class Read:
     def _be_offsets(self):  # 1, offset, 1, offset, ...
         self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 2, ">")[1::2]
 
-    def _le_offsets(self):  # 1, offset, 1, offset, ...
+    def _le_offsets(self):
         self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 2)[1::2]
+
+    def _le_offsets_2(self):
+        self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 3)[1::3]
 
     def _cno_info(self):
         f = self.f
@@ -691,6 +694,52 @@ class Read:
                     MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
                              self.vertex_mesh_offset[i], bone_count_list[i], ()))
 
+    def _ino_info_2(self):
+        f = self.f
+        start = self.start
+        block_type_list = []
+        block_size_list = []
+        vertex_count_list = []
+        bone_count_list = []
+        bone_offset_complex = []
+        for offset in self.vert_info_offset:
+            f.seek(offset + start + 4)
+            count = read_int(f)
+            vert_info_count = read_int(f)
+            to_vert_info = read_int(f)
+            vert_info = []
+            f.seek(8, 1)
+            offset = read_int(f)
+            f.seek(4, 1)
+            b_count = read_int(f)
+            b_offset = read_int(f)
+
+            f.seek(to_vert_info + start + 12)
+            block_size_list.append(read_int(f))
+
+            f.seek(to_vert_info + start)
+            for i in range(vert_info_count):
+                vert_info.append(read_int_tuple(f, 2))
+                f.seek(16, 1)
+
+            block_type_list.append(vert_info)
+            vertex_count_list.append(count)
+            self.vertex_mesh_offset.append(offset)
+            bone_count_list.append(b_count)  # if > 1 bone its stored here
+            bone_offset_complex.append(b_offset)
+        for i in range(len(bone_offset_complex)):
+            offset = bone_offset_complex[i] + start
+            if offset:  # get bones for meshes with >1 bone
+                f.seek(offset)
+                self.mesh_info.append(
+                    MeshData(
+                        block_type_list[i], block_size_list[i], vertex_count_list[i],
+                        self.vertex_mesh_offset[i], bone_count_list[i], read_short_tuple(f, bone_count_list[i])))
+            else:
+                self.mesh_info.append(
+                    MeshData(block_type_list[i], block_size_list[i], vertex_count_list[i],
+                             self.vertex_mesh_offset[i], bone_count_list[i], ()))
+
     def _ino_vertices(self):
         f = self.f
         vertex_data = []
@@ -752,6 +801,7 @@ class Read:
                     off = b_func[b_type](b_var)
 
             format_dict = {
+                "SonicTheHedgehog4EpisodeI_I": sonic_4_episode_1_i,
                 "SonicTheHedgehog4EpisodeIPre2016_I": sonic_4_episode_1_i,
             }
             format_dict[self.format_type]()
@@ -1696,9 +1746,14 @@ class Read:
         return self._gno_vertices()
 
     def ino(self):
-        self._le_offsets()
-        self._ino_info()
-        return self._ino_vertices()
+        if self.format_type == "SonicTheHedgehog4EpisodeI_I":
+            self._le_offsets_2()
+            self._ino_info_2()
+            return self._ino_vertices()
+        else:
+            self._le_offsets()
+            self._ino_info()
+            return self._ino_vertices()
 
     def lno(self):
         self._le_offsets()

@@ -46,6 +46,7 @@ A Python library for Blender for games using Sega's NN libraries.
 #### Sonic Riders
 
 ### Ino
+#### Sonic 4 Episode 1
 #### Sonic 4 Episode 1 (Pre 2016 Update)
 
 ### Lno

@@ -130,7 +130,7 @@ class ReadModel:
         f = self.f
         m = ModelData()
 
-        d, self.start = self._run(read_int(f), 0, model_data.Read(self._info_gen(), start_block).le_semi)
+        d, self.start = self._run(read_int(f), 0, model_data.Read(self._info_gen(), start_block).le_ino)
 
         m.info = d
         self._debug_1(d)

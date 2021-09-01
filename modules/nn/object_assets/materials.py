@@ -76,6 +76,9 @@ class Read:
             self.texture_count.append(read_int(f))
             self.texture_offset.append(read_int(f))
 
+    def _le_offsets_5(self):
+        self.info_offset = read_int_tuple(self.f, self.material_count * 3)[1::3]
+
     def _be_offsets_2(self):
         f = self.f
         material_count = self.material_count
@@ -106,6 +109,15 @@ class Read:
         for offset in self.info_offset:
             f.seek(offset + self.start)
             _, _, var1, _, var2, var3 = read_int_tuple(f, 6)
+            self.colour_offset.append(var1)
+            self.texture_count.append(var2)
+            self.texture_offset.append(var3)
+
+    def _le_info_4(self):
+        f = self.f
+        for offset in self.info_offset:
+            f.seek(offset + self.start)
+            _, _, var1, _, _, _, var2, var3 = read_int_tuple(f, 8)
             self.colour_offset.append(var1)
             self.texture_count.append(var2)
             self.texture_offset.append(var3)
@@ -368,6 +380,7 @@ class Read:
             return t_type, t_settings
 
         format_dict = {
+            "SonicTheHedgehog4EpisodeI_I": sonic_4_episode_1_i,
             "SonicTheHedgehog4EpisodeIPre2016_I": sonic_4_episode_1_i,
         }
         f = self.f
@@ -757,8 +770,12 @@ class Read:
         return self._return_data_1()
 
     def ino(self):
-        self._le_offsets_1()
-        self._le_info_3()
+        if self.format_type == "SonicTheHedgehog4EpisodeI_I":
+            self._le_offsets_5()
+            self._le_info_4()
+        else:
+            self._le_offsets_1()
+            self._le_info_3()
         self._ino_texture()
         return self._return_data_2()
 
