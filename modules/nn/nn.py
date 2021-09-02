@@ -9,11 +9,12 @@ import Sega_NN_tools.io.nn_import_data as nn_data
 
 
 class ReadNn:
-    __slots__ = ["f", "filepath", "format_type", "debug", "nn", "big_endian", "det_n"]
+    __slots__ = ["f", "filepath", "file_len", "format_type", "debug", "nn", "big_endian", "det_n"]
 
     def __init__(self, f, filepath, format_type, debug):
         self.f = f
         self.filepath = filepath
+        self.file_len = os.path.getsize(self.filepath)
         self.format_type = format_type
         self.debug = debug
         self.nn = self.NnFile()
@@ -74,7 +75,7 @@ class ReadNn:
             nn_unknown.Read(f, block_name).generic()
 
     def read_file(self):
-        while not self.nn.end:
+        while not self.nn.end and self.file_len > self.f.tell():
             self._read_block()
         if not self.nn.textures:
             self.read_texture_names()
