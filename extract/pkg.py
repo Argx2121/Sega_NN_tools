@@ -24,8 +24,7 @@ class ExtractPkg:
         f = self.f_pkg
         for name, offset, f_len in self.f_data:
             f.seek(offset)
-            file_path = bpy.path.native_pathsep(
-                bpy.path.abspath(self.file[:-4]).rstrip(bpy.path.basename(self.file[:-4])) + "_Extracted" + "/" + name)
+            file_path = bpy.path.native_pathsep(bpy.path.abspath(self.file[:-4]) + "_Extracted" + "/" + name)
             pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
             fn = open(file_path, "wb")
             fn.write(f.read(f_len))
