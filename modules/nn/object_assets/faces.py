@@ -38,6 +38,9 @@ class Read:
     def _le_offsets_2(self):
         return read_int_tuple(self.f, self.face_set_count * 3)[1::3]
 
+    def _le_offsets_3(self):
+        return read_int_tuple(self.f, self.face_set_count * 4)[2::4]
+
     def _be_offsets_flags(self):
         var = read_int_tuple(self.f, self.face_set_count * 2, ">")
         return var[1::2], var[0::2]
@@ -60,6 +63,13 @@ class Read:
             f.seek(offset + self.start)
             data = read_int_tuple(f, 8)
             self.face_info.append(self.FaceInfo(data[5], 0, 0, data[6]))
+
+    def _le_info_5(self, info_offset):
+        f = self.f
+        for offset in info_offset:
+            f.seek(offset + self.start)
+            data = read_int_tuple(f, 11)
+            self.face_info.append(self.FaceInfo(data[9], 0, 0, data[10]))
 
     def _le_info_3(self, info_offset):
         f = self.f
@@ -380,9 +390,14 @@ class Read:
         return self.face_list
 
     def lno(self):
-        info_offset = self._le_offsets()
-        self._le_info_2(info_offset)
-        self._le_indices_2()
+        if self.format_type == "SonicTheHedgehog4EpisodeII_L":
+            info_offset = self._le_offsets_3()
+            self._le_info_5(info_offset)
+            self._le_indices_2()
+        else:
+            info_offset = self._le_offsets()
+            self._le_info_2(info_offset)
+            self._le_indices_2()
         return self.face_list
 
     def ino(self):

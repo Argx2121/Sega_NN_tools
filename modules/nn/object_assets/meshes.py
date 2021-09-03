@@ -109,3 +109,16 @@ class Read:
                 var = read_int_tuple(f, 8, ">")
                 build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
         return build_mesh
+
+    def le_14(self):
+        f = self.f
+        build_mesh = []
+        for var in range(self.sets_count):
+            f.seek(self.data_offset[var] + self.start)
+            for _ in range(self.data_count[var]):
+                pos = read_float_tuple(f, 3)
+                f.seek(4, 1)
+                scale = read_float(f)
+                var = read_int_tuple(f, 9)
+                build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
+        return build_mesh

@@ -50,6 +50,7 @@ A Python library for Blender for games using Sega's NN libraries.
 #### Sonic 4 Episode 1 (Pre 2016 Update)
 
 ### Lno
+#### Sonic 4 Episode 2
 #### The House of the Dead 4
 #### Loving Deads: The House of the Dead EX
 

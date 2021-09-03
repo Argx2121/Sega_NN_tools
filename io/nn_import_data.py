@@ -54,6 +54,8 @@ ino_list = (
 )
 
 lno_list = (
+    ("SonicTheHedgehog4EpisodeII_L", "Sonic the Hedgehog 4: Episode II",
+     "Sonic the Hedgehog 4: Episode II Model | 7 Oct 2010"),
     ("LovingDeadsHouseOfTheDeadEX_L", "Loving Deads: The House of the Dead EX",
      "Loving Deads: The House of the Dead EX Model | 2009"),
     ("HouseOfTheDead4_L", "The House of the Dead 4", "The House of the Dead 4 Model | 30 Dec 2005"),
@@ -102,6 +104,7 @@ determine_bone = {
     "SonicTheHedgehog4EpisodeI_I": 1,
     "SonicTheHedgehog4EpisodeIPre2016_I": 1,
 
+    "SonicTheHedgehog4EpisodeII_L": 2,
     "LovingDeadsHouseOfTheDeadEX_L": 5,
     "HouseOfTheDead4_L": 5,
 

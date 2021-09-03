@@ -79,6 +79,9 @@ class Read:
     def _le_offsets_5(self):
         self.info_offset = read_int_tuple(self.f, self.material_count * 3)[1::3]
 
+    def _le_offsets_6(self):
+        self.info_offset = read_int_tuple(self.f, self.material_count * 4)[2::4]
+
     def _be_offsets_2(self):
         f = self.f
         material_count = self.material_count
@@ -431,7 +434,18 @@ class Read:
 
             return t_type, t_settings
 
+        def sonic_the_hedgehog4_episode_ii_l():
+            t_type = "none"
+            t_settings = []
+            if TextureFlags.byte1bit1:
+                t_type = "normal"
+            elif TextureFlags.byte1bit2:
+                t_type = "diffuse"
+
+            return t_type, t_settings
+
         format_dict = {
+            "SonicTheHedgehog4EpisodeII_L": sonic_the_hedgehog4_episode_ii_l,
             "HouseOfTheDead4_L": house_of_the_dead_4_l,
             "LovingDeadsHouseOfTheDeadEX_L": loving_deads_house_of_the_dead_ex_l,
         }
@@ -780,8 +794,12 @@ class Read:
         return self._return_data_2()
 
     def lno(self):
-        self._le_offsets_1()
-        self._le_info_2()
+        if self.format_type == "SonicTheHedgehog4EpisodeII_L":
+            self._le_offsets_6()
+            self._le_info_4()
+        else:
+            self._le_offsets_1()
+            self._le_info_2()
         self._lno_texture()
         return self._return_data_2()
 

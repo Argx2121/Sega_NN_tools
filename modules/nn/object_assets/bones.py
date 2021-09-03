@@ -27,15 +27,28 @@ class Read:
         f = self.f
         bone_data = []
         f.seek(4, 1)
-        for _ in range(self.bone_count):
-            group, parent, _, _ = read_short_tuple(f, 4)
-            rel = read_float_tuple(f, 3)
-            f.seek(12, 1)
-            scale = read_float_tuple(f, 3)
-            pos = (read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
-                   read_float_tuple(f, 4))
-            f.seek(36, 1)
-            bone_data.append(self.Bone(group, parent, rel, scale, Matrix(pos).transposed().inverted_safe()))
+        if self.format_type == "SonicTheHedgehog4EpisodeII_L":
+            for _ in range(self.bone_count):
+                group, parent, _, _ = read_short_tuple(f, 4)
+                f.seek(4, 1)
+                rel = read_float_tuple(f, 3)
+                f.seek(20, 1)
+                scale = read_float_tuple(f, 3)
+                f.seek(4, 1)
+                pos = (read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
+                       read_float_tuple(f, 4))
+                f.seek(52, 1)
+                bone_data.append(self.Bone(group, parent, rel, scale, Matrix(pos).transposed().inverted_safe()))
+        else:
+            for _ in range(self.bone_count):
+                group, parent, _, _ = read_short_tuple(f, 4)
+                rel = read_float_tuple(f, 3)
+                f.seek(12, 1)
+                scale = read_float_tuple(f, 3)
+                pos = (read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
+                       read_float_tuple(f, 4))
+                f.seek(36, 1)
+                bone_data.append(self.Bone(group, parent, rel, scale, Matrix(pos).transposed().inverted_safe()))
         return bone_data
 
     def be_full(self):

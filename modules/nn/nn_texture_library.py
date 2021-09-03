@@ -40,6 +40,9 @@ class Read:
         texture_count = read_int_tuple(f, 2)[0]
         if self.format_type == "SonicTheHedgehog4EpisodeI_I":
             f.seek(4, 1)
+        elif self.format_type == "SonicTheHedgehog4EpisodeII_L":
+            f.seek(start_block + 40)
+            f.seek(read_int(f))
         texture_names = read_str_nulls(f, end_of_block - f.tell())[:texture_count]
         f.seek(end_of_block)
         return [self.filepath + t for t in texture_names]

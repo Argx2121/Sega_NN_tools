@@ -151,7 +151,7 @@ class ReadModel:
         f = self.f
         m = ModelData()
 
-        d, self.start = self._run(read_int(f), 0, model_data.Read(self._info_gen(), start_block).le_semi)
+        d, self.start = self._run(read_int(f), 0, model_data.Read(self._info_gen(), start_block).le_lno)
 
         m.info = d
         self._debug_1(d)
@@ -161,10 +161,16 @@ class ReadModel:
         m.materials = self._run(d.material_offset, 2, materials.Read(info, d.material_count).lno)
         m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).lno)
         m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).lno)
-        m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_12)
+        if self.format_type == "SonicTheHedgehog4EpisodeII_L":
+            m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_14)
 
-        self._debug_2(m.build_mesh)
-        f.seek(start_block + len_block + 8)  # seek end of block
+            self._debug_2(m.build_mesh)
+            f.seek(4, 1)
+        else:
+            m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_12)
+
+            self._debug_2(m.build_mesh)
+            f.seek(start_block + len_block + 8)  # seek end of block
         return m
 
     def sno(self) -> ModelData:

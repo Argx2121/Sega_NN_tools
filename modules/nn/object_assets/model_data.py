@@ -189,3 +189,55 @@ class Read:
             mi.mesh_offset = var[2::5]
 
         return mi, start
+
+    def le_lno(self):
+        f = self.f
+        start = self.start
+        n_start = self.n_start
+        if self.format_type == "SonicTheHedgehog4EpisodeII_L":
+            f.seek(4, 1)
+            bounds = read_float_tuple(f, 4)
+            (mats, mat_off, _,
+             verts, _, v_off, _,
+             faces, _, f_off, _,
+             bones, _, b_off, _, b_used,
+             m_sets, off) = read_int_tuple(f, 18)
+
+            mi = self.ModelInfo(
+                bounds[:3:], bounds[3], mats, mat_off, verts, v_off, faces, f_off, bones, b_off,
+                b_used, m_sets, [0], [0])
+
+            # we can't check if pointers are fine
+            if not m_sets:
+                mi.vertex_count = mi.face_count = 0
+                mi.vertex_offset = mi.face_offset = - start
+                return mi, start
+
+            f.seek(off)
+            var = read_int_tuple(f, 8 * m_sets)
+
+            mi.mesh_count = var[1::8]
+            mi.mesh_offset = var[2::8]
+            start = 0
+        else:
+            bounds = read_float_tuple(f, 4)
+            mats, mat_off, verts, v_off, faces, f_off, bones, _, b_off, b_used, m_sets, off = read_int_tuple(f, 12)
+
+            mi = self.ModelInfo(
+                bounds[:3:], bounds[3], mats, mat_off, verts, v_off, faces, f_off, bones, b_off,
+                b_used, m_sets, [0], [0])
+
+            if b_off > n_start + 16:  # make sure pointers are fine
+                start = n_start + 16 - b_off
+                if not m_sets:
+                    mi.vertex_count = mi.face_count = 0
+                    mi.vertex_offset = mi.face_offset = - start
+                    return mi, start
+
+            f.seek(off + start)
+            var = read_int_tuple(f, 5 * m_sets)
+
+            mi.mesh_count = var[1::5]
+            mi.mesh_offset = var[2::5]
+
+        return mi, start

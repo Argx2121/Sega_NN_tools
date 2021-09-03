@@ -78,6 +78,9 @@ class Read:
     def _le_offsets_2(self):
         self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 3)[1::3]
 
+    def _le_offsets_3(self):
+        self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 4)[2::4]
+
     def _cno_info(self):
         f = self.f
         start = self.start
@@ -855,6 +858,40 @@ class Read:
                 else:
                     v_format.append("unknown")
                 v_format_size.append(data[-2])
+
+            self.mesh_info.append(MeshData(
+                v_format, v_format_size, vertex_count, v_offset, v_bone_count, v_bone_list))
+
+    def _lno_info_2(self):
+        f = self.f
+        start = self.start
+        for offset in self.vert_info_offset:
+            f.seek(offset + start + 4)
+            vertex_count, info_count = read_int_tuple(f, 2)
+            f.seek(4, 1)
+            info_offset = read_int(f)
+            f.seek(20, 1)
+            v_bone_count, _, v_bone_off = read_int_tuple(f, 3)
+            f.seek(v_bone_off + start)
+            v_bone_list = read_short_tuple(f, v_bone_count)
+
+            f.seek(info_offset + start)
+            v_offset = []
+            v_format = []
+            v_format_size = []
+            det_format = {
+                1: "pos", 8: "norm", 64: "unknown", 128: "unknown", 256: "uv", 2: "weight", 4: "bone",
+                512: "wx",
+            }
+
+            for _ in range(info_count):
+                data = read_int_tuple(f, 6)
+                v_offset.append(data[-2])
+                if data[0] in det_format:
+                    v_format.append(det_format[data[0]])
+                else:
+                    v_format.append("unknown")
+                v_format_size.append(data[-3])
 
             self.mesh_info.append(MeshData(
                 v_format, v_format_size, vertex_count, v_offset, v_bone_count, v_bone_list))
@@ -1756,8 +1793,12 @@ class Read:
             return self._ino_vertices()
 
     def lno(self):
-        self._le_offsets()
-        self._lno_info()
+        if self.format_type == "SonicTheHedgehog4EpisodeII_L":
+            self._le_offsets_3()
+            self._lno_info_2()
+        else:
+            self._le_offsets()
+            self._lno_info()
         return self._lno_vertices()
 
     def sno(self):
