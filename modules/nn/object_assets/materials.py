@@ -255,6 +255,14 @@ class Read:
             self.texture_list.append(texture_list)
 
     def _gno_texture(self):
+        def super_monkey_ball_g():
+            t_type = "none"
+            t_settings = []
+            if TextureFlags.byte4bit1:
+                t_type = "diffuse"
+
+            return t_type, t_settings
+
         def sonic_and_the_black_knight_g():
             t_type = "none"
             t_settings = []
@@ -330,12 +338,14 @@ class Read:
             return t_type, t_settings
 
         format_dict = {
+            "SuperMonkeyBallStepAndRoll_G": super_monkey_ball_g,
             "SonicAndTheBlackKnight_G": sonic_and_the_black_knight_g,
             "SonicAndTheSecretRings_G": sonic_and_the_secret_rings_g,
             "SonicRidersZeroGravity_G": sonic_riders_zero_gravity_g,
             "BleachShatteredBlade_G": bleach_shattered_blade_g,
             "SonicRiders_G": sonic_riders_g,
             "SonicUnleashed_G": sonic_unleashed_g,
+            "SuperMonkeyBallBananaBlitz_G": super_monkey_ball_g,
         }
         f = self.f
 

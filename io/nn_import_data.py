@@ -38,11 +38,15 @@ eno_list = (
 )
 
 gno_list = (
+    ("SuperMonkeyBallStepAndRoll_G", "Super Monkey Ball: Step & Roll",
+     "Super Monkey Ball: Step & Roll Model | 9 Feb 2010"),
     ("SonicAndTheBlackKnight_G", "Sonic and the Black Knight", "Sonic and the Black Knight Model | 3 Mar 2009"),
     ("SonicRidersZeroGravity_G", "Sonic Riders Zero Gravity", "Sonic Riders Zero Gravity Model | 8 Jan 2008"),
     ("SonicUnleashed_G", "Sonic Unleashed", "Sonic Unleashed Model | 18 Nov 2008"),
     ("SonicAndTheSecretRings_G", "Sonic and the Secret Rings", "Sonic and the Secret Rings Model | 20 Feb 2007"),
     ("BleachShatteredBlade_G", "Bleach: Shattered Blade", "Bleach: Shattered Blade Model | 14 Dec 2006"),
+    ("SuperMonkeyBallBananaBlitz_G", "Super Monkey Ball: Banana Blitz",
+     "Super Monkey Ball: Banana Blitz | 19 Nov 2006"),
     ("SonicRiders_G", "Sonic Riders", "Sonic Riders Model | 21 Feb 2006"),
 )
 
@@ -94,11 +98,13 @@ determine_bone = {
     "SonicFreeRiders_E": 0.5,
     "SonicTheHedgehog4EpisodeIPrototype_E": 2,
 
+    "SuperMonkeyBallStepAndRoll_G": 1,
     "SonicAndTheBlackKnight_G": 1,
     "SonicUnleashed_G": 1,
     "SonicRidersZeroGravity_G": 0.5,
     "SonicAndTheSecretRings_G": 1,
     "BleachShatteredBlade_G": 1,
+    "SuperMonkeyBallBananaBlitz_G": 1,
     "SonicRiders_G": 0.5,
 
     "SonicTheHedgehog4EpisodeI_I": 1,

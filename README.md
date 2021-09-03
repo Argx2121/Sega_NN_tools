@@ -38,11 +38,13 @@ A Python library for Blender for games using Sega's NN libraries.
 #### Sonic the Hedgehog 4: Episode I (Prototype)
 
 ### Gno
+#### Super Monkey Ball: Step & Roll
 #### Sonic and the Black Knight
 #### Sonic Unleashed
 #### Sonic Riders Zero Gravity
 #### Sonic and the Secret Rings
 #### Bleach: Shattered Blade
+#### Super Monkey Ball: Banana Blitz
 #### Sonic Riders
 
 ### Ino
