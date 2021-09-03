@@ -169,6 +169,7 @@ class ReadNn:
                 b_name = read_str(f, 4)
             f.seek(read_int(f), 1)
         else:
+            f.seek(read_int(f), 1)
             file_name = "Unnamed_File_" + str(index) + "." + block_type.lower() + block
             index += 1
         return file_name, index
