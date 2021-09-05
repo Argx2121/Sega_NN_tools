@@ -69,15 +69,13 @@ def make_mesh(self):
                 col_layer.data[v_index + 2].color = col_short_hand[face_index[2]]
 
         def make_colours_faces():
-            pass
-            # appear broken
-            # for vert_index in range(v_loop_count):
-            #     v_index = vert_index * 3
-            #     face_index = face_col[vert_index]
-            #
-            #     col_layer.data[v_index].color = col_short_hand[face_index[0]]
-            #     col_layer.data[v_index + 1].color = col_short_hand[face_index[1]]
-            #     col_layer.data[v_index + 2].color = col_short_hand[face_index[2]]
+            for vert_index in range(v_loop_count):
+                v_index = vert_index * 3
+                face_index = face_col[vert_index]
+
+                col_layer.data[v_index].color = col_short_hand[face_index[0]]
+                col_layer.data[v_index + 1].color = col_short_hand[face_index[1]]
+                col_layer.data[v_index + 2].color = col_short_hand[face_index[2]]
 
         def make_normals():
             mesh.normals_split_custom_set_from_vertices(norm_short_hand)
@@ -146,7 +144,10 @@ def make_mesh(self):
 
         mesh.from_pydata(pos_short_hand, [], face_list)
 
-        obj.data.materials.append(material_list_blender[sm.material])
+        if not sm.material < len(material_list_blender):
+            obj.data.materials.append(material_list_blender[0])
+        else:
+            obj.data.materials.append(material_list_blender[sm.material])
         obj.modifiers.new(name=model_name, type='ARMATURE').object = obj.parent = armature
 
         if is_gno:
@@ -217,6 +218,9 @@ def make_mesh(self):
             face_broke = face_broke[::-1]
 
         face_list = [f for f in face_list if f.count(f[0]) == 1 and f.count(f[1]) == 1]
+
+        if not face_list:
+            continue
 
         lowest = 0
         highest = max([item for sub in face_list for item in sub]) + 1
