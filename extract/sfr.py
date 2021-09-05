@@ -31,7 +31,7 @@ class ExtractSFR:
             f.seek(offset)
             if block_type == "NEIF":
                 f.seek(4, 1)
-                file_name, _ = ReadNn(f, self.file_path, "SonicFreeRiders_E").find_file_name(i)
+                file_name, _ = ReadNn(f, self.file_path, "SonicFreeRiders_E", False).find_file_name(i)
 
                 f.seek(offset)
 
@@ -110,15 +110,12 @@ class ExtractSFR:
                 f.seek(read_int(f), 1)
                 if read_str(f, 4) == "NFN0":
                     file_name = nn_file_name.Read(self.f).generic()
-                    file_name = file_name[:-4] + ".SonicFreeRiders_E" + file_name[-4:]
                 else:
-                    file_name = "Unnamed_NN_File_" + str(i) + ".SonicFreeRiders_E.eno"
+                    file_name = "Unnamed_NN_File_" + str(i) + ".eno"
 
                 f.seek(offset)
 
                 file_path = bpy.path.native_pathsep(self.file.split(".")[0] + "_Extracted" + "/" + file_name)
-                pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
-
                 pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
 
                 fn = open(file_path, "wb")
