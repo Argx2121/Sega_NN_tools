@@ -133,7 +133,9 @@ class ReadNn:
         block_types = {
             "N_OB": "no", "N_TL": "no",
             "N_NN": "na",
-            "N_MA": "nv", "N_MO": "nm", "N_CA": "nd", "N_MC": "nd", "N_LI": "ni", "N_MT": "ng"}
+            "N_MA": "nv", "N_MO": "nm", "N_MC": "nd", "N_MT": "ng", "N_MM": "nf",
+            "N_CA": "nd", "N_LI": "ni",
+        }
 
         start = f.tell() - 4
 
