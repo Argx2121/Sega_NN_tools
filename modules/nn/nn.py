@@ -94,7 +94,7 @@ class ReadNn:
             texture_count = read_int(f)
             texture_names = read_str_nulls(f, os.path.getsize(self.filepath) - 4)[:texture_count]
             filepath = self.filepath.rstrip(bpy.path.basename(self.filepath))
-            self.nn.textures = [filepath + t + ".dds" for t in texture_names]
+            self.nn.textures = [filepath + t + ".png" for t in texture_names]
 
             if self.debug:
                 print(self.nn.textures)
