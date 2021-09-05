@@ -41,11 +41,12 @@ class EXTRACT_PT_Panel(GENERIC_panel, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator("sfr.extract", text="Sonic Free Riders .pac / .pas")
         layout.operator("amb.extract", text="Sonic 4 .AMB")
         layout.operator("bnk.extract", text="Bank file .bnk")
-        layout.operator("srpc.extract", text="Sonic Riders PC (NO EXTENSION)")
         layout.operator("pkg.extract", text="Sega Superstars .DIR and .PKG")
+        layout.operator("srpc.extract", text="Sonic Riders PC (NO EXTENSION)")
+        layout.operator("srzg.extract", text="Sonic Riders Zero Gravity .pack")
+        layout.operator("sfr.extract", text="Sonic Free Riders .pac / .pas")
 
 
 class NN_PT_About(GENERIC_panel, bpy.types.Panel):
