@@ -92,7 +92,7 @@ class ExtractSRZG:
                         sample2 = f.read(12)
                         f.seek(40, 1)
                         sample3 = f.read(12)
-                        if sample == sample2 == sample3 and block_type:
+                        if sample == sample2 == sample3 and block_type and j - i > block_type:
                             block_type = "objects"
                         else:
                             block_type = False
