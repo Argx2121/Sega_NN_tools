@@ -48,20 +48,20 @@ class Read:
         colour: Any
         texture: Any
 
-    def _le_offsets_1(self):
+    def _le_offsets(self):
         self.info_offset = read_int_tuple(self.f, self.material_count * 2)[1::2]
 
-    def _be_offsets_1(self):
+    def _be_offsets(self):
         self.info_offset = read_int_tuple(self.f, self.material_count * 2, ">")[1::2]
 
-    def _le_offsets_2(self):
+    def _xno_offsets(self):
         f = self.f
         material_count = self.material_count
         for _ in range(material_count):
             self.texture_count.append(read_int(f) & 15)
             self.info_offset.append(read_int(f))
 
-    def _le_offsets_3(self):
+    def _sno_offsets(self):
         f = self.f
         material_count = self.material_count
         for _ in range(material_count):
@@ -69,20 +69,20 @@ class Read:
             f.seek(2, 1)
             self.texture_offset.append(read_int(f))
 
-    def _le_offsets_4(self):
+    def _uno_offsets(self):
         f = self.f
         material_count = self.material_count
         for _ in range(material_count):
             self.texture_count.append(read_int(f))
             self.texture_offset.append(read_int(f))
 
-    def _le_offsets_5(self):
+    def _le_offsets_3(self):
         self.info_offset = read_int_tuple(self.f, self.material_count * 3)[1::3]
 
-    def _le_offsets_6(self):
+    def _le_offsets_4(self):
         self.info_offset = read_int_tuple(self.f, self.material_count * 4)[2::4]
 
-    def _be_offsets_2(self):
+    def _gno_offsets(self):
         f = self.f
         material_count = self.material_count
         for _ in range(material_count):
@@ -90,7 +90,7 @@ class Read:
             self.texture_count.append(a)
             self.texture_offset.append(read_int(f, ">"))
 
-    def _le_info_1(self):
+    def _xno_info(self):
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.start + 8)
@@ -98,7 +98,7 @@ class Read:
             self.colour_offset.append(var1)
             self.texture_offset.append(var2)
 
-    def _le_info_2(self):
+    def _lno_zno_info(self):
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.start)
@@ -116,7 +116,7 @@ class Read:
             self.texture_count.append(var2)
             self.texture_offset.append(var3)
 
-    def _le_info_4(self):
+    def _ino_lno_info_2(self):
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.start)
@@ -125,7 +125,7 @@ class Read:
             self.texture_count.append(var2)
             self.texture_offset.append(var3)
 
-    def _be_info_1(self):
+    def _cno_eno_info(self):
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.start + 8)
@@ -134,13 +134,13 @@ class Read:
             self.texture_count.append(var[-2])
             self.texture_offset.append(var[-1])
 
-    def _le_colour_1(self):
+    def _xno_colour(self):
         f = self.f
         for offset in self.colour_offset:
             f.seek(offset + self.start)
             self.colour_list.append(self.Colour(read_float_tuple(f, 3), read_float(f)))
 
-    def _be_colour_1(self):
+    def _cno_eno_colour(self):
         f = self.f
         for offset in self.colour_offset:
             f.seek(offset + self.start + 16)
@@ -775,63 +775,63 @@ class Read:
         return material_list
 
     def cno(self):
-        self._be_offsets_1()
-        self._be_info_1()
-        self._be_colour_1()
+        self._be_offsets()
+        self._cno_eno_info()
+        self._cno_eno_colour()
         self._cno_texture()
         return self._return_data_1()
 
     def eno(self):
-        self._be_offsets_1()
-        self._be_info_1()
-        self._be_colour_1()
+        self._be_offsets()
+        self._cno_eno_info()
+        self._cno_eno_colour()
         self._eno_texture()
         return self._return_data_1()
 
     def gno(self):
-        self._be_offsets_2()
+        self._gno_offsets()
         self._gno_texture()
         return self._return_data_1()
 
     def ino(self):
         if self.format_type == "SonicTheHedgehog4EpisodeI_I":
-            self._le_offsets_5()
-            self._le_info_4()
+            self._le_offsets_3()
+            self._ino_lno_info_2()
         else:
-            self._le_offsets_1()
+            self._le_offsets()
             self._le_info_3()
         self._ino_texture()
         return self._return_data_2()
 
     def lno(self):
         if self.format_type == "SonicTheHedgehog4EpisodeII_L":
-            self._le_offsets_6()
-            self._le_info_4()
+            self._le_offsets_4()
+            self._ino_lno_info_2()
         else:
-            self._le_offsets_1()
-            self._le_info_2()
+            self._le_offsets()
+            self._lno_zno_info()
         self._lno_texture()
         return self._return_data_2()
 
     def sno(self):
-        self._le_offsets_3()
+        self._sno_offsets()
         self._sno_texture()
         return self._return_data_2()
 
     def uno(self):
-        self._le_offsets_4()
+        self._uno_offsets()
         self._uno_texture()
         return self._return_data_2()
 
     def xno(self):
-        self._le_offsets_2()
-        self._le_info_1()
-        self._le_colour_1()
+        self._xno_offsets()
+        self._xno_info()
+        self._xno_colour()
         self._xno_texture()
         return self._return_data_1()
 
     def zno(self):
-        self._le_offsets_1()
-        self._le_info_2()
+        self._le_offsets()
+        self._lno_zno_info()
         self._zno_texture()
         return self._return_data_2()

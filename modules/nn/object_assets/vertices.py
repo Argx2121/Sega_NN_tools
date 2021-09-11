@@ -75,10 +75,10 @@ class Read:
     def _le_offsets(self):
         self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 2)[1::2]
 
-    def _le_offsets_2(self):
+    def _le_offsets_3(self):
         self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 3)[1::3]
 
-    def _le_offsets_3(self):
+    def _le_offsets_4(self):
         self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 4)[2::4]
 
     def _cno_info(self):
@@ -1775,7 +1775,7 @@ class Read:
 
     def ino(self):
         if self.format_type == "SonicTheHedgehog4EpisodeI_I":
-            self._le_offsets_2()
+            self._le_offsets_3()
             self._ino_info_2()
             return self._ino_vertices()
         else:
@@ -1785,7 +1785,7 @@ class Read:
 
     def lno(self):
         if self.format_type == "SonicTheHedgehog4EpisodeII_L":
-            self._le_offsets_3()
+            self._le_offsets_4()
             self._lno_info_2()
         else:
             self._le_offsets()

@@ -35,43 +35,43 @@ class Read:
     def _be_offsets(self):
         return read_int_tuple(self.f, self.face_set_count * 2, ">")[1::2]
 
-    def _le_offsets_2(self):
+    def _le_offsets_3(self):
         return read_int_tuple(self.f, self.face_set_count * 3)[1::3]
 
-    def _le_offsets_3(self):
+    def _le_offsets_4(self):
         return read_int_tuple(self.f, self.face_set_count * 4)[2::4]
 
     def _be_offsets_flags(self):
         var = read_int_tuple(self.f, self.face_set_count * 2, ">")
         return var[1::2], var[0::2]
 
-    def _le_info_1(self, info_offset):
+    def _xno_zno_info(self, info_offset):
         f = self.f
         for offset in info_offset:
             f.seek(offset + self.start + 4)
             self.face_info.append(self.FaceInfo(read_int(f), read_int(f), read_int(f), read_int(f)))
 
-    def _be_info_1(self, info_offset):
+    def _eno_info(self, info_offset):
         f = self.f
         for offset in info_offset:
             f.seek(offset + self.start + 4)
             self.face_info.append(self.FaceInfo(read_int(f, ">"), read_int(f, ">"), read_int(f, ">"), read_int(f, ">")))
 
-    def _le_info_2(self, info_offset):
+    def _lno_info(self, info_offset):
         f = self.f
         for offset in info_offset:
             f.seek(offset + self.start)
             data = read_int_tuple(f, 8)
             self.face_info.append(self.FaceInfo(data[5], 0, 0, data[6]))
 
-    def _le_info_5(self, info_offset):
+    def _lno_info_2(self, info_offset):
         f = self.f
         for offset in info_offset:
             f.seek(offset + self.start)
             data = read_int_tuple(f, 11)
             self.face_info.append(self.FaceInfo(data[9], 0, 0, data[10]))
 
-    def _le_info_3(self, info_offset):
+    def _ino_info(self, info_offset):
         f = self.f
         for offset in info_offset:
             f.seek(offset + self.start + 4)
@@ -82,7 +82,7 @@ class Read:
             face_off = read_int_tuple(f, face_off_count)
             self.face_info.append(self.FaceInfo(face_len, 0, 0, face_off))
 
-    def _le_info_4(self, info_offset):
+    def _ino_info_2(self, info_offset):
         f = self.f
         for offset in info_offset:
             f.seek(offset + self.start + 4)
@@ -93,7 +93,7 @@ class Read:
             face_off = read_int_tuple(f, face_off_count)
             self.face_info.append(self.FaceInfo(face_len, 0, 0, face_off))
 
-    def _be_info_2(self, info_offset):
+    def _cno_info(self, info_offset):
         f = self.f
         for offset in info_offset:
             f.seek(offset + self.start + 4)
@@ -104,26 +104,26 @@ class Read:
             face_off = read_int_tuple(f, face_off_count, ">")
             self.face_info.append(self.FaceInfo(face_len, 0, 0, face_off))
 
-    def _be_info_3(self, info_offset):
+    def _gno_info(self, info_offset):
         f = self.f
         for offset in info_offset:
             f.seek(offset + self.start + 4)
             face_off, face_len, face_off_2 = read_int_tuple(f, 3, ">")
             self.face_info.append(self.FaceInfo(face_len, 0, face_off_2, face_off))
 
-    def _le_strip_1(self):
+    def _xno_zno_strip(self):
         f = self.f
         for info in self.face_info:
             f.seek(info.face_lens_offset + self.start)
             self.face_strip_list.append(read_short_tuple(f, info.face_lens_count))
 
-    def _be_strip_1(self):
+    def _eno_strip(self):
         f = self.f
         for info in self.face_info:
             f.seek(info.face_lens_offset + self.start)
             self.face_strip_list.append(read_short_tuple(f, info.face_lens_count, ">"))
 
-    def _le_indices_1(self):
+    def _xno_zno_indices(self):
         f = self.f
         for index in range(len(self.face_info)):
             info = self.face_info[index]
@@ -140,7 +140,7 @@ class Read:
                     face_list_mesh.append((face_list[- 3], face_list[- 2], face_list[- 1]))
             self.face_list.append(face_list_mesh)
 
-    def _be_indices_1(self):
+    def _eno_indices(self):
         f = self.f
         for index in range(len(self.face_info)):  # for all sub meshes
             info = self.face_info[index]
@@ -158,7 +158,7 @@ class Read:
                     face_list_mesh.append((face_list[- 3], face_list[- 2], face_list[- 1]))
             self.face_list.append(face_list_mesh)
 
-    def _le_indices_2(self):
+    def _lno_indices(self):
         f = self.f
         for info in self.face_info:
             face_list_mesh = []
@@ -176,7 +176,7 @@ class Read:
 
             self.face_list.append(face_list_mesh)
 
-    def _be_indices_2(self):
+    def _cno_indices(self):
         f = self.f
         for info in self.face_info:  # for all sub meshes
             face_list_mesh = []
@@ -193,7 +193,7 @@ class Read:
                     face_list_mesh.append((face_list[- 3], face_list[- 2], face_list[- 1]))
             self.face_list.append(face_list_mesh)
 
-    def _le_indices_3(self):
+    def _ino_indices(self):
         f = self.f
         for info in self.face_info:  # for all sub meshes
             face_list_mesh = []
@@ -210,7 +210,7 @@ class Read:
                     face_list_mesh.append((face_list[- 3], face_list[- 2], face_list[- 1]))
             self.face_list.append(face_list_mesh)
 
-    def _be_indices_3(self, info_flag):
+    def _gno_indices(self, info_flag):
         def faces_flag():
             f.seek(info.face_offset + self.start + 20)
             face_flags = read_byte(f, ">")
@@ -377,48 +377,48 @@ class Read:
 
     def xno_zno(self):
         info_offset = self._le_offsets()
-        self._le_info_1(info_offset)
-        self._le_strip_1()
-        self._le_indices_1()
+        self._xno_zno_info(info_offset)
+        self._xno_zno_strip()
+        self._xno_zno_indices()
         return self.face_list
 
     def eno(self):
         info_offset = self._be_offsets()
-        self._be_info_1(info_offset)
-        self._be_strip_1()
-        self._be_indices_1()
+        self._eno_info(info_offset)
+        self._eno_strip()
+        self._eno_indices()
         return self.face_list
 
     def lno(self):
         if self.format_type == "SonicTheHedgehog4EpisodeII_L":
-            info_offset = self._le_offsets_3()
-            self._le_info_5(info_offset)
-            self._le_indices_2()
+            info_offset = self._le_offsets_4()
+            self._lno_info_2(info_offset)
+            self._lno_indices()
         else:
             info_offset = self._le_offsets()
-            self._le_info_2(info_offset)
-            self._le_indices_2()
+            self._lno_info(info_offset)
+            self._lno_indices()
         return self.face_list
 
     def ino(self):
         if self.format_type == "SonicTheHedgehog4EpisodeI_I":
-            info_offset = self._le_offsets_2()
-            self._le_info_4(info_offset)
-            self._le_indices_3()
+            info_offset = self._le_offsets_3()
+            self._ino_info_2(info_offset)
+            self._ino_indices()
         else:
             info_offset = self._le_offsets()
-            self._le_info_3(info_offset)
-            self._le_indices_3()
+            self._ino_info(info_offset)
+            self._ino_indices()
         return self.face_list
 
     def cno(self):
         info_offset = self._be_offsets()
-        self._be_info_2(info_offset)
-        self._be_indices_2()
+        self._cno_info(info_offset)
+        self._cno_indices()
         return self.face_list
 
     def gno(self):
         info_offset, info_flag = self._be_offsets_flags()
-        self._be_info_3(info_offset)
-        self._be_indices_3(info_flag)
+        self._gno_info(info_offset)
+        self._gno_indices(info_flag)
         return self.face_list, self.uv_list, self.wx_list, self.norm_list, self.col_list
