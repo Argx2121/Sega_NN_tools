@@ -88,10 +88,11 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         default=False)
     batch: EnumProperty(
         name="Batch usage",
-        description="If all files in a folder (non recursive) should be used",
+        description="What files should be imported",
         items=(
             ('Single', "Single", "Only opens selected file"),
-            ('Batch', "Batch", "Opens all of the folders files")),
+            ('Batch', "Batch", "Opens all of the folders files (non recursive)"),
+            ('Recursive', "Recursive", "Opens files recursively")),
         default='Single')
     simple_mat: BoolProperty(
         name="Simple materials (for export)",
@@ -171,10 +172,8 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
             settings.format = self.filepath.split(".")[-2]
             # if extracted by these tools game name is in file name
         else:
-            settings.format = getattr(self, self.filepath[-3].upper())
-            # gets *no type and uses name from * list of games
+            pass  # handled later
         settings.format_bone_scale = determine_bone[settings.format]
-
         return model_import(self.filepath, settings)
 
 
@@ -199,7 +198,7 @@ class Settings:
 
 
 def model_import(filepath, settings):
-    def execute(file_path):
+    def execute_set(file_path):
         if "texture_names" in file_path:
             return
         f = open(file_path, 'rb')
@@ -215,8 +214,34 @@ def model_import(filepath, settings):
             show_not_read("NN Model Importer")
         f.close()
 
-    name_require = "." + settings.format[-1].lower() + "no"
-    batch_handler(filepath, settings.batch_import, execute, name_require=name_require, case_sensitive=False)
+    def execute_match(file_path):
+        if not file_path.endswith("no"):
+            return
+        if "texture_names" in file_path:
+            return
+        f = open(file_path, 'rb')
+        block = read_str_nulls(f, 4)[0]
+        f.seek(0)
+        expected_block = "N" + block[1] + "IF"
+        print_line()
+        if block == expected_block:
+            import Sega_NN_tools.io.nn_import_data as ass
+            idk = block[1].lower() + "no_list"
+            settings.format = getattr(ass, idk)[0][0]
+            nn = ReadNn(f, file_path, settings.format, settings.debug).read_file()[1]
+            if nn.model:
+                Model(nn, settings).execute()
+            settings.format = "Match__"
+        else:
+            show_not_read("NN Model Importer")
+        f.close()
+
+    if settings.format != "Match__":
+        name_require = "." + settings.format[-1].lower() + "no"
+        batch_handler(filepath, settings.batch_import, execute_set, name_require=name_require, case_sensitive=False)
+    else:
+        name_require = "no"
+        batch_handler(filepath, settings.batch_import, execute_match, name_require=name_require, case_sensitive=False)
     return {'FINISHED'}
 
 
@@ -228,7 +253,7 @@ def batch_handler(filepath: str, batch_import: str, func: Any, name_ignore: str 
         stdout.flush()
     else:
         toggle_console()
-        file_list = get_files(filepath, name_ignore, name_require, case_sensitive)
+        file_list = get_files(filepath, batch_import, name_ignore, name_require, case_sensitive)
         for filepath in file_list:
             func(filepath)
             stdout.flush()

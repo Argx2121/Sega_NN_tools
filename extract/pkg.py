@@ -40,7 +40,7 @@ class ExtractPkg:
             self.read_pkg()
             self.f_pkg.close()
         else:
-            file_list = get_files(self.file, name_require=".PKG")
+            file_list = get_files(self.file, self.set_batch,name_require=".PKG")
             for self.file in file_list:
                 self.f_dir = open(self.file[:-3] + "DIR", "rb")
                 self.read_dir()
@@ -72,12 +72,12 @@ class ExtractPkgTools(Operator, ImportHelper):
     )
     set_batch: EnumProperty(
         name="Batch usage",
-        description="If all files in a folder (non recursive) should be used",
+        description="What files should be imported",
         items=(
             ('Single', "Single", "Only opens selected file"),
-            ('Batch', "Batch", "Opens all of the folders files"),
-        ),
-        default='Single',
+            ('Batch', "Batch", "Opens all of the folders files (non recursive)"),
+            ('Recursive', "Recursive", "Opens files recursively")),
+        default='Single'
     )
 
     def draw(self, context):

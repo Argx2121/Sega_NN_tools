@@ -92,7 +92,7 @@ class ExtractAmb:
             run_file()
             self.f.close()
         else:
-            file_list = get_files(self.file, name_require=".AMB")
+            file_list = get_files(self.file, self.set_batch, name_require=".AMB")
             for self.file in file_list:
                 self.f = open(self.file, "rb")
                 self.file_name = bpy.path.basename(self.file)[:-4]
@@ -122,12 +122,12 @@ class Sonic4Tools(Operator, ImportHelper):
     )
     set_batch: EnumProperty(
         name="Batch usage",
-        description="If all files in a folder (non recursive) should be used",
+        description="What files should be imported",
         items=(
             ('Single', "Single", "Only opens selected file"),
-            ('Batch', "Batch", "Opens all of the folders files"),
-        ),
-        default='Single',
+            ('Batch', "Batch", "Opens all of the folders files (non recursive)"),
+            ('Recursive', "Recursive", "Opens files recursively")),
+        default='Single'
     )
 
     def draw(self, context):

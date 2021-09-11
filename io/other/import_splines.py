@@ -35,10 +35,11 @@ class ImportSegaNNSplines(bpy.types.Operator, ImportHelper):
 
     batch: EnumProperty(
         name="Batch usage",
-        description="If all files in a folder (non recursive) should be used",
+        description="What files should be imported",
         items=(
             ('Single', "Single", "Only opens selected file"),
-            ('Batch', "Batch", "Opens all of the folders files")),
+            ('Batch', "Batch", "Opens all of the folders files (non recursive)"),
+            ('Recursive', "Recursive", "Opens files recursively")),
         default='Single')
 
     def draw(self, context):

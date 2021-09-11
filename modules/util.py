@@ -12,13 +12,16 @@ from typing import BinaryIO, Tuple, Any, Union  # Union is used by files that im
 # functions
 
 
-def get_files(file_path: str, name_ignore: str = False, name_require: str = False, case_sensitive: bool = True) -> list:
+def get_files(file_path: str, batch_type: str,
+              name_ignore: str = False, name_require: str = False, case_sensitive: bool = True) -> list:
     """Returns a list of file names in the current folder with optional restrictions on name.
 
     Parameters
     ----------
     file_path : str
         Path to the folder - can have a files name included and be relative.
+    batch_type : str
+        Identifier if the import is recursive or not.
     name_ignore : str
         String that files should not have in their name.
     name_require : str
@@ -33,15 +36,26 @@ def get_files(file_path: str, name_ignore: str = False, name_require: str = Fals
 
     """
     file_path = bpy.path.abspath(file_path).rstrip(bpy.path.basename(file_path))
-    file_list = [file for file in os.listdir(file_path) if os.path.isfile(file_path + file)]
+    if batch_type == "Recursive":
+        file_list = list(pathlib.Path(file_path).rglob('*'))
+    else:
+        file_list = list(pathlib.Path(file_path).glob('*'))
+    file_list = [str(path) for path in file_list]
+
     if not case_sensitive:
         name_require = name_require.casefold()
-        file_list = [file.casefold() for file in file_list]
+
     if name_require:
-        file_list = [file for file in file_list if name_require in file]
+        if case_sensitive:
+            file_list = [file for file in file_list if name_require in bpy.path.basename(file)]
+        else:
+            file_list = [file for file in file_list if name_require in bpy.path.basename(file).casefold()]
     if name_ignore:
-        file_list = [file for file in file_list if name_ignore not in file]
-    return [file_path + file for file in file_list]
+        if case_sensitive:
+            file_list = [file for file in file_list if name_ignore not in bpy.path.basename(file)]
+        else:
+            file_list = [file for file in file_list if name_ignore not in bpy.path.basename(file).casefold()]
+    return file_list
 
 
 # noinspection PyArgumentList

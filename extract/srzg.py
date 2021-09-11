@@ -119,7 +119,7 @@ class ExtractSRZG:
             self.f.close()
 
         else:
-            files_pack = get_files(self.file, name_require=".pack")
+            files_pack = get_files(self.file, self.set_batch,name_require=".pack")
             for self.file in files_pack:
                 self.f = open(self.file, "rb")
                 self.pack_extract()
@@ -163,12 +163,12 @@ class ExtractSrgzTools(Operator, ImportHelper):
     )
     set_batch: EnumProperty(
         name="Batch usage",
-        description="If all files in a folder (non recursive) should be used",
+        description="What files should be imported",
         items=(
             ('Single', "Single", "Only opens selected file"),
-            ('Batch', "Batch", "Opens all of the folders files"),
-        ),
-        default='Single',
+            ('Batch', "Batch", "Opens all of the folders files (non recursive)"),
+            ('Recursive', "Recursive", "Opens files recursively")),
+        default='Single'
     )
 
     def draw(self, context):
