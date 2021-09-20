@@ -1,4 +1,5 @@
 import dataclasses
+import math
 
 from Sega_NN_tools.modules.util import *
 
@@ -35,6 +36,7 @@ class ReadInstanceModels:
             obj = bpy.data.objects.new("Instance_Object_" + str(inst.item_type), None)
             pos = inst.position
             obj.location = pos[0], - pos[2], pos[1]
-            obj.rotation_euler = inst.rotation
+            rot = inst.rotation
+            obj.rotation_euler = math.radians(- rot[0]), math.radians(- rot[1]), math.radians(- rot[2])
 
             bpy.context.collection.objects.link(obj)
