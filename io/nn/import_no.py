@@ -17,7 +17,7 @@ from Sega_NN_tools.modules.util import *
 
 
 class ImportSegaNO(bpy.types.Operator, ImportHelper):
-    """Import a Sega NN file (not necessarily an *.xno, *.zno etc file)"""
+    """Import a Sega NN file model"""
     bl_idname = "import.sega_no"
     bl_label = "Import *no Model"
     bl_options = {'REGISTER', 'UNDO'}
