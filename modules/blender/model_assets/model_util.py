@@ -61,6 +61,14 @@ def clean_mesh_strict(obj):
 
     bm = bmesh.new()
     bm.from_mesh(obj.data)
+    bm.faces.ensure_lookup_table()
+    faces = [f for f in bm.faces if not f.calc_area()]
+    bmesh.ops.delete(bm, geom=faces, context="FACES")
+    bm.to_mesh(obj.data)
+    bm.free()
+
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
     bm.edges.ensure_lookup_table()
     edges = [e for e in bm.edges if not e.link_faces]
     bmesh.ops.delete(bm, geom=edges, context="EDGES")
