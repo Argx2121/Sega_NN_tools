@@ -1265,7 +1265,7 @@ class Read:
                     v_uvs.append((data_float[i], - data_float[i + 1] + 1))
                 return off + 8
 
-            def get_weights_short(off):
+            def get_weights_4(off):
                 div_by = 32767
                 for i in range(vertex_count):
                     i = (i * block_len + off) // 2
@@ -1273,11 +1273,28 @@ class Read:
                     v_weights.append([v[0] / div_by, v[1] / div_by, v[2] / div_by, v[3] / div_by])
                 return off + 8
 
+            def get_weights_2(off):
+                div_by = 32767
+                for i in range(vertex_count):
+                    i = (i * block_len + off) // 2
+                    v_weights.append([data_short[i] / div_by, data_short[i + 1] / div_by])
+                return off + 4
+
             def k_on_after_school_live_u():
                 off = 0
 
-                off = get_weights_short(off)
-                off = get_uvs(off)
+                if BitFlags.weights_2:
+                    off = get_weights_2(off)
+
+                if BitFlags.weights_4:
+                    off = get_weights_4(off)
+
+                if BitFlags.uv:
+                    off = get_uvs(off)
+
+                if BitFlags.unknown:
+                    off += 4
+
                 off = get_positions(off)
 
             format_dict = {
@@ -1293,22 +1310,17 @@ class Read:
             block_type = self.mesh_info[var].vertex_block_type
             vertex_buffer_len = vertex_count * block_len
 
-            class BitFlags(Flag):  # not enough samples for this
-
-                uv = block_type >> 16 & 1
-                position = block_type >> 25 & 1
-                normal = block_type >> 28 & 1
-                colour_short = block_type >> 31 & 1
-                colour_byte = block_type >> 30 & 1
-                weights = block_type >> 27 & 1
-                weight_indices = block_type >> 50 & 1
-                wx = block_type >> 17 & 1
-                unnamed = block_type >> 48 & 1
+            class BitFlags(Flag):
+                unknown = block_type >> 10 & 1
+                uv = block_type >> 19 & 1
+                weights_2 = block_type >> 26 & 1
+                weights_4 = block_type >> 27 & 1
 
             vertex_buffer = f.read(vertex_buffer_len)
             data_float = unpack(str(vertex_buffer_len // 4) + "f", vertex_buffer)
 
-            data_short = unpack(str(vertex_buffer_len // 2) + "H", vertex_buffer)
+            if BitFlags.weights_4 or BitFlags.weights_2:  # signed weights
+                data_short = unpack(str(vertex_buffer_len // 2) + "h", vertex_buffer)
 
             del vertex_buffer
 
