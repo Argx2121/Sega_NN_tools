@@ -192,7 +192,7 @@ class ReadModel:
         m.faces, m.vertices = implicit_faces_fix_mesh_size(m.vertices)
         console_out_post(var)
 
-        m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_9_sno)
+        m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_9_face)
 
         self._debug_2(m.build_mesh)
         f.seek(start_block + len_block + 8)  # seek end of block
@@ -212,7 +212,7 @@ class ReadModel:
         m.bones = self._run(d.bone_offset, 1, bones.Read(info, d.bone_count).le_full)
         m.materials = self._run(d.material_offset, 2, materials.Read(info, d.material_count).uno)
         m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).uno)
-        m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_9)
+        m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_9_face)
 
         m.faces = implicit_faces(m.vertices)
 

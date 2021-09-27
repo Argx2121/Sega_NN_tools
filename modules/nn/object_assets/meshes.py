@@ -38,7 +38,7 @@ class Read:
                 build_mesh.append(self.BuildMesh(pos, scale, var[0], var[1], var[2], var[3], var[4]))
         return build_mesh
 
-    def le_9_sno(self):
+    def le_9_face(self):
         f = self.f
         build_mesh = []
         for var in range(self.sets_count):
