@@ -40,7 +40,7 @@ def get_files(file_path: str, batch_type: str,
         file_list = list(pathlib.Path(file_path).rglob('*'))
     else:
         file_list = list(pathlib.Path(file_path).glob('*'))
-    file_list = [str(path) for path in file_list]
+    file_list = [str(path) for path in file_list if os.path.isfile(path)]
 
     if not case_sensitive:
         name_require = name_require.casefold()
