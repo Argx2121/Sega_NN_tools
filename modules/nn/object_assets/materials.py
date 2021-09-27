@@ -560,7 +560,8 @@ class Read:
         def k_on_after_school_live_u():
             t_type = "none"
             t_settings = []
-            if TextureFlags.byte1bit1:
+            # Only seen diffuse
+            if TextureFlags.byte1bit1 and TextureFlags.byte1bit2 and TextureFlags.byte1bit4:
                 t_type = "diffuse"
 
             return t_type, t_settings
@@ -580,10 +581,10 @@ class Read:
 
                     class TextureFlags(Flag):
                         # byte 1
-                        byte1bit4 = texture_flags >> 27 & 1  # 00001000
-                        byte1bit3 = texture_flags >> 26 & 1  # 00000100
-                        byte1bit2 = texture_flags >> 25 & 1  # 00000010
-                        byte1bit1 = texture_flags >> 24 & 1  # 00000001
+                        byte1bit1 = texture_flags >> 0 & 1  # 00000001
+                        byte1bit2 = texture_flags >> 1 & 1  # 00000010
+                        byte1bit3 = texture_flags >> 2 & 1  # 00000100
+                        byte1bit4 = texture_flags >> 3 & 1  # 00001000
 
                         # byte 2
 
