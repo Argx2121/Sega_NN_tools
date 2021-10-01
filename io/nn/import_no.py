@@ -215,7 +215,7 @@ def model_import(filepath, settings):
         f.close()
 
     def execute_match(file_path):
-        if not file_path.endswith("no"):
+        if not file_path.lower().endswith("no"):
             return
         if "texture_names" in file_path:
             return
@@ -225,9 +225,8 @@ def model_import(filepath, settings):
         expected_block = "N" + block[1] + "IF"
         print_line()
         if block == expected_block:
-            import Sega_NN_tools.io.nn_import_data as ass
-            idk = block[1].lower() + "no_list"
-            settings.format = getattr(ass, idk)[0][0]
+            import Sega_NN_tools.io.nn_import_data as nn_data
+            settings.format = getattr(nn_data, block[1].lower() + "no_list")[0][0]
             nn = ReadNn(f, file_path, settings.format, settings.debug).read_file()[1]
             if nn.model:
                 Model(nn, settings).execute()
