@@ -48,7 +48,7 @@ class ReadNn:
 
 
             # generic
-            "NOF0": self._nof0, "NFN0": self._nfn0, "NEND": self._nend
+            "NOF0": self._nof0, "NFN0": self._nfn0, "NEND": self._nend,
         }  # supported blocks
 
     @dataclass
@@ -77,10 +77,11 @@ class ReadNn:
     def read_file(self):
         while not self.nn.end and self.file_len > self.f.tell():
             self._read_block()
-        if not self.nn.textures:
-            self.read_texture_names()
-        if not self.nn.bones:
-            self.read_bone_names()
+        if self.nn.model:
+            if not self.nn.textures:
+                self.read_texture_names()
+            if not self.nn.bones:
+                self.read_bone_names()
         if self.nn.name == "Unnamed_File":
             self.nn.name = bpy.path.basename(self.filepath)
         return self.format_type, self.nn
