@@ -2,7 +2,7 @@ import bpy
 from bpy.props import StringProperty, EnumProperty
 from bpy_extras.io_utils import ImportHelper
 
-from Sega_NN_tools.io.nn.import_no import batch_handler
+from Sega_NN_tools.io.import_util import batch_handler
 from Sega_NN_tools.modules.util import print_line
 from Sega_NN_tools.modules.other.splines.srpc import ReadPaths as Srpc
 from Sega_NN_tools.modules.other.splines.srzg import ReadPaths as Srzg
