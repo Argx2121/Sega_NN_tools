@@ -1,24 +1,17 @@
 from dataclasses import dataclass
-from sys import stdout
-from time import time
-from typing import Any
 
-import bpy
 from bpy.props import StringProperty, EnumProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 
 from Sega_NN_tools.io.import_util import batch_handler
 from Sega_NN_tools.io.nn_import_data import *
-
-
-from Sega_NN_tools.io.nn_import_data import no_list, determine_bone
 from Sega_NN_tools.modules.blender.model import Model
 from Sega_NN_tools.modules.nn.nn import ReadNn
 from Sega_NN_tools.modules.util import *
 
 
 class ImportSegaNO(bpy.types.Operator, ImportHelper):
-    """Import a Sega NN file model"""
+    """Import a Sega NN Model"""
     bl_idname = "import.sega_no"
     bl_label = "Import *no Model"
     bl_options = {'REGISTER', 'UNDO'}
@@ -29,7 +22,7 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         maxlen=255)
 
     # generic
-    no_format: EnumProperty(
+    nn_format: EnumProperty(
         name="Format",
         description="*no variant",
         items=no_list,
@@ -38,48 +31,48 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
 
     C: EnumProperty(
         name="Game",
-        description="Game the model is from (to get the correct cno variant)",
-        items=cno_list,
+        description="Game the asset is from (to get the correct game variant)",
+        items=cn_list,
     )
     E: EnumProperty(
         name="Game",
-        description="Game the model is from (to get the correct eno variant)",
-        items=eno_list,
+        description="Game the asset is from (to get the correct game variant)",
+        items=en_list,
     )
     G: EnumProperty(
         name="Game",
-        description="Game the model is from (to get the correct gno variant)",
-        items=gno_list,
+        description="Game the asset is from (to get the correct game variant)",
+        items=gn_list,
     )
     I: EnumProperty(
         name="Game",
-        description="Game the model is from (to get the correct ino variant)",
-        items=ino_list,
+        description="Game the asset is from (to get the correct game variant)",
+        items=in_list,
     )
     L: EnumProperty(
         name="Game",
-        description="Game the model is from (to get the correct lno variant)",
-        items=lno_list,
+        description="Game the asset is from (to get the correct game variant)",
+        items=ln_list,
     )
     S: EnumProperty(
         name="Game",
-        description="Game the model is from (to get the correct sno variant)",
-        items=sno_list,
+        description="Game the asset is from (to get the correct game variant)",
+        items=sn_list,
     )
     U: EnumProperty(
         name="Game",
-        description="Game the model is from (to get the correct uno variant)",
-        items=uno_list,
+        description="Game the asset is from (to get the correct game variant)",
+        items=un_list,
     )
     X: EnumProperty(
         name="Game",
-        description="Game the model is from (to get the correct xno variant)",
-        items=xno_list,
+        description="Game the asset is from (to get the correct game variant)",
+        items=xn_list,
     )
     Z: EnumProperty(
         name="Game",
-        description="Game the model is from (to get the correct zno variant)",
-        items=zno_list,
+        description="Game the asset is from (to get the correct game variant)",
+        items=zn_list,
     )
 
     # other
@@ -130,10 +123,10 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         preferences = bpy.context.preferences.addons[__package__.partition(".")[0]].preferences
         layout.label(text="Sega NN importer settings:", icon="KEYFRAME_HLT")
 
-        no_nn_format = self.no_format
-        layout.row().prop(self, "no_format")
-        if not no_nn_format.endswith("_"):
-            layout.row().prop(self, no_nn_format)
+        nn_format = self.nn_format
+        layout.row().prop(self, "nn_format")
+        if not nn_format.endswith("_"):
+            layout.row().prop(self, nn_format)
 
         box = layout.box()
         box.label(text="Generic settings:", icon="KEYFRAME_HLT")
@@ -159,14 +152,14 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
             self.batch, self.clean, self.simple_mat,
             self.length, preferences.max_len, self.pose, self.bone,
         )
-        no_nn_format = self.no_format  # "Match__", "E" etc
-        no_format = getattr(self, no_nn_format, no_nn_format)
+        nn_format = self.nn_format  # "Match__", "E" etc
+        nn_format = getattr(self, nn_format, nn_format)
         # "Match__", "SonicFreeRiders_E" etc defaults to match
-        settings.format = no_format
-        settings.format_bone_scale = determine_bone[no_format]
+        settings.format = nn_format
+        settings.format_bone_scale = determine_bone[nn_format]
 
         # this gives us a game name
-        if no_format != "Match__":
+        if nn_format != "Match__":
             pass  # user selected game name
         elif self.filepath.count(".") > 1 and self.filepath.split(".")[-2] in determine_bone:
             # dictionary has all game types
@@ -184,7 +177,6 @@ def menu_func_import(self, context):  # add to dynamic menu
 
 @dataclass
 class Settings:
-    # generic
     format: str
     format_bone_scale: int
     debug: bool
@@ -227,7 +219,7 @@ def model_import(filepath, settings):
         print_line()
         if block == expected_block:
             import Sega_NN_tools.io.nn_import_data as nn_data
-            settings.format = getattr(nn_data, block[1].lower() + "no_list")[0][0]
+            settings.format = getattr(nn_data, block[1].lower() + "n_list")[0][0]
             nn = ReadNn(f, file_path, settings.format, settings.debug).read_file()[1]
             if nn.model:
                 Model(nn, settings).execute()

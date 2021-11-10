@@ -9,10 +9,85 @@ no_list = (
     ("G", "GNO", "Gno"),
     ("I", "INO", "Ino"),
     ("L", "LNO", "Lno"),
-    ("S", "SNO", "Sno (Experimental!!)"),
+    ("S", "SNO", "Sno"),
     ("U", "UNO", "Uno"),
     ("X", "XNO", "Xno"),
     ("Z", "ZNO", "Zno"),
+)
+
+nd_list = (
+    # Extra import functions
+    ("Match__", "Match", "Tries to match the file with a known format (Experimental!!)"),
+    # Formats
+    ("C", "CND", "Cnd"),
+    ("E", "END", "End"),
+    ("G", "GND", "Gnd"),
+    ("I", "IND", "Ind"),
+    ("L", "LND", "Lnd"),
+    ("S", "SND", "Snd"),
+    ("U", "UND", "Und"),
+    ("X", "XND", "Xnd"),
+    ("Z", "ZND", "Znd"),
+)
+
+ni_list = (
+    # Extra import functions
+    ("Match__", "Match", "Tries to match the file with a known format (Experimental!!)"),
+    # Formats
+    ("C", "CNI", "Cni"),
+    ("E", "ENI", "Eni"),
+    ("G", "GNI", "Gni"),
+    ("I", "INI", "Ini"),
+    ("L", "LNI", "Lni"),
+    ("S", "SNI", "Sni"),
+    ("U", "UNI", "Uni"),
+    ("X", "XNI", "Xni"),
+    ("Z", "ZNI", "Zni"),
+)
+
+nm_list = (
+    # Extra import functions
+    ("Match__", "Match", "Tries to match the file with a known format (Experimental!!)"),
+    # Formats
+    ("C", "CNM", "Cnm"),
+    ("E", "ENM", "Enm"),
+    ("G", "GNM", "Gnm"),
+    ("I", "INM", "Inm"),
+    ("L", "LNM", "Lnm"),
+    ("S", "SNM", "Snm"),
+    ("U", "UNM", "Unm"),
+    ("X", "XNM", "Xnm"),
+    ("Z", "ZNM", "Znm"),
+)
+
+nv_list = (
+    # Extra import functions
+    ("Match__", "Match", "Tries to match the file with a known format (Experimental!!)"),
+    # Formats
+    ("C", "CNV", "Cnv"),
+    ("E", "ENV", "Env"),
+    ("G", "GNV", "Gnv"),
+    ("I", "INV", "Inv"),
+    ("L", "LNV", "Lnv"),
+    ("S", "SNV", "Snv"),
+    ("U", "UNV", "Unv"),
+    ("X", "XNV", "Xnv"),
+    ("Z", "ZNV", "Znv"),
+)
+
+nf_list = (
+    # Extra import functions
+    ("Match__", "Match", "Tries to match the file with a known format (Experimental!!)"),
+    # Formats
+    ("C", "CNF", "Cnf"),
+    ("E", "ENF", "Enf"),
+    ("G", "GNF", "Gnf"),
+    ("I", "INF", "Inf"),
+    ("L", "LNF", "Lnf"),
+    ("S", "SNF", "Snf"),
+    ("U", "UNF", "Unf"),
+    ("X", "XNF", "Xnf"),
+    ("Z", "ZNF", "Znf"),
 )
 
 # Syntax plays an important role in importing so follow this arrangement:
@@ -27,17 +102,17 @@ no_list = (
 
 # Game formats should be sorted by date.
 
-cno_list = (
+cn_list = (
     ("HouseOfTheDead4_C", "The House of the Dead 4", "The House of the Dead 4 Model | 17 Apr 2012"),
 )
 
-eno_list = (
+en_list = (
     ("SonicFreeRiders_E", "Sonic Free Riders", "Sonic Free Riders Model | 4 Nov 2010"),
     ("SonicTheHedgehog4EpisodeIPrototype_E", "Sonic the Hedgehog 4: Episode I (Prototype)",
      "Sonic the Hedgehog 4: Episode I (Prototype) Model | 9 Feb 2010"),
 )
 
-gno_list = (
+gn_list = (
     ("SuperMonkeyBallStepAndRoll_G", "Super Monkey Ball: Step & Roll",
      "Super Monkey Ball: Step & Roll Model | 9 Feb 2010"),
     ("SonicAndTheBlackKnight_G", "Sonic and the Black Knight", "Sonic and the Black Knight Model | 3 Mar 2009"),
@@ -50,14 +125,14 @@ gno_list = (
     ("SonicRiders_G", "Sonic Riders", "Sonic Riders Model | 21 Feb 2006"),
 )
 
-ino_list = (
+in_list = (
     ("SonicTheHedgehog4EpisodeI_I", "Sonic the Hedgehog 4: Episode I",
      "Sonic the Hedgehog 4: Episode I Model | 7 Oct 2010"),
     ("SonicTheHedgehog4EpisodeIPre2016_I", "Sonic the Hedgehog 4: Episode I (Pre 2016)",
      "Sonic the Hedgehog 4: Episode I (Pre 2016) Model | 7 Oct 2010"),
 )
 
-lno_list = (
+ln_list = (
     ("SonicTheHedgehog4EpisodeII_L", "Sonic the Hedgehog 4: Episode II",
      "Sonic the Hedgehog 4: Episode II Model | 7 Oct 2010"),
     ("LovingDeadsHouseOfTheDeadEX_L", "Loving Deads: The House of the Dead EX",
@@ -65,24 +140,24 @@ lno_list = (
     ("HouseOfTheDead4_L", "The House of the Dead 4", "The House of the Dead 4 Model | 30 Dec 2005"),
 )
 
-sno_list = (
+sn_list = (
     ("SonicRidersZeroGravity_S", "Sonic Riders Zero Gravity", "Sonic Riders Zero Gravity Model | 8 Jan 2008"),
     ("SegaSuperstars_S", "Sega Superstars", "Sega Superstars Model | 22 Oct 2004"),
     ("SegaAges2500SeriesVol5GoldenAxe_S", "Sega Ages 2500 Series Vol. 5: Golden Axe",
      "Sega Ages 2500 Golden Axe Model | 25 Sep 2003"),
 )
 
-uno_list = (
+un_list = (
     ("KOnAfterSchoolLive_U", "K-On! After School Live!!", "K-ON! Hokago Live!! Model | 30 Sep 2010"),
 )
 
-xno_list = (
+xn_list = (
     ("Sonic2006_X", "Sonic 2006", "Sonic '06 Model | 14 Nov 2006"),
     ("PhantasyStarUniverse_X", "Phantasy Star Universe", "Phantasy Star Universe Model | 31 Aug 2006"),
     ("SonicRiders_X", "Sonic Riders", "Sonic Riders Model | 21 Feb 2006"),
 )
 
-zno_list = (
+zn_list = (
     ("TransformersHumanAlliance_Z", "Transformers: Human Alliance", "Transformers Human Alliance Model | 2013"),
     ("Sonic4Episode1_Z", "Sonic 4 Ep 1", "Sonic 4 Episode 1 Model | 7 Oct 2010"),
     ("SegaGoldenGun_Z", "Sega Golden Gun", "Sega Golden Gun Model | 2010"),
