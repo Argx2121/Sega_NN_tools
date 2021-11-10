@@ -67,6 +67,7 @@ class NN_PT_About(GENERIC_panel, bpy.types.Panel):
         box = layout.box()
         box.label(text="Special thanks:")
         box.label(text="firegodjr")
+        box.label(text="Radfordhound")
         box.label(text="Sewer56")
         box.label(text="Shadowth117")
         box.label(text="Yacker")

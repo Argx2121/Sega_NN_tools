@@ -83,6 +83,7 @@ A Python library for Blender for games using Sega's NN libraries.
  
 ### Special thanks
  - firegodjr
+ - Radfordhound
  - Sewer56
  - Shadowth117
  - Yacker
