@@ -26,7 +26,7 @@ class ReadPaths:
             f.seek(start + offset)
             sub_offsets = read_int_tuple(f, 3)
             f.seek(16, 1)
-            vert_count = read_int(f)
+            vert_count = read_short(f)
             points = []
 
             f.seek(sub_offsets[1] + start)
