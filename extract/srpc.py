@@ -41,7 +41,7 @@ class ExtractSRPC:
         # noinspection SpellCheckingInspection
         def run_file():
             f = self.f
-            archive = read_archive(f)
+            archive = read_archive(f, "<")
             arc_types = {
                 0: "Player", 8: "oPlayerShadow", 9: "Gear_Shadow", 20: "Animation",
                 30: "oTornadoSmall", 31: "oTornado",

@@ -13,7 +13,7 @@ class ArchiveInfo:
     sub_file_types: Tuple[int, ...]
 
 
-def read_archive(f: BinaryIO) -> ArchiveInfo:
+def read_archive(f: BinaryIO, endian: str) -> ArchiveInfo:
     """Reads the Archive info in Riders files.
 
     Usage : Required.
@@ -23,7 +23,10 @@ def read_archive(f: BinaryIO) -> ArchiveInfo:
     Parameters
     ----------
     f : BinaryIO
-        The file read.
+        The file read
+
+    endian : str
+        File endian.
 
     Returns
     -------
@@ -31,11 +34,11 @@ def read_archive(f: BinaryIO) -> ArchiveInfo:
         The Archive info.
 
     """
-    file_count = read_int(f)
+    file_count = read_int(f, endian)
     sub_file_counts = read_byte_tuple(f, file_count)
     offset_count = sum(sub_file_counts)
     read_aligned(f, 4)
-    sub_shorts = read_short_tuple(f, file_count * 2)
-    sub_file_offsets = read_int_tuple(f, offset_count)
+    sub_shorts = read_short_tuple(f, file_count * 2, endian)
+    sub_file_offsets = read_int_tuple(f, offset_count, endian)
     read_aligned(f, 16)
     return ArchiveInfo(file_count, sub_file_counts, sub_file_offsets, sub_shorts[:file_count], sub_shorts[file_count:])
