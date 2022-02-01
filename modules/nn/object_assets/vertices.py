@@ -519,6 +519,20 @@ class Read:
                 data = read_float_tuple(f, 3 * count, ">")
                 for v in range(count):
                     v_positions.append(data[v * 3: v * 3 + 3])
+            elif d_type == 2:
+                data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
+                for v in range(count):
+                    v1 = data[v * 3] / 4
+                    v2 = data[v * 3 + 1] / 4
+                    v3 = data[v * 3 + 2] / 4
+                    v_positions.append((v1, v2, v3))
+            elif d_type == 3:
+                data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
+                for v in range(count):
+                    v1 = data[v * 3] / 8
+                    v2 = data[v * 3 + 1] / 8
+                    v3 = data[v * 3 + 2] / 8
+                    v_positions.append((v1, v2, v3))
             elif d_type == 4:
                 data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
                 for v in range(count):
