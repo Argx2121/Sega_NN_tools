@@ -543,9 +543,9 @@ class Read:
             elif d_type == 7:
                 data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
                 for v in range(count):
-                    v1 = data[v * 3] / 1024
-                    v2 = data[v * 3 + 1] / 1024
-                    v3 = data[v * 3 + 2] / 1024
+                    v1 = data[v * 3] / 512
+                    v2 = data[v * 3 + 1] / 512
+                    v3 = data[v * 3 + 2] / 512
                     v_positions.append((v1, v2, v3))
             elif d_type == 8:
                 data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
@@ -559,14 +559,19 @@ class Read:
             if d_type == 1:
                 data = read_float_tuple(f, 3 * count, ">")
                 for v in range(count):
-                    v_positions.append(data[v * 3: v * 3 + 3])
+                    v_normals.append(data[v * 3: v * 3 + 3])
+            elif d_type == 2:
+                data_byte = unpack(">" + str(count * 3) + "h", f.read(count * 6))
+                for v in range(count):
+                    v_normals.append(
+                        (data_byte[v * 3] / 16384, data_byte[v * 3 + 1] / 16384, data_byte[v * 3 + 2] / 16384))
             elif d_type == 3:
                 data_byte = unpack(">" + str(count * 3) + "b", f.read(count * 3))
                 for v in range(count):
                     v_normals.append(
                         (data_byte[v * 3] / 64, data_byte[v * 3 + 1] / 64, data_byte[v * 3 + 2] / 64))
 
-        def get_colours(d_type, count):  # colours seem broken
+        def get_colours(d_type, count):
             if d_type == 1:
                 data_byte = unpack(">" + str(count * 4) + "B", f.read(count * 4))
                 div_by = 255
