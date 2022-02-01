@@ -16,9 +16,6 @@ class ReadPaths:
         start = f.tell()
         f.seek(8, 1)
         count = read_short_tuple(f, 2, ">")[1]
-        if count <= 1:
-            print("Unknown structure, cancelled")
-            return "Cancelled"
 
         offsets = read_int_tuple(f, count, ">")
         fix = 0
