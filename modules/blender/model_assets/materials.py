@@ -102,6 +102,8 @@ def _normal(tree, image, settings, skip_textures):
     tree.links.new(node.inputs[1], image.outputs[0])
     if "world" in settings:
         node.space = 'WORLD'
+    elif "object" in settings:
+        node.space = 'OBJECT'
     return node.outputs[0]
 
 

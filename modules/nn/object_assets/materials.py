@@ -439,6 +439,7 @@ class Read:
             t_settings = []
             if TextureFlags.byte1bit1:
                 t_type = "normal"
+                t_settings.append("object")
             elif TextureFlags.byte1bit2:
                 t_type = "diffuse"
 
