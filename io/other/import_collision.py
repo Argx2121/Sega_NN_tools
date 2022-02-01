@@ -57,18 +57,25 @@ class ImportSegaNNCollision(bpy.types.Operator, ImportHelper):
 def collision_import(filepath, game, settings):
     game_dict = {"SonicRiders_X": Srpc, "SonicRidersZeroGravity_G": Srzg, "SonicFreeRiders_E": Sfr}
 
-    def execute(file_path):
+    def execute_set(file_path):
+        f = open(file_path, 'rb')
+        print_line()
+        game_dict[game](f).execute()
+        f.close()
+
+    def execute_match(file_path):
         f = open(file_path, 'rb')
         print_line()
         game_type = file_path.split(".")[-2]
+        if game_type not in game_dict:
+            return {'FINISHED'}
         game_dict[game_type](f).execute()
         f.close()
 
-    if game != "Match__" and settings == "Single" and game + ".collision" not in filepath:
-        return {'FINISHED'}
-
-    name_req = ".collision"
     if game != "Match__":
         name_req = game + ".collision"
-    batch_handler(filepath, settings, execute, name_require=name_req)
+        batch_handler(filepath, settings, execute_set, name_require=name_req)
+    else:
+        name_req = ".collision"
+        batch_handler(filepath, settings, execute_match, name_require=name_req)
     return {'FINISHED'}
