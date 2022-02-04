@@ -3,18 +3,21 @@ from ...util import *
 
 # read + make textures
 class ExtractImage:
-    def __init__(self, f: BinaryIO, filepath: str):
+    def __init__(self, f: BinaryIO, filepath: str, endian: str):
         self.f = f
         self.filepath = filepath
         self.texture_path = bpy.path.abspath(filepath).rstrip(bpy.path.basename(filepath))
         self.texture_files = []
+        self.endian = endian
 
     def texture_block_info(self):
         f = self.f
+        endian = self.endian
+
         tex_start = f.tell()
-        img_count = read_short(f)
+        img_count = read_short(f, endian)
         _, image_pad = read_byte_tuple(f, 2)
-        texture_offsets = read_int_tuple(f, img_count)
+        texture_offsets = read_int_tuple(f, img_count, endian)
         tex_names_len = (texture_offsets[0] - (4 * img_count + 4 + img_count * image_pad))
         f.seek(tex_start + 4 + img_count * 4 + img_count * image_pad - 1)
         type_byte = read_byte(f)
@@ -22,15 +25,37 @@ class ExtractImage:
         f.seek(tex_start + 4 + img_count * 4 + img_count * image_pad)
         texture_names = read_str_nulls(f, tex_names_len)[:img_count]
         texture_names = [bpy.path.native_pathsep(t) for t in texture_names]
-        return tex_start, img_count, type_byte, texture_offsets, texture_names, texture_bytes
+        return tex_start, img_count, type_byte, texture_offsets, texture_names, texture_bytes, image_pad
 
     def execute(self):
-        texture_start, image_count, type_byte, texture_offsets, texture_names, texture_bytes = \
+        texture_start, image_count, type_byte, texture_offsets, texture_names, texture_bytes, image_pad = \
             self.texture_block_info()
-        self.make_image(texture_start, image_count, texture_offsets, texture_names)
+        if self.endian == ">":
+            self.make_image_gamecube(texture_start, image_count, texture_offsets, texture_names)
+            type_byte = image_pad
+        else:
+            self.make_image_xbox(texture_start, image_count, texture_offsets, texture_names)
         return self.texture_files, self.texture_path, texture_names, type_byte, texture_bytes
 
-    def make_image(self, texture_start, image_count, texture_offsets, texture_names):
+    def make_image_gamecube(self, texture_start, image_count, texture_offsets, texture_names):
+        f = self.f
+        tex_path = self.texture_path
+
+        for texture_index in range(image_count):
+            texture_offset_current = texture_offsets[texture_index]
+            f.seek(texture_start + texture_offset_current + 20)
+            tex_len = read_int(f) + 24  # little endian
+
+            file_name = tex_path + texture_names[texture_index] + ".gvr"
+            self.texture_files.append(file_name)
+
+            pathlib.Path(file_name).parent.mkdir(parents=True, exist_ok=True)
+            ft = open(file_name, "wb")
+            f.seek(texture_start + texture_offset_current)
+            ft.write(f.read(tex_len))
+            ft.close()
+
+    def make_image_xbox(self, texture_start, image_count, texture_offsets, texture_names):
         f = self.f
         tex_path = self.texture_path
 
@@ -146,7 +171,6 @@ class ExtractImage:
         pix_format = {"01110000": pixel, "01110001": pixel}  # pixels still swizzled
 
         # get the info we need and write image as dds
-        # tex index included in case of name double ups
         for texture_index in range(image_count):
             texture_offset_current = texture_offsets[texture_index]
             f.seek(texture_start + texture_offset_current + 20)

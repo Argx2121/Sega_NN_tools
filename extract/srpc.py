@@ -140,7 +140,7 @@ class ExtractSRPC:
                         if f.tell() < os.path.getsize(self.file) and read_str(f, 4) == "GBIX":
                             f.seek(i)
                             texture_name_list, _, _, type_byte, texture_bytes = \
-                                ExtractImage(f, sf_path).execute()
+                                ExtractImage(f, sf_path, "<").execute()
                             if type_byte == 20:
                                 for file_name in obj_need_texture:
                                     pathlib.Path(file_name).parent.mkdir(parents=True, exist_ok=True)
@@ -149,7 +149,7 @@ class ExtractSRPC:
                                     fn.write(texture_bytes)
                                     fn.close()
                                     f.seek(i)
-                                    ExtractImage(f, file_name).execute()
+                                    ExtractImage(f, file_name, "<").execute()
                                 obj_need_texture = []
                             continue
                         elif start_int == 1481589336:
