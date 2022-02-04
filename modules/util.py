@@ -218,7 +218,7 @@ def write_aligned(file: BinaryIO, divide_by: int):
         Alignment to write to.
     """
     while file.tell() % divide_by:
-        write_byte(file, "<")
+        write_byte(file, "<", 0)
 
 
 # read info
