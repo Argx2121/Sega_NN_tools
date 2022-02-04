@@ -92,7 +92,7 @@ class ExtractAmb:
             run_file()
             self.f.close()
         else:
-            file_list = get_files(self.file, self.set_batch, name_require=".AMB")
+            file_list = get_files(self.file, self.set_batch, name_require=".AMB", case_sensitive=False)
             for self.file in file_list:
                 self.f = open(self.file, "rb")
                 self.file_name = bpy.path.basename(self.file)[:-4]
