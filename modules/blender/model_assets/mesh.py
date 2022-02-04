@@ -217,13 +217,13 @@ def make_mesh(self):
                     face_broke.append(index)
             face_broke = face_broke[::-1]
 
-        face_list = [f for f in face_list if f.count(f[0]) == 1 and f.count(f[1]) == 1]
-
-        if not face_list:
+        if not face_list or len(face_broke) == len(face_list):
             continue
 
         lowest = 0
         highest = max([item for sub in face_list for item in sub]) + 1
+
+        face_list, highest = face_clean_gno(face_list, highest)
 
         if is_gno:
             if self.model.norm[sm.face]:
