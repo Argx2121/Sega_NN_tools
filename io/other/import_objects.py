@@ -5,6 +5,8 @@ from bpy_extras.io_utils import ImportHelper
 
 from Sega_NN_tools.io.import_util import batch_handler
 from Sega_NN_tools.modules.util import print_line
+
+from Sega_NN_tools.modules.other.objects.srgc import ReadInstanceModels as Srgc
 from Sega_NN_tools.modules.other.objects.srpc import ReadInstanceModels as Srpc
 from Sega_NN_tools.modules.other.objects.srzg import ReadInstanceModels as Srzg
 from Sega_NN_tools.modules.other.objects.sfr import ReadInstanceModels as Sfr
@@ -26,7 +28,8 @@ class ImportSegaNNObjects(bpy.types.Operator, ImportHelper):
         description="Game variant",
         items=(
             ("Match__", "Match", "Tries to match the file with a known format (Experimental!!)"),
-            ("SonicRiders_X", "Sonic Riders", "Sonic Riders Objects | 21 Feb 2006"),
+            ("SonicRiders_G", "Sonic Riders GC", "Sonic Riders Gamecube Objects | 21 Feb 2006"),
+            ("SonicRiders_X", "Sonic Riders PC", "Sonic Riders Pc Objects | 21 Feb 2006"),
             ("SonicRidersZeroGravity_G", "Sonic Riders Zero Gravity",
              "Sonic Riders Zero Gravity Objects | 8 Jan 2008"),
             ("SonicFreeRiders_E", "Sonic Free Riders", "Sonic Free Riders Objects | 4 Nov 2010"),
@@ -56,7 +59,8 @@ class ImportSegaNNObjects(bpy.types.Operator, ImportHelper):
 
 
 def objects_import(filepath, game, settings):
-    game_dict = {"SonicRiders_X": Srpc, "SonicRidersZeroGravity_G": Srzg, "SonicFreeRiders_E": Sfr}
+    game_dict = {
+        "SonicRiders_G": Srgc, "SonicRiders_X": Srpc, "SonicRidersZeroGravity_G": Srzg, "SonicFreeRiders_E": Sfr}
 
     def execute_set(file_path):
         f = open(file_path, 'rb')
