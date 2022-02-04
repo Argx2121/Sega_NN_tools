@@ -4,6 +4,8 @@ from bpy_extras.io_utils import ImportHelper
 
 from Sega_NN_tools.io.import_util import batch_handler
 from Sega_NN_tools.modules.util import print_line
+
+from Sega_NN_tools.modules.other.splines.srgc import ReadPaths as Srgc
 from Sega_NN_tools.modules.other.splines.srpc import ReadPaths as Srpc
 from Sega_NN_tools.modules.other.splines.srzg import ReadPaths as Srzg
 from Sega_NN_tools.modules.other.splines.sfr import ReadPaths as Sfr
@@ -25,7 +27,8 @@ class ImportSegaNNSplines(bpy.types.Operator, ImportHelper):
         description="Game variant",
         items=(
             ("Match__", "Match", "Tries to match the file with a known format (Experimental!!)"),
-            ("SonicRiders_X", "Sonic Riders", "Sonic Riders Splines | 21 Feb 2006"),
+            ("SonicRiders_G", "Sonic Riders GC", "Sonic Riders Gamecube Splines | 21 Feb 2006"),
+            ("SonicRiders_X", "Sonic Riders PC", "Sonic Riders Pc Splines | 21 Feb 2006"),
             ("SonicRidersZeroGravity_G", "Sonic Riders Zero Gravity",
              "Sonic Riders Zero Gravity Splines | 8 Jan 2008"),
             ("SonicFreeRiders_E", "Sonic Free Riders", "Sonic Free Riders Splines | 4 Nov 2010"),
@@ -55,7 +58,8 @@ class ImportSegaNNSplines(bpy.types.Operator, ImportHelper):
 
 
 def splines_import(filepath, game, settings):
-    game_dict = {"SonicRiders_X": Srpc, "SonicRidersZeroGravity_G": Srzg, "SonicFreeRiders_E": Sfr}
+    game_dict = {
+        "SonicRiders_G": Srgc, "SonicRiders_X": Srpc, "SonicRidersZeroGravity_G": Srzg, "SonicFreeRiders_E": Sfr}
 
     def execute_set(file_path):
         f = open(file_path, 'rb')
