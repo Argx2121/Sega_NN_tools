@@ -131,14 +131,14 @@ def show_finished(tool_name):
     """Shows a pop-up to tell the user a process is finished"""
     def draw(self, context):
         self.layout.label(text="Finished!")
-    bpy.context.window_manager.popup_menu(draw, tool_name, "INFO")
+    bpy.context.window_manager.popup_menu(draw_func=draw, title=tool_name, icon="INFO")
 
 
 def show_not_read(tool_name):
     """Shows a pop-up to tell the user the file couldn't be read"""
     def draw(self, context):
         self.layout.label(text="File could not be read!")
-    bpy.context.window_manager.popup_menu(draw, tool_name, "ERROR")
+    bpy.context.window_manager.popup_menu(draw_func=draw, title=tool_name, icon="ERROR")
 
 
 def toggle_console():
