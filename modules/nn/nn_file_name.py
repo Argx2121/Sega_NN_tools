@@ -28,6 +28,6 @@ class Read:
         block_len = read_int(f)
         end_of_block = block_len + f.tell()
         f.seek(8, 1)
-        file_name = read_str_nulls(f, block_len)[0]
+        file_name = read_str_nulls(f, block_len - 8)[0]
         f.seek(end_of_block)
         return file_name
