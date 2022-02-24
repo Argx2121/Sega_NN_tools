@@ -42,14 +42,6 @@ def hide_null_bones():  # a subset of (if not all) unweighted bones
         bpy.ops.pose.hide(unselected=False)
 
 
-def scale_bones(self):
-    bone_data = self.model.bones
-    obj = bpy.context.object
-    for i in range(self.model.info.bone_count):
-        obj.data.bones[i].inherit_scale = 'NONE'
-        obj.pose.bones[i].scale = bone_data[i].scale
-
-
 def make_bone_groups(self):
     bone_data = self.model.bones
     group_names = self.group_names

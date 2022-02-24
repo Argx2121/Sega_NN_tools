@@ -32,8 +32,6 @@ class Model:
 
         bpy.ops.object.mode_set(mode="POSE")  # pose bone stuff here
         console_out("Making Bone Groups...", armature.make_bone_groups, self)
-        if not self.settings.ignore_bone_scale:
-            console_out("Scaling Bones...", armature.scale_bones, self)
         if self.settings.hide_null_bones:
             console_out("Hiding Null Bones...", armature.hide_null_bones)
 

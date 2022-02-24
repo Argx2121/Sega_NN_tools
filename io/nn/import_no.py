@@ -102,10 +102,6 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         name="Hide Null bones",
         description="Hides Null Group bones from view",
         default=True)
-    pose: BoolProperty(
-        name="Ignore bone scale",
-        description="Don't import bone scale - importing may make models appear distorted",
-        default=True)
 
     # dev specific
     clean: BoolProperty(
@@ -135,7 +131,6 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         box.row().prop(self, "simple_mat")
         box.row().prop(self, "bone")
         box.row().prop(self, "length")
-        box.row().prop(self, "pose")
         if preferences.dev_mode:
             box = layout.box()
             box.label(text="Dev settings:", icon="KEYFRAME_HLT")
@@ -150,7 +145,7 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         settings = Settings(
             "", 0, self.debug, self.recursive_textures,
             self.batch, self.clean, self.simple_mat,
-            self.length, preferences.max_len, self.pose, self.bone,
+            self.length, preferences.max_len, self.bone,
         )
         nn_format = self.nn_format  # "Match__", "E" etc
         nn_format = getattr(self, nn_format, nn_format)
@@ -186,7 +181,6 @@ class Settings:
     simple_materials: bool
     all_bones_one_length: bool
     max_bone_length: float
-    ignore_bone_scale: bool
     hide_null_bones: bool
 
 
