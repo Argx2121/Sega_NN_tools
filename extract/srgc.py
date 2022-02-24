@@ -1,7 +1,7 @@
-from Sega_NN_tools.modules.game_specific.srpc.extract_image import ExtractImage
-from Sega_NN_tools.modules.nn.nn import ReadNn
-from Sega_NN_tools.modules.util import *
-from Sega_NN_tools.modules.game_specific.srpc.read_archive import read_archive
+from ..modules.game_specific.srpc.extract_image import ExtractImage
+from ..modules.nn.nn import ReadNn
+from ..modules.util import *
+from ..modules.game_specific.srpc.read_archive import read_archive
 
 
 # ImportHelper is a helper class, defines filename and

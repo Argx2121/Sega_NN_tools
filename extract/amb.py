@@ -1,4 +1,4 @@
-from Sega_NN_tools.modules.util import *
+from ..modules.util import *
 
 
 class ExtractAmb:

@@ -3,11 +3,12 @@ from dataclasses import dataclass
 from bpy.props import StringProperty, EnumProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 
-from Sega_NN_tools.io.import_util import batch_handler
-from Sega_NN_tools.io.nn_import_data import *
-from Sega_NN_tools.modules.blender.model import Model
-from Sega_NN_tools.modules.nn.nn import ReadNn
-from Sega_NN_tools.modules.util import *
+from ...io.import_util import batch_handler
+from ...io.nn_import_data import *
+from ...io import nn_import_data as nn_data
+from ...modules.blender.model import Model
+from ...modules.nn.nn import ReadNn
+from ...modules.util import *
 
 
 class ImportSegaNO(bpy.types.Operator, ImportHelper):
@@ -212,7 +213,6 @@ def model_import(filepath, settings):
         expected_block = "N" + block[1] + "IF"
         print_line()
         if block == expected_block:
-            import Sega_NN_tools.io.nn_import_data as nn_data
             settings.format = getattr(nn_data, block[1].lower() + "n_list")[0][0]
             nn = ReadNn(f, file_path, settings.format, settings.debug).read_file()[1]
             if nn.model:

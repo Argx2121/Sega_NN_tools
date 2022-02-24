@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 
-from Sega_NN_tools.modules.nn import nn_unknown, nn_information_file, nn_texture_library, nn_effects, nn_node_names, \
+from ..nn import nn_unknown, nn_information_file, nn_texture_library, nn_effects, nn_node_names, \
     nn_object, nn_offset_file, nn_file_name, nn_end, nn_camera
-from Sega_NN_tools.modules.nn.nn_object import ModelData
-from Sega_NN_tools.modules.util import *
-
-import Sega_NN_tools.io.nn_import_data as nn_data
+from ..nn.nn_object import ModelData
+from ...io import nn_import_data as nn_data
+from ..util import *
 
 
 class ReadNn:

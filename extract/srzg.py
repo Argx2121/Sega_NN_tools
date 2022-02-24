@@ -1,6 +1,6 @@
-from Sega_NN_tools.modules.game_specific.srzg.extract_image import ExtractImage
-from Sega_NN_tools.modules.nn.nn import ReadNn
-from Sega_NN_tools.modules.util import *
+from ..modules.game_specific.srzg.extract_image import ExtractImage
+from ..modules.nn.nn import ReadNn
+from ..modules.util import *
 
 
 class ExtractSRZG:

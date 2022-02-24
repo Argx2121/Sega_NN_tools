@@ -1,5 +1,5 @@
-from Sega_NN_tools.modules.nn.nn import ReadNn
-from Sega_NN_tools.modules.util import *
+from ..modules.nn.nn import ReadNn
+from ..modules.util import *
 
 
 class ExtractBnk:

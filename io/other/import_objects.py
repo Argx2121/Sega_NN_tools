@@ -3,13 +3,13 @@ import bpy
 from bpy.props import StringProperty, EnumProperty
 from bpy_extras.io_utils import ImportHelper
 
-from Sega_NN_tools.io.import_util import batch_handler
-from Sega_NN_tools.modules.util import print_line
+from ...io.import_util import batch_handler
+from ...modules.util import print_line
 
-from Sega_NN_tools.modules.other.objects.srgc import ReadInstanceModels as Srgc
-from Sega_NN_tools.modules.other.objects.srpc import ReadInstanceModels as Srpc
-from Sega_NN_tools.modules.other.objects.srzg import ReadInstanceModels as Srzg
-from Sega_NN_tools.modules.other.objects.sfr import ReadInstanceModels as Sfr
+from ...modules.other.objects.srgc import ReadInstanceModels as Srgc
+from ...modules.other.objects.srpc import ReadInstanceModels as Srpc
+from ...modules.other.objects.srzg import ReadInstanceModels as Srzg
+from ...modules.other.objects.sfr import ReadInstanceModels as Sfr
 
 
 class ImportSegaNNObjects(bpy.types.Operator, ImportHelper):

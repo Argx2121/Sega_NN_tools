@@ -33,9 +33,8 @@ import bpy
 
 from .io.nn import import_no
 from .io.other import import_collision, import_splines, import_pathfinding, import_objects
+from .extract import srgc, srpc, amb, sfr, pkg, srzg, bnk
 from .ui import panels, preferences
-from Sega_NN_tools.extract import srgc, srpc, amb, sfr, pkg, srzg
-from .extract import bnk
 
 # classes
 classes = (

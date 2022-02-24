@@ -2,13 +2,13 @@ import bpy
 from bpy.props import StringProperty, EnumProperty
 from bpy_extras.io_utils import ImportHelper
 
-from Sega_NN_tools.io.import_util import batch_handler
-from Sega_NN_tools.modules.util import print_line
+from ...io.import_util import batch_handler
+from ...modules.util import print_line
 
-from Sega_NN_tools.modules.other.pathfinding.srgc import ReadGc as Srgc
-from Sega_NN_tools.modules.other.pathfinding.srpc import ReadXbox as Srpc
-from Sega_NN_tools.modules.other.pathfinding.srzg import ReadWii as Srzg
-from Sega_NN_tools.modules.other.pathfinding.sfr import ReadX360 as Sfr
+from ...modules.other.pathfinding.srgc import ReadGc as Srgc
+from ...modules.other.pathfinding.srpc import ReadXbox as Srpc
+from ...modules.other.pathfinding.srzg import ReadWii as Srzg
+from ...modules.other.pathfinding.sfr import ReadX360 as Sfr
 
 
 class ImportSegaNNPathfinding(bpy.types.Operator, ImportHelper):

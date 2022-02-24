@@ -1,6 +1,6 @@
 import bpy
 
-from Sega_NN_tools.modules.blender.model_assets import model_util
+from ..model_assets import model_util
 
 
 def make_mesh(self):

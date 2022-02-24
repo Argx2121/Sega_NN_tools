@@ -1,7 +1,7 @@
 import dataclasses
 import math
 
-from Sega_NN_tools.modules.util import *
+from ...util import *
 
 
 @dataclasses.dataclass

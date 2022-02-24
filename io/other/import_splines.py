@@ -2,13 +2,13 @@ import bpy
 from bpy.props import StringProperty, EnumProperty
 from bpy_extras.io_utils import ImportHelper
 
-from Sega_NN_tools.io.import_util import batch_handler
-from Sega_NN_tools.modules.util import print_line
+from ...io.import_util import batch_handler
+from ...modules.util import print_line
 
-from Sega_NN_tools.modules.other.splines.srgc import ReadPaths as Srgc
-from Sega_NN_tools.modules.other.splines.srpc import ReadPaths as Srpc
-from Sega_NN_tools.modules.other.splines.srzg import ReadPaths as Srzg
-from Sega_NN_tools.modules.other.splines.sfr import ReadPaths as Sfr
+from ...modules.other.splines.srgc import ReadPaths as Srgc
+from ...modules.other.splines.srpc import ReadPaths as Srpc
+from ...modules.other.splines.srzg import ReadPaths as Srzg
+from ...modules.other.splines.sfr import ReadPaths as Sfr
 
 
 class ImportSegaNNSplines(bpy.types.Operator, ImportHelper):

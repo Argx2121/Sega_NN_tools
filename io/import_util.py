@@ -1,4 +1,4 @@
-from Sega_NN_tools.modules.util import *
+from ..modules.util import *
 
 
 def batch_handler(filepath: str, batch_import: str, func: Any, name_ignore: str = False, name_require: str = False,
