@@ -1,7 +1,24 @@
 import bpy
 
 
-def make_bones(self):
+
+def make_bones_accurate(self):
+    bone_data = self.model.bones
+    bone_names = self.bone_names
+    armature = bpy.context.object.data
+    tail_var = self.settings.format_bone_scale
+
+    for b, name in zip(bone_data, bone_names):
+        bone = armature.edit_bones.new(name)
+
+        if b.parent != 65535:
+            bone.parent = armature.edit_bones[b.parent]
+        bone.tail = bone.head + mathutils.Vector((0, 1, 0))
+        bone.matrix = b.matrix
+        bone.length = tail_var
+
+
+def make_bones_pretty(self):
     bone_data = self.model.bones
     bone_names = self.bone_names
     max_len = self.settings.max_bone_length

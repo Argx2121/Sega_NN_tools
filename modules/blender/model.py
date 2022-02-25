@@ -28,7 +28,10 @@ class Model:
 
         console_out("Making Armature...", armature.make_armature, self)
         console_out("Generating Names...", model_util.make_names, self)
-        console_out("Making Bones...", armature.make_bones, self)
+        if self.settings.keep_bones_accurate:
+            console_out("Making Accurate Bones...", armature.make_bones_accurate, self)
+        else:
+            console_out("Making Pretty Bones...", armature.make_bones_pretty, self)
 
         bpy.ops.object.mode_set(mode="POSE")  # pose bone stuff here
         console_out("Making Bone Groups...", armature.make_bone_groups, self)

@@ -103,6 +103,10 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         name="Hide Null bones",
         description="Hides Null Group bones from view",
         default=True)
+    accurate: BoolProperty(
+        name="Accurate bones",
+        description="Do not modify bones - only use stored values",
+        default=True)
 
     # dev specific
     clean: BoolProperty(
@@ -132,6 +136,7 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         box.row().prop(self, "simple_mat")
         box.row().prop(self, "bone")
         box.row().prop(self, "length")
+        box.row().prop(self, "accurate")
         if preferences.dev_mode:
             box = layout.box()
             box.label(text="Dev settings:", icon="KEYFRAME_HLT")
@@ -146,7 +151,7 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         settings = Settings(
             "", 0, self.debug, self.recursive_textures,
             self.batch, self.clean, self.simple_mat,
-            self.length, preferences.max_len, self.bone,
+            self.length, self.accurate, preferences.max_len, self.bone,
         )
         nn_format = self.nn_format  # "Match__", "E" etc
         nn_format = getattr(self, nn_format, nn_format)
@@ -181,6 +186,7 @@ class Settings:
     clean_mesh: bool
     simple_materials: bool
     all_bones_one_length: bool
+    keep_bones_accurate: bool
     max_bone_length: float
     hide_null_bones: bool
 
