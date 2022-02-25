@@ -332,6 +332,26 @@ def read_int(file: BinaryIO, endian="<") -> int:
     return unpack(endian + "I", file.read(4))[0]
 
 
+def read_int_bam(file: BinaryIO, endian="<") -> float:
+    """Reads and returns a 32bit BAM using NNs BAM setup.
+
+    Parameters
+    ----------
+    file : BinaryIO
+        The file read.
+
+    endian :
+        Endian of what's being read.
+
+    Returns
+    -------
+    float
+        The BAM read.
+    """
+
+    return unpack(endian + "i", file.read(4))[0] * (180 / 32767)
+
+
 def read_short(file: BinaryIO, endian="<") -> int:
     """Reads and returns a short.
 
@@ -350,6 +370,26 @@ def read_short(file: BinaryIO, endian="<") -> int:
         """
 
     return unpack(endian + "H", file.read(2))[0]
+
+
+def read_short_bam(file: BinaryIO, endian="<") -> float:
+    """Reads and returns a 16bit BAM using NNs BAM setup.
+
+    Parameters
+    ----------
+    file : BinaryIO
+        The file read.
+
+    endian :
+        Endian of what's being read.
+
+    Returns
+    -------
+    float
+        The BAM read.
+    """
+
+    return unpack(endian + "h", file.read(2))[0] * (180 / 32767)
 
 
 def read_byte(file: BinaryIO, endian="<") -> int:
@@ -461,6 +501,29 @@ def read_int_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
     return unpack(endian + str(count) + "I", file.read(count * 4))
 
 
+def read_int_bam_tuple(file: BinaryIO, count: int, endian="<") -> tuple:
+    """Reads and returns a tuple of 32bit BAMs using NNs BAM setup.
+
+    Parameters
+    ----------
+    file : BinaryIO
+        The file read.
+
+    count : int
+        How many BAMs to read.
+
+    endian :
+        Endian of what's being read.
+
+    Returns
+    -------
+    tuple
+        The BAMs read.
+    """
+    var = unpack(endian + str(count) + "i", file.read(count * 4))
+    return tuple([a * (180 / 32767) for a in var])
+
+
 def read_short_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
     """Reads and returns tuple of shorts.
 
@@ -482,6 +545,29 @@ def read_short_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
 
     """
     return unpack(endian + str(count) + "H", file.read(count * 2))
+
+
+def read_short_bam_tuple(file: BinaryIO, count: int, endian="<") -> tuple:
+    """Reads and returns a tuple of 16bit BAMs using NNs BAM setup.
+
+    Parameters
+    ----------
+    file : BinaryIO
+        The file read.
+
+    count : int
+        How many BAMs to read.
+
+    endian :
+        Endian of what's being read.
+
+    Returns
+    -------
+    tuple
+        The BAMs read.
+    """
+    var = unpack(endian + str(count) + "h", file.read(count * 2))
+    return tuple([a * (180 / 32767) for a in var])
 
 
 def read_byte_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
