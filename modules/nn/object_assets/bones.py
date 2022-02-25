@@ -16,80 +16,97 @@ class Read:
 
     @dataclass
     class Bone:
-        __slots__ = ["group", "parent", "relative", "scale", "position"]
+        __slots__ = [
+            "flags", "group", "parent", "child", "sibling",
+            "position", "rotation", "scale", "matrix", "center", "radius", "unknown", "length"
+        ]
+        flags: int
         group: int
         parent: int
-        relative: tuple
+        child: int
+        sibling: int
+        position: tuple
+        rotation: tuple
         scale: tuple
-        position: Matrix
+        matrix: Matrix
+        center: tuple
+        radius: float
+        unknown: int
+        length: tuple
 
     def le_full(self):
         f = self.f
         bone_data = []
-        f.seek(4, 1)
         if self.format_type == "SonicTheHedgehog4EpisodeII_L":
             for _ in range(self.bone_count):
-                group, parent, _, _ = read_short_tuple(f, 4)
+                flags = read_int(f)
+                group, parent, child, sibling = read_short_tuple(f, 4)
                 f.seek(4, 1)
-                rel = read_float_tuple(f, 3)
-                f.seek(20, 1)
+                pos = read_float_tuple(f, 3)
+                f.seek(4, 1)
+                rot = read_int_bam_tuple(f, 3)
+                f.seek(4, 1)
                 scale = read_float_tuple(f, 3)
                 f.seek(4, 1)
-                pos = (read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
+                mat = (read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
                        read_float_tuple(f, 4))
-                f.seek(52, 1)
-                bone_data.append(self.Bone(group, parent, rel, scale, Matrix(pos).transposed().inverted_safe()))
-        else:
-            for _ in range(self.bone_count):
-                group, parent, _, _ = read_short_tuple(f, 4)
-                rel = read_float_tuple(f, 3)
+                cen = read_float_tuple(f, 3)
+                f.seek(4, 1)
+                rad = read_float(f)
+                unk = read_int(f)
                 f.seek(12, 1)
-                scale = read_float_tuple(f, 3)
-                pos = (read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
-                       read_float_tuple(f, 4))
-                f.seek(36, 1)
-                bone_data.append(self.Bone(group, parent, rel, scale, Matrix(pos).transposed().inverted_safe()))
+                dim = read_float_tuple(f, 3)
+                bone_data.append(self.Bone(
+                    flags, group, parent, child, sibling, pos, rot, scale, Matrix(mat).transposed().inverted_safe(),
+                    cen, rad, unk, dim,
+                ))
+        else:
+            bone_data = [
+                self.Bone(
+                    read_int(f), read_short(f), read_short(f), read_short(f), read_short(f),
+                    read_float_tuple(f, 3), read_int_bam_tuple(f, 3), read_float_tuple(f, 3),
+                    Matrix((read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
+                            read_float_tuple(f, 4))).transposed().inverted_safe(),
+                    read_float_tuple(f, 3), read_float(f), read_int(f), read_float_tuple(f, 3),
+                )
+                for _ in range(self.bone_count)]
         return bone_data
 
     def be_full(self):
         f = self.f
-        bone_data = []
-        f.seek(4, 1)
-        for _ in range(self.bone_count):
-            group, parent, _, _ = read_short_tuple(f, 4, ">")
-            rel = read_float_tuple(f, 3, ">")
-            f.seek(12, 1)
-            scale = read_float_tuple(f, 3, ">")
-            pos = (read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"),
-                   read_float_tuple(f, 4, ">"))
-            f.seek(36, 1)
-            bone_data.append(self.Bone(group, parent, rel, scale, Matrix(pos).transposed().inverted_safe()))
+        bone_data = [
+            self.Bone(
+                read_int(f, ">"), read_short(f, ">"), read_short(f, ">"), read_short(f, ">"), read_short(f, ">"),
+                read_float_tuple(f, 3, ">"), read_int_bam_tuple(f, 3, ">"), read_float_tuple(f, 3, ">"),
+                Matrix((read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"),
+                        read_float_tuple(f, 4, ">"))).transposed().inverted_safe(),
+                read_float_tuple(f, 3, ">"), read_float(f, ">"), read_int(f, ">"), read_float_tuple(f, 3, ">"),
+            )
+            for _ in range(self.bone_count)]
         return bone_data
 
     def le_semi(self):
         f = self.f
-        bone_data = []
-        f.seek(4, 1)
-        for _ in range(self.bone_count):
-            group, parent, _, _ = read_short_tuple(f, 4, ">")
-            rel = read_float_tuple(f, 3)
-            f.seek(12, 1)
-            scale = read_float_tuple(f, 3)
-            pos = read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4), (0, 0, 0, 1)
-            f.seek(36, 1)
-            bone_data.append(self.Bone(group, parent, rel, scale, Matrix(pos).inverted_safe()))
+        bone_data = [
+            self.Bone(
+                read_int(f), read_short(f), read_short(f), read_short(f), read_short(f),
+                read_float_tuple(f, 3), read_int_bam_tuple(f, 3), read_float_tuple(f, 3),
+                Matrix((read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
+                        (0, 0, 0, 1))).inverted_safe(),
+                read_float_tuple(f, 3), read_float(f), read_int(f), read_float_tuple(f, 3),
+            )
+            for _ in range(self.bone_count)]
         return bone_data
 
     def be_semi(self):
         f = self.f
-        bone_data = []
-        f.seek(4, 1)
-        for _ in range(self.bone_count):
-            group, parent, _, _ = read_short_tuple(f, 4, ">")
-            rel = read_float_tuple(f, 3, ">")
-            f.seek(12, 1)
-            scale = read_float_tuple(f, 3, ">")
-            pos = read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), (0, 0, 0, 1)
-            f.seek(36, 1)
-            bone_data.append(self.Bone(group, parent, rel, scale, Matrix(pos).inverted_safe()))
+        bone_data = [
+            self.Bone(
+                read_int(f, ">"), read_short(f, ">"), read_short(f, ">"), read_short(f, ">"), read_short(f, ">"),
+                read_float_tuple(f, 3, ">"), read_int_bam_tuple(f, 3, ">"), read_float_tuple(f, 3, ">"),
+                Matrix((read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"),
+                        (0, 0, 0, 1))).inverted_safe(),
+                read_float_tuple(f, 3, ">"), read_float(f, ">"), read_int(f, ">"), read_float_tuple(f, 3, ">"),
+            )
+            for _ in range(self.bone_count)]
         return bone_data
