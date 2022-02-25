@@ -806,12 +806,14 @@ class Read:
         return self._return_data_2()
 
     def lno(self):
-        if self.format_type == "SonicTheHedgehog4EpisodeII_L":
-            self._le_offsets_4()
-            self._ino_lno_info_2()
-        else:
-            self._le_offsets()
-            self._lno_zno_info()
+        self._le_offsets()
+        self._lno_zno_info()
+        self._lno_texture()
+        return self._return_data_2()
+
+    def lno_s4e2(self):
+        self._le_offsets_4()
+        self._ino_lno_info_2()
         self._lno_texture()
         return self._return_data_2()
 

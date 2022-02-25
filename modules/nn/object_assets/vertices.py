@@ -1815,12 +1815,13 @@ class Read:
             return self._ino_vertices()
 
     def lno(self):
-        if self.format_type == "SonicTheHedgehog4EpisodeII_L":
-            self._le_offsets_4()
-            self._lno_info_2()
-        else:
-            self._le_offsets()
-            self._lno_info()
+        self._le_offsets()
+        self._lno_info()
+        return self._lno_vertices()
+
+    def lno_s4e2(self):
+        self._le_offsets_4()
+        self._lno_info_2()
         return self._lno_vertices()
 
     def sno(self):

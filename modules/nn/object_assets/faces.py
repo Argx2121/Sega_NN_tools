@@ -390,14 +390,15 @@ class Read:
         return self.face_list
 
     def lno(self):
-        if self.format_type == "SonicTheHedgehog4EpisodeII_L":
-            info_offset = self._le_offsets_4()
-            self._lno_info_2(info_offset)
-            self._lno_indices()
-        else:
-            info_offset = self._le_offsets()
-            self._lno_info(info_offset)
-            self._lno_indices()
+        info_offset = self._le_offsets()
+        self._lno_info(info_offset)
+        self._lno_indices()
+        return self.face_list
+
+    def lno_s4e2(self):
+        info_offset = self._le_offsets_4()
+        self._lno_info_2(info_offset)
+        self._lno_indices()
         return self.face_list
 
     def ino(self):
