@@ -104,12 +104,23 @@ class Read:
             face_off = read_int_tuple(f, face_off_count, ">")
             self.face_info.append(self.FaceInfo(face_len, 0, 0, face_off))
 
-    def _gno_info(self, info_offset):
+    def _gno_info(self, info_offset, info_flag):
         f = self.f
-        for offset in info_offset:
+        for t, offset in zip(info_flag, info_offset):
             f.seek(offset + self.start + 4)
-            face_off, face_len, face_off_2 = read_int_tuple(f, 3, ">")
-            self.face_info.append(self.FaceInfo(face_len, 0, face_off_2, face_off))
+            if t == 4:
+                face_off, face_len, face_off_2 = read_int_tuple(f, 3, ">")
+                self.face_info.append(self.FaceInfo(face_len, 0, face_off_2, face_off))
+            elif t == 0:
+                face_off, face_len, face_off_2 = read_int_tuple(f, 3, ">")
+                self.face_info.append(self.FaceInfo(face_len, 0, face_off_2, face_off))
+            elif t == 65536:
+                # not enough samples to verify what this 0x00 00 00 03 means
+                # probably face index types (3 = three face sets, pos norm uv)
+                # we will include it anyway
+                # this seems like it's used in an older non-final version of the exporter
+                self.face_info.append(self.FaceInfo(
+                    read_int(f, ">"), read_int(f, ">"), read_int(f, ">"), read_int(f, ">")))
 
     def _xno_zno_strip(self):
         f = self.f
@@ -211,7 +222,8 @@ class Read:
             self.face_list.append(face_list_mesh)
 
     def _gno_indices(self, info_flag):
-        def faces_flag():
+        # most use this setting
+        def faces_type_4():
             f.seek(info.face_offset + self.start + 20)
             face_flags = read_byte(f, ">")
             face_start = read_byte(f, ">")
@@ -317,7 +329,8 @@ class Read:
                             wx_list_mesh.append((f2, f1, f3))
                     off += 1
 
-        def faces():
+        # sonic unleashed uses this occasionally
+        def faces_type_0():
             f.seek(info.face_short_count + self.start)  # they have the offset and count position swapped
             counts = read_short_tuple(f, info.face_offset, ">")
             f.seek(info.face_lens_offset + self.start)
@@ -357,6 +370,55 @@ class Read:
                     else:
                         uv_list_mesh.append((f2, f1, f3))
 
+        # probably one of the oldest versions of gno face storage
+        def faces_type_65536():
+            f.seek(info.face_lens_offset + self.start)
+            face_strips = read_short_tuple(f, info.face_lens_count, ">")
+
+            f.seek(info.face_offset + self.start)
+            for strip in face_strips:
+                indices = read_short_tuple(f, info.face_short_count * strip, ">")
+                off = 0
+                multi = info.face_short_count
+                face_list = indices
+                face_count = strip
+
+                for face in range(face_count - 2):
+                    f1, f2, f3 = \
+                        face_list[(face + 0) * multi], \
+                        face_list[(face + 1) * multi], \
+                        face_list[(face + 2) * multi]
+                    if face & 1:
+                        face_list_mesh.append((f1, f2, f3))
+                    else:
+                        face_list_mesh.append((f2, f1, f3))
+                off += 1
+
+                # not enough samples to know what the requirements are for any of these
+                if multi == 3:
+                    for face in range(face_count - 2):
+                        f1, f2, f3 = \
+                            face_list[(face + 0) * multi + off], \
+                            face_list[(face + 1) * multi + off], \
+                            face_list[(face + 2) * multi + off]
+                        if face & 1:
+                            norm_list_mesh.append((f1, f2, f3))
+                        else:
+                            norm_list_mesh.append((f2, f1, f3))
+                    off += 1
+
+                if multi == 3:
+                    for face in range(face_count - 2):
+                        f1, f2, f3 = \
+                            face_list[(face + 0) * multi + off], \
+                            face_list[(face + 1) * multi + off], \
+                            face_list[(face + 2) * multi + off]
+                        if face & 1:
+                            uv_list_mesh.append((f1, f2, f3))
+                        else:
+                            uv_list_mesh.append((f2, f1, f3))
+                    off += 1
+
         f = self.f
         for info, inf_flag in zip(self.face_info, info_flag):  # for all sub meshes
             face_list_mesh = []
@@ -364,10 +426,12 @@ class Read:
             wx_list_mesh = []
             norm_list_mesh = []
             col_list_mesh = []
-            if inf_flag:
-                faces_flag()
-            else:
-                faces()
+            if inf_flag == 4:
+                faces_type_4()
+            elif inf_flag == 0:
+                faces_type_0()
+            elif inf_flag == 65536:
+                faces_type_65536()
 
             self.face_list.append(face_list_mesh)
             self.col_list.append(col_list_mesh)
@@ -420,6 +484,6 @@ class Read:
 
     def gno(self):
         info_offset, info_flag = self._be_offsets_flags()
-        self._gno_info(info_offset)
+        self._gno_info(info_offset, info_flag)
         self._gno_indices(info_flag)
         return self.face_list, self.uv_list, self.wx_list, self.norm_list, self.col_list
