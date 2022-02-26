@@ -1,3 +1,6 @@
+import bmesh
+
+
 def make_names(self):
     model_strip = self.model_name_strip
     if not self.bone_names:
@@ -14,7 +17,6 @@ def make_names(self):
 
 
 def clean_mesh(obj):  # removing illegal faces is done in mesh generation
-    import bmesh
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     bm.verts.ensure_lookup_table()
@@ -32,7 +34,6 @@ def clean_mesh(obj):  # removing illegal faces is done in mesh generation
 
 
 def clean_mesh_lazy(obj):
-    import bmesh
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     bm.faces.ensure_lookup_table()
@@ -43,7 +44,6 @@ def clean_mesh_lazy(obj):
 
 
 def clean_mesh_strict(obj):
-    import bmesh
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     bm.verts.ensure_lookup_table()
