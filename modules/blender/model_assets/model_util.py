@@ -1,16 +1,16 @@
 def make_names(self):
     model_strip = self.model_name_strip
     if not self.bone_names:
-        self.bone_names = [model_strip + "_Bone_" + str(a) for a in list(range(self.model.info.bone_count))]
+        self.bone_names = [model_strip + "_Bone_" + str(a).zfill(4) for a in list(range(self.model.info.bone_count))]
     elif len(self.bone_names) < self.model.info.bone_count:
         for name_index, b in enumerate(self.model.bones):
             if b.group == 65535:
-                self.bone_names.insert(name_index, model_strip + "_Bone_" + str(name_index))
+                self.bone_names.insert(name_index, model_strip + "_Bone_" + str(name_index).zfill(4))
             if len(self.bone_names) == self.model.info.bone_count:  # possible?
                 break
-    self.group_names = [model_strip + "_Bone_Group_" + str(a.group) for a in self.model.bones]
-    self.mat_names = [model_strip + "_Material_" + str(a) for a in list(range(self.model.info.material_count))]
-    self.mesh_names = [model_strip + "_Mesh_" + str(a) for a in list(range(len(self.model.build_mesh)))]
+    self.group_names = [model_strip + "_Bone_Group_" + str(a.group).zfill(4) for a in self.model.bones]
+    self.mat_names = [model_strip + "_Material_" + str(a).zfill(4) for a in list(range(self.model.info.material_count))]
+    self.mesh_names = [model_strip + "_Mesh_" + str(a).zfill(4) for a in list(range(len(self.model.build_mesh)))]
 
 
 def clean_mesh(obj):  # removing illegal faces is done in mesh generation
