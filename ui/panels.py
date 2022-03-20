@@ -22,7 +22,7 @@ class GENERIC_panel:
     bl_category = "Sega NN Tools"
 
 
-class NN_PT_ModelPanel(GENERIC_panel, bpy.types.Panel):
+class NN_PT_ImportPanel(GENERIC_panel, bpy.types.Panel):
     bl_label = "Import"
 
     def draw(self, context):

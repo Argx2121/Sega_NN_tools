@@ -44,7 +44,7 @@ classes = (
     srgc.SonicRGCTools, srpc.SonicRPCTools,
     amb.Sonic4Tools, sfr.ExtractSfrTools, bnk.ExtractBnkTools, pkg.ExtractPkgTools,
     srzg.ExtractSrgzTools,
-    panels.NN_PT_ModelPanel,
+    panels.NN_PT_ImportPanel,
     panels.EXTRACT_PT_Panel,
     panels.NN_PT_About,
 )
