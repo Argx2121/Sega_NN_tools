@@ -1,5 +1,5 @@
 import bpy
-
+import mathutils
 
 
 def make_bones_accurate(self):
