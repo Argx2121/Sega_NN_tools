@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Flag
+from mathutils import Vector
 
 from ...util import *
 
@@ -305,8 +306,7 @@ class Read:
                     v0 = to_signed(v >> 0 & 0b1111111111)
                     v1 = to_signed(v >> 10 & 0b1111111111)
                     v2 = to_signed(v >> 20 & 0b1111111111)
-
-                    v_normals.append([v0 / div_by, v1 / div_by, v2 / div_by])
+                    v_normals.append(Vector([v0 / div_by, v1 / div_by, v2 / div_by]).normalized())
                 return off + 4
 
             def get_normals_float(off):
@@ -594,12 +594,14 @@ class Read:
                 data_byte = unpack(">" + str(count * 3) + "h", f.read(count * 6))
                 for v in range(count):
                     v_normals.append(
-                        (data_byte[v * 3] / 16384, data_byte[v * 3 + 1] / 16384, data_byte[v * 3 + 2] / 16384))
+                        Vector((data_byte[v * 3] / 16384, data_byte[v * 3 + 1] / 16384, data_byte[v * 3 + 2] / 16384)
+                               ).normalized())
             elif d_type == 3:
                 data_byte = unpack(">" + str(count * 3) + "b", f.read(count * 3))
                 for v in range(count):
                     v_normals.append(
-                        (data_byte[v * 3] / 64, data_byte[v * 3 + 1] / 64, data_byte[v * 3 + 2] / 64))
+                        Vector((data_byte[v * 3] / 64, data_byte[v * 3 + 1] / 64, data_byte[v * 3 + 2] / 64)
+                               ).normalized())
 
         def get_colours(d_type, count):
             if d_type == 1:
@@ -1058,7 +1060,7 @@ class Read:
                 data = unpack(str(count) + "h", f.read(count * 2))
                 data = [a / 4096 for a in data]
                 for v in range(vertex_count):
-                    v_normals.append(data[v * 3: v * 3 + 3])
+                    v_normals.append(Vector(data[v * 3: v * 3 + 3]).normalized())
 
             def unk4():  # not sure how to parse these normals
                 f.seek(4 * vertex_count, 1)
