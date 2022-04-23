@@ -90,12 +90,14 @@ def _rgba(tree, rgba):
 
 
 def _reflection(tree, image):
+    image.name = "ReflectionTexture"
     node = tree.nodes.new(type="ShaderNodeTexCoord")
     tree.links.new(image.inputs[0], node.outputs[6])
     return image.outputs[0]
 
 
 def _normal(tree, image, settings, skip_textures):
+    image.name = "NormalTexture"
     if not skip_textures:
         image.image.colorspace_settings.name = 'Non-Color'
     node = tree.nodes.new(type="ShaderNodeNormalMap")
@@ -108,6 +110,7 @@ def _normal(tree, image, settings, skip_textures):
 
 
 def _bump(tree, image):
+    image.name = "BumpTexture"
     image.image.colorspace_settings.name = 'Non-Color'
     node = tree.nodes.new(type="ShaderNodeBump")
     tree.links.new(node.inputs[2], image.outputs[0])
