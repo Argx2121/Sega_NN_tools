@@ -41,7 +41,7 @@ def _mix_colour_reflection(tree, input_1, input_2):
 
 def _vertex_colours(tree, name):
     node = tree.nodes.new(type="ShaderNodeVertexColor")
-    node.layer_name = name + "_Vertex_Colours"
+    # todo add vertex alpha
     return node.outputs[0]
 
 
