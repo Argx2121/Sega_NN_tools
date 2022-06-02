@@ -127,8 +127,8 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         preferences = bpy.context.preferences.addons[__package__.partition(".")[0]].preferences
         layout.label(text="Sega NN importer settings:", icon="KEYFRAME_HLT")
         global selected_file
-        if selected_file != bpy.data.screens["temp"].areas[0].spaces[0].params.filename:
-            selected_file = bpy.data.screens["temp"].areas[0].spaces[0].params.filename
+        if selected_file != bpy.context.space_data.params.filename:
+            selected_file = bpy.context.space_data.params.filename
             if len(selected_file) > 2 and selected_file[-3:].upper() in no_list_types:
                 # the file name is a variable that the user can set
                 #  the user could rename this variable to a filetype that isn't supported
