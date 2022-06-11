@@ -33,10 +33,14 @@ class Read:
         end_of_block = start_block + read_int(f) + 8
         f.seek(self.post_info + read_int(f) + 4)
         bone_count = read_int(f)
-        f.seek(start_block + bone_count * 8 + 28)
-        bone_names = read_str_nulls(f, end_of_block - f.tell())[:bone_count]
+        name_start = read_int(f)
+        f.seek(self.post_info + name_start)
+        bone_names = [list(read_int_tuple(f, 2)) for _ in range(bone_count)]
+        for i in range(bone_count):
+            f.seek(bone_names[i][1] + self.post_info)
+            bone_names[i][1] = read_str_terminated(f)
         f.seek(end_of_block)
-        return bone_names
+        return dict(bone_names)
 
     def be(self):
         f = self.f
@@ -44,7 +48,11 @@ class Read:
         end_of_block = start_block + read_int(f) + 8
         f.seek(self.post_info + read_int(f, ">") + 4)
         bone_count = read_int(f, ">")
-        f.seek(start_block + bone_count * 8 + 28)
-        bone_names = read_str_nulls(f, end_of_block - f.tell())[:bone_count]
+        name_start = read_int(f, ">")
+        f.seek(self.post_info + name_start)
+        bone_names = [list(read_int_tuple(f, 2, ">")) for _ in range(bone_count)]
+        for i in range(bone_count):
+            f.seek(bone_names[i][1] + self.post_info)
+            bone_names[i][1] = read_str_terminated(f)
         f.seek(end_of_block)
-        return bone_names
+        return dict(bone_names)

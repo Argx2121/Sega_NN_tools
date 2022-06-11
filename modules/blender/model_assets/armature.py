@@ -8,8 +8,8 @@ def make_bones_accurate(self):
     armature = bpy.context.object.data
     tail_var = self.settings.format_bone_scale
 
-    for b, name in zip(bone_data, bone_names):
-        bone = armature.edit_bones.new(name)
+    for i, b in enumerate(bone_data):
+        bone = armature.edit_bones.new(bone_names[i])
 
         if b.parent != 65535:
             bone.parent = armature.edit_bones[b.parent]
@@ -25,8 +25,8 @@ def make_bones_pretty(self):
     armature = bpy.context.object.data
     tail_var = self.settings.format_bone_scale
 
-    for b, name in zip(bone_data, bone_names):
-        bone = armature.edit_bones.new(name)
+    for i, b in enumerate(bone_data):
+        bone = armature.edit_bones.new(bone_names[i])
 
         if b.parent != 65535:
             bone.parent = armature.edit_bones[b.parent]
