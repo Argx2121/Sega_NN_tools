@@ -2,9 +2,9 @@ from ..util import *
 
 
 class Read:
-    __slots__ = ["f", "filepath", "format_type"]
+    __slots__ = ["f", "post_info", "filepath", "format_type"]
 
-    def __init__(self, f: BinaryIO, filepath: str, format_type: str):
+    def __init__(self, f: BinaryIO, post_info: int, filepath: str, format_type: str):
         """Reads a N*TL block.
 
         Usage : Optional
@@ -15,6 +15,9 @@ class Read:
         ----------
         f : BinaryIO
             The file read.
+
+        post_info : int
+            After the info block.
 
         filepath : str
             Folder location.
@@ -29,6 +32,7 @@ class Read:
 
         """
         self.f = f
+        self.post_info = post_info
         self.filepath = filepath.rstrip(bpy.path.basename(filepath))
         self.format_type = format_type
 
@@ -37,14 +41,32 @@ class Read:
         start_block = f.tell() - 4
         end_of_block = start_block + read_int(f) + 8
         f.seek(read_int(f) + start_block)
-        texture_count = read_int_tuple(f, 2)[0]
+        texture_count = read_int(f)
         if self.format_type == "SonicTheHedgehog4EpisodeI_I":
-            f.seek(4, 1)
+            texture_start = read_int(f)
+            f.seek(self.post_info + texture_start)
+            texture_names = [read_int_tuple(f, 6)[1] for _ in range(texture_count)]
+            for i in range(texture_count):
+                f.seek(texture_names[i] + self.post_info)
+                texture_names[i] = read_str_terminated(f)
+            f.seek(end_of_block)
         elif self.format_type == "SonicTheHedgehog4EpisodeII_L":
-            f.seek(start_block + 40)
-            f.seek(read_int(f))
-        texture_names = read_str_nulls(f, end_of_block - f.tell())[:texture_count]
-        f.seek(end_of_block)
+            f.seek(4, 1)
+            texture_start = read_int(f)
+            f.seek(texture_start)
+            texture_names = [read_int_tuple(f, 8)[2] for _ in range(texture_count)]
+            for i in range(texture_count):
+                f.seek(texture_names[i])
+                texture_names[i] = read_str_terminated(f)
+            f.seek(end_of_block)
+        else:
+            texture_start = read_int(f)
+            f.seek(self.post_info + texture_start)
+            texture_names = [read_int_tuple(f, 5)[1] for _ in range(texture_count)]
+            for i in range(texture_count):
+                f.seek(texture_names[i] + self.post_info)
+                texture_names[i] = read_str_terminated(f)
+            f.seek(end_of_block)
         return [self.filepath + t for t in texture_names]
 
     def be(self):
@@ -52,7 +74,12 @@ class Read:
         start_block = f.tell() - 4
         end_of_block = start_block + read_int(f) + 8
         f.seek(read_int(f, ">") + start_block)
-        texture_count = read_int_tuple(f, 2, ">")[0]
-        texture_names = read_str_nulls(f, end_of_block - f.tell())[:texture_count]
+        texture_count = read_int(f, ">")
+        texture_start = read_int(f, ">")
+        f.seek(self.post_info + texture_start)
+        texture_names = [read_int_tuple(f, 5, ">")[1] for _ in range(texture_count)]
+        for i in range(texture_count):
+            f.seek(texture_names[i] + self.post_info)
+            texture_names[i] = read_str_terminated(f)
         f.seek(end_of_block)
         return [self.filepath + t for t in texture_names]

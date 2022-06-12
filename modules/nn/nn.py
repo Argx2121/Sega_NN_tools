@@ -185,13 +185,13 @@ class ReadNn:
             stdout.write("| \n" + message + " " * (50 - len(message)))
 
     def _tex_1(self):
-        self.nn.textures = nn_texture_library.Read(self.f, self.filepath, self.format_type).le()
+        self.nn.textures = nn_texture_library.Read(self.f, self.nn.start, self.filepath, self.format_type).le()
         if self.debug:
             message = "Texture names: " + str(self.nn.textures)
             stdout.write("| \n" + message + " " * (50 - len(message)))
 
     def _tex_2(self):
-        self.nn.textures = nn_texture_library.Read(self.f, self.filepath, self.format_type).be()
+        self.nn.textures = nn_texture_library.Read(self.f, self.nn.start, self.filepath, self.format_type).be()
         if self.debug:
             message = "Texture names: " + str(self.nn.textures)
             stdout.write("| \n" + message + " " * (50 - len(message)))
