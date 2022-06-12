@@ -95,9 +95,31 @@ class ReadNn:
             texture_names = read_str_nulls(f, os.path.getsize(self.filepath) - 4)[:texture_count]
             filepath = self.filepath.rstrip(bpy.path.basename(self.filepath))
             self.nn.textures = [filepath + t + ".png" for t in texture_names]
+            f.close()
 
             if self.debug:
                 print(self.nn.textures)
+            return
+
+        final_letter = "t"
+        if self.filepath[-3:].isupper():
+            final_letter = "T"
+
+        if os.path.exists(self.filepath[:-1] + final_letter):
+            f = open(self.filepath[:-1] + final_letter, "rb")
+            f.seek(4, 1)
+            f.seek(read_int(f), 1)
+            block_name = read_str(f, 4)
+
+            if block_name[0] == "N" and block_name[2] == "T" and block_name[3] == "L":  # N*TL
+                if block_name[1] in self.big_endian:
+                    self.nn.textures = nn_texture_library.Read(
+                        f, f.tell() - 4, self.filepath, self.format_type).be()
+                else:
+                    self.nn.textures = nn_texture_library.Read(
+                        f, f.tell() - 4, self.filepath, self.format_type).le()
+                if self.debug:
+                    print(self.nn.textures)
             f.close()
 
     def read_bone_names(self):
