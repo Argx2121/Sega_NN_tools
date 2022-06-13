@@ -323,7 +323,7 @@ def _make_bpy_recursive(texture_names: list):
     dds_join = ', '.join(path_list_dds).casefold()
     png_join = ', '.join(path_list_png).casefold()
 
-    texture_names = [bpy.path.basename(tex.split(".")[0]) for tex in texture_names]
+    texture_names = [bpy.path.basename(tex.rsplit(".")[0]) for tex in texture_names]
 
     for name in texture_names:
         if (name + ".png").casefold() not in png_join:
@@ -362,20 +362,22 @@ def _make_bpy_recursive(texture_names: list):
 def _make_bpy_non_recursive(texture_names: list):
     has_png = True  # png shouldn't be used in game but converted image files might be .png
     has_dds = True
+    texture_png = [tex.rsplit(".")[0] + ".png" for tex in texture_names]
+    texture_dds = [tex.rsplit(".")[0] + ".dds" for tex in texture_names]
 
-    for tex in texture_names:
-        if not os.path.exists(tex[:-4] + ".png"):
+    for tex in texture_png:
+        if not os.path.exists(tex):
             has_png = False
             break
-    for tex in texture_names:
-        if not os.path.exists(tex[:-4] + ".dds"):
+    for tex in texture_dds:
+        if not os.path.exists(tex):
             has_dds = False
             break
 
     if has_png:
-        return [bpy.data.images.load(tex[:-4] + ".png") for tex in texture_names]
+        return [bpy.data.images.load(tex) for tex in texture_png]
     elif has_dds:
-        return [bpy.data.images.load(tex[:-4] + ".dds") for tex in texture_names]
+        return [bpy.data.images.load(tex) for tex in texture_dds]
 
     return texture_names
 
