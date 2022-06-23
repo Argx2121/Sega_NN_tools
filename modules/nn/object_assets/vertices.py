@@ -1538,12 +1538,16 @@ class Read:
                 if BitFlags.normal:
                     off = get_normals(off)
 
-                if BitFlags.colour_short:
+                if BitFlags.colour_short and BitFlags.colour_byte:
+                    off = get_colours_byte(off)
+                    off += 4
+                elif BitFlags.colour_short:
                     off = get_colours_short(off)
                 elif BitFlags.colour_byte:
                     off = get_colours_byte(off)
 
                 if BitFlags.wx:
+                    off = get_uvs(off)
                     off = get_wxs(off)
                 elif BitFlags.uv:
                     off = get_uvs(off)
