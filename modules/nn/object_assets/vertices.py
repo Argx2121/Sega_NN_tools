@@ -201,7 +201,7 @@ class Read:
             format_dict[self.format_type]()
 
         for var in range(self.vertex_buffer_count):  # for all sub meshes
-            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [[], []], []
             f.seek(self.vertex_mesh_offset[var] + self.start)
             vertex_count = self.mesh_info[var].vertex_count
             block_len = self.mesh_info[var].vertex_block_size
@@ -441,7 +441,7 @@ class Read:
             format_dict[self.format_type]()
 
         for var in range(self.vertex_buffer_count):  # for all sub meshes
-            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [[], []], []
             f.seek(self.vertex_mesh_offset[var] + self.start)
             vertex_count = self.mesh_info[var].vertex_count
             block_len = self.mesh_info[var].vertex_block_size
@@ -608,7 +608,7 @@ class Read:
                 data_byte = unpack(">" + str(count * 4) + "B", f.read(count * 4))
                 div_by = 255
                 for v in range(count):
-                    v_colours.append((
+                    v_colours[0].append((
                         data_byte[v * 4 + 0] / div_by, data_byte[v * 4 + 1] / div_by,
                         data_byte[v * 4 + 2] / div_by, data_byte[v * 4 + 3] / div_by))
 
@@ -682,7 +682,7 @@ class Read:
                 v_weights.append((data_float[v * 6 + 5], 1 - data_float[v * 6 + 5]))
 
         for t, m in zip(vert_flags, self.mesh_info):  # for all sub meshes
-            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [[], []], []
             if t == 1:
                 if m.vertex_offset:
                     f.seek(m.vertex_offset + self.start)
@@ -876,7 +876,7 @@ class Read:
             format_dict[self.format_type]()
 
         for var in range(self.vertex_buffer_count):  # for all sub meshes
-            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [[], []], []
             f.seek(self.vertex_mesh_offset[var] + self.start)
             vertex_count = self.mesh_info[var].vertex_count
             block_len = self.mesh_info[var].vertex_block_size
@@ -1005,7 +1005,7 @@ class Read:
 
         for info in self.mesh_info:  # for all sub meshes
             vertex_count = info.vertex_count
-            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], []
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], [[], []]
             v_bones, v_norms2_list, v_norms3_list = [], [], []
 
             for i in range(len(info.vertex_offset)):
@@ -1079,7 +1079,7 @@ class Read:
             }
 
             while final_pos > f.tell():
-                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], []
+                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], [[], []]
                 v_bones, v_norms2_list, v_norms3_list = [], [], []
 
                 var = read_int(f)
@@ -1120,7 +1120,7 @@ class Read:
 
         def type_1():
             while final_pos > f.tell():
-                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], []
+                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], [[], []]
                 v_bones, v_norms2_list, v_norms3_list = [], [], []
 
                 var = read_int(f)
@@ -1145,7 +1145,7 @@ class Read:
 
         def type_2():
             while final_pos > f.tell():
-                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], []
+                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], [[], []]
                 v_bones, v_norms2_list, v_norms3_list = [], [], []
 
                 var = read_int(f)
@@ -1170,7 +1170,7 @@ class Read:
 
         def type_17():
             while final_pos > f.tell():
-                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], []
+                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], [[], []]
                 v_bones, v_norms2_list, v_norms3_list = [], [], []
 
                 var = read_int(f)
@@ -1201,7 +1201,7 @@ class Read:
 
         def type_33():
             while final_pos > f.tell():
-                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], []
+                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], [[], []]
                 v_bones, v_norms2_list, v_norms3_list = [], [], []
 
                 var = read_int(f)
@@ -1235,7 +1235,7 @@ class Read:
 
         def type_273():
             while final_pos > f.tell():
-                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], []
+                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], [[], []]
                 v_bones, v_norms2_list, v_norms3_list = [], [], []
 
                 var = read_int(f)
@@ -1378,7 +1378,7 @@ class Read:
             format_dict[self.format_type]()
 
         for var in range(self.vertex_buffer_count):  # for all sub meshes
-            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [[], []], []
             f.seek(self.vertex_mesh_offset[var] + self.start)
             vertex_count = self.mesh_info[var].vertex_count
             block_len = self.mesh_info[var].vertex_block_size
@@ -1496,7 +1496,7 @@ class Read:
                 for i in range(vertex_count):
                     i = (i * block_len + off) // 2
                     v = data_short[i:i + 4]
-                    v_colours.append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
+                    v_colours[0].append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
                 return off + 8
 
             def get_colours_byte(off):  # colours stored as b g r a
@@ -1504,7 +1504,15 @@ class Read:
                 for i in range(vertex_count):
                     i = i * block_len + off
                     v = data_byte[i:i + 4]
-                    v_colours.append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
+                    v_colours[0].append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
+                return off + 4
+
+            def get_colours_byte2(off):  # colours stored as b g r a
+                div_by = 255
+                for i in range(vertex_count):
+                    i = i * block_len + off
+                    v = data_byte[i:i + 4]
+                    v_colours[1].append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
                 return off + 4
 
             def sonic_riders_x():
@@ -1540,7 +1548,7 @@ class Read:
 
                 if BitFlags.colour_short and BitFlags.colour_byte:
                     off = get_colours_byte(off)
-                    off += 4
+                    off = get_colours_byte2(off)
                 elif BitFlags.colour_short:
                     off = get_colours_short(off)
                 elif BitFlags.colour_byte:
@@ -1587,7 +1595,7 @@ class Read:
             format_dict[self.format_type]()
 
         for var in range(self.vertex_buffer_count):  # for all sub meshes
-            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [[], []], []
             f.seek(self.vertex_mesh_offset[var] + self.start)
             vertex_count = self.mesh_info[var].vertex_count
             block_len = self.mesh_info[var].vertex_block_size
@@ -1692,7 +1700,7 @@ class Read:
                 for i in range(vertex_count):
                     i = (i * block_len + off) // 2
                     v = data_short[i:i + 4]
-                    v_colours.append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
+                    v_colours[0].append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
                 return off + 8
 
             def get_colours_byte(off):  # colours stored as b g r a
@@ -1700,7 +1708,7 @@ class Read:
                 for i in range(vertex_count):
                     i = i * block_len + off
                     v = data_byte[i:i + 4]
-                    v_colours.append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
+                    v_colours[0].append([v[2] / div_by, v[1] / div_by, v[0] / div_by, v[3] / div_by])
                 return off + 4
 
             def sonic_4_episode_1_z():
@@ -1804,7 +1812,7 @@ class Read:
             format_dict[self.format_type]()
 
         for var in range(self.vertex_buffer_count):  # for all sub meshes
-            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [], []
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [[], []], []
             f.seek(self.vertex_mesh_offset[var] + self.start)
             vertex_count = self.mesh_info[var].vertex_count
             block_len = self.mesh_info[var].vertex_block_size

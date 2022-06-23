@@ -59,23 +59,32 @@ def make_mesh(self):
                 wx_tex.data[v_index + 1].uv = uv_short_hand[face_index[1]]
                 wx_tex.data[v_index + 2].uv = uv_short_hand[face_index[2]]
 
-        def make_colours():
+        def make_colours(is_col2):
+            if is_col2:
+                col_layer = mesh.vertex_colors.new(name=model_name_strip + "_Vertex_Colours_2")
+                col_data = col2_short_hand
+            else:
+                col_layer = mesh.vertex_colors.new(name=model_name_strip + "_Vertex_Colours")
+                col_data = col1_short_hand
+
             for vert_index in range(v_loop_count):
                 v_index = vert_index * 3
                 face_index = face_list[vert_index]
 
-                col_layer.data[v_index].color = col_short_hand[face_index[0]]
-                col_layer.data[v_index + 1].color = col_short_hand[face_index[1]]
-                col_layer.data[v_index + 2].color = col_short_hand[face_index[2]]
+                col_layer.data[v_index].color = col_data[face_index[0]]
+                col_layer.data[v_index + 1].color = col_data[face_index[1]]
+                col_layer.data[v_index + 2].color = col_data[face_index[2]]
 
         def make_colours_faces():
+            col_layer = mesh.vertex_colors.new(name=model_name_strip + "_Vertex_Colours")
+            col_data = col1_short_hand
             for vert_index in range(v_loop_count):
                 v_index = vert_index * 3
                 face_index = face_col[vert_index]
 
-                col_layer.data[v_index].color = col_short_hand[face_index[0]]
-                col_layer.data[v_index + 1].color = col_short_hand[face_index[1]]
-                col_layer.data[v_index + 2].color = col_short_hand[face_index[2]]
+                col_layer.data[v_index].color = col_data[face_index[0]]
+                col_layer.data[v_index + 1].color = col_data[face_index[1]]
+                col_layer.data[v_index + 2].color = col_data[face_index[2]]
 
         def make_normals():
             mesh.normals_split_custom_set_from_vertices(norm_short_hand)
@@ -161,9 +170,6 @@ def make_mesh(self):
                 if wx_short_hand:
                     make_wxs()
 
-        # needed in materials
-        col_layer = mesh.vertex_colors.new(name=model_name_strip + "_Vertex_Colours")
-
         if is_gno:
             if self.model.col[sm.face]:
                 make_colours_faces()
@@ -174,8 +180,10 @@ def make_mesh(self):
             else:
                 make_weights_simple()
         else:
-            if col_short_hand:
-                make_colours()
+            if col1_short_hand:
+                make_colours(False)
+                if col2_short_hand:
+                    make_colours(True)
             if norm_short_hand:
                 make_normals()
             if m_info.bone_count_complex:
@@ -246,7 +254,8 @@ def make_mesh(self):
         v_loop_count = len(face_list)
         uv_short_hand = v_data.uvs[lowest: highest]
         wx_short_hand = v_data.wxs[lowest: highest]
-        col_short_hand = v_data.colours[lowest: highest]
+        col1_short_hand = v_data.colours[0][lowest: highest]
+        col2_short_hand = v_data.colours[1][lowest: highest]
         norm_short_hand = v_data.normals[lowest: highest]
         pos_short_hand = v_data.positions[lowest: highest]
 
