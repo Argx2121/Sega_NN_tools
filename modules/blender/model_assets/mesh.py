@@ -61,21 +61,23 @@ def make_mesh(self):
 
         def make_colours(is_col2):
             if is_col2:
-                colour_layer = mesh.vertex_colors.new(name=model_name_strip + "_Vertex_Colours_2")
-                colour_data = col2_short_hand
+                col_layer = mesh.vertex_colors.new(name=model_name_strip + "_Vertex_Colours_2")
+                col_data = col2_short_hand
             else:
-                colour_layer = col_layer
-                colour_data = col_data
+                col_layer = mesh.vertex_colors[model_name_strip + "_Vertex_Colours"]
+                col_data = col1_short_hand
 
             for vert_index in range(v_loop_count):
                 v_index = vert_index * 3
                 face_index = face_list[vert_index]
 
-                colour_layer.data[v_index].color = colour_data[face_index[0]]
-                colour_layer.data[v_index + 1].color = colour_data[face_index[1]]
-                colour_layer.data[v_index + 2].color = colour_data[face_index[2]]
+                col_layer.data[v_index].color = col_data[face_index[0]]
+                col_layer.data[v_index + 1].color = col_data[face_index[1]]
+                col_layer.data[v_index + 2].color = col_data[face_index[2]]
 
         def make_colours_faces():
+            col_layer = mesh.vertex_colors[model_name_strip + "_Vertex_Colours"]
+            col_data = col1_short_hand
             for vert_index in range(v_loop_count):
                 v_index = vert_index * 3
                 face_index = face_col[vert_index]
@@ -157,10 +159,9 @@ def make_mesh(self):
             obj.data.materials.append(material_list_blender[sm.material])
         obj.modifiers.new(name=model_name, type='ARMATURE').object = obj.parent = armature
 
-        col_layer = mesh.vertex_colors.new(name=model_name_strip + "_Vertex_Colours")
-        col_data = col1_short_hand
-
-        # col_layer is called in materials by the v col node. The node needs a data layer, or it will break materials
+        # this is called in materials by the v col node. The node needs a data layer, or it will break materials
+        # don't get rid of this
+        mesh.vertex_colors.new(name=model_name_strip + "_Vertex_Colours")
 
         if is_gno:
             if self.model.uvs[sm.face]:
