@@ -239,7 +239,7 @@ def model_import(filepath, settings):
             show_not_read("NN Model Importer")
         f.close()
 
-    if bpy.context.object.mode != "OBJECT":
+    if bpy.context.object and bpy.context.object.mode != "OBJECT":
         bpy.ops.object.mode_set(mode="OBJECT")
     if settings.format != "Match__":
         name_require = "." + settings.format[-1].lower() + "no"
