@@ -150,6 +150,7 @@ def make_mesh(self):
         mesh = bpy.data.meshes.new(mesh_names[i])
         obj = bpy.data.objects.new(mesh.name, mesh)
         collection.objects.link(obj)
+        obj.rotation_euler[0] = 1.5708  # rotate 90 deg to stand up
 
         mesh.from_pydata(pos_short_hand, [], face_list)
 
@@ -158,6 +159,7 @@ def make_mesh(self):
         else:
             obj.data.materials.append(material_list_blender[sm.material])
         obj.modifiers.new(name=model_name, type='ARMATURE').object = obj.parent = armature
+        obj.matrix_parent_inverse = armature.matrix_world.inverted()
 
         # this is called in materials by the v col node. The node needs a data layer, or it will break materials
         # don't get rid of this
