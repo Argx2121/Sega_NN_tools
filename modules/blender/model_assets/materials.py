@@ -153,6 +153,7 @@ def material_complex(self):
     material_list_blender = self.material_list_blender
     material_list = self.model.materials
     model_name_strip = self.model_name_strip
+    file_path = self.file_path
 
     material_list = sort_list(material_list)
 
@@ -161,7 +162,7 @@ def material_complex(self):
     if not texture_name:
         skip_textures = True
     elif texture_name:
-        texture_name = make_bpy_textures(texture_name, self.settings.recursive_textures)
+        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures)
         if type(texture_name[0]) == str:
             skip_textures = True
 
@@ -249,6 +250,7 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
     material_list_blender = self.material_list_blender
     material_list = self.model.materials
     model_name_strip = self.model_name_strip
+    file_path = self.file_path
 
     material_list = sort_list(material_list)
 
@@ -257,7 +259,7 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
     if not texture_name:
         skip_textures = True
     elif texture_name:
-        texture_name = make_bpy_textures(texture_name, self.settings.recursive_textures)
+        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures)
         if type(texture_name[0]) == str:
             skip_textures = True
 
@@ -313,78 +315,22 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
             _vertex_colours(tree, model_name_strip)
 
 
-def _make_bpy_recursive(texture_names: list):
-    has_png = True  # png shouldn't be used in game but converted image files might be .png
-    has_dds = True
-    path_base = pathlib.Path(bpy.path.abspath(texture_names[0]).rstrip(bpy.path.basename(texture_names[0])))
-
-    path_list_dds = [str(path) for path in path_base.rglob("*.dds")]
-    path_list_png = [str(path) for path in path_base.rglob("*.png")]
-    dds_join = ', '.join(path_list_dds).casefold()
-    png_join = ', '.join(path_list_png).casefold()
-
-    texture_names = [bpy.path.basename(tex.rsplit(".")[0]) for tex in texture_names]
-
-    for name in texture_names:
-        if (name + ".png").casefold() not in png_join:
-            has_png = False
-            break
-    for name in texture_names:
-        if (name + ".dds").casefold() not in dds_join:
-            has_dds = False
-            break
-
-    img_list = []
-
-    if system() == "Windows":
-        var = "\\"
-    else:
-        var = "/"
-
-    if has_png:
-        for name in texture_names:
-            for path in path_list_png:
-                if (var + name + ".").casefold() in path.casefold():
-                    img_list.append(path)
-                    break
-        return [bpy.data.images.load(tex) for tex in img_list]
-    elif has_dds:
-        for name in texture_names:
-            for path in path_list_dds:
-                if (var + name + ".").casefold() in path.casefold():
-                    img_list.append(path)
-                    break
-        return [bpy.data.images.load(tex) for tex in img_list]
-
-    return texture_names
-
-
-def _make_bpy_non_recursive(texture_names: list):
-    has_png = True  # png shouldn't be used in game but converted image files might be .png
-    has_dds = True
-    texture_png = [tex.rsplit(".")[0] + ".png" for tex in texture_names]
-    texture_dds = [tex.rsplit(".")[0] + ".dds" for tex in texture_names]
-
-    for tex in texture_png:
-        if not os.path.exists(tex):
-            has_png = False
-            break
-    for tex in texture_dds:
-        if not os.path.exists(tex):
-            has_dds = False
-            break
-
-    if has_png:
-        return [bpy.data.images.load(tex) for tex in texture_png]
-    elif has_dds:
-        return [bpy.data.images.load(tex) for tex in texture_dds]
-
-    return texture_names
-
-
-def make_bpy_textures(texture_names: list, recursive: bool):  # get textures if they exist
+def make_bpy_textures(file_path: str, texture_names: list, recursive: bool):  # get textures if they exist
     # Imports textures to Blender, returns the loaded texture names.
+    path_base = pathlib.Path(pathlib.Path(file_path).parent)
+    tex_names = [tex.rsplit(".", 1)[0] for tex in texture_names]
+
     if recursive:
-        return _make_bpy_recursive(texture_names)
+        path_list_dds = [[str(path) for path in path_base.rglob(tex + ".dds")] for tex in tex_names]
+        path_list_png = [[str(path) for path in path_base.rglob(tex + ".png")] for tex in tex_names]
     else:
-        return _make_bpy_non_recursive(texture_names)
+        path_list_dds = [[str(path) for path in path_base.glob(tex + ".dds")] for tex in tex_names]
+        path_list_png = [[str(path) for path in path_base.glob(tex + ".png")] for tex in tex_names]
+
+    dds_check = [bool(a) for a in path_list_dds]
+    if False not in dds_check:
+        return [bpy.data.images.load(tex[0]) for tex in path_list_dds]
+    png_check = [bool(a) for a in path_list_png]
+    if False not in png_check:
+        return [bpy.data.images.load(tex[0]) for tex in path_list_png]
+    return texture_names

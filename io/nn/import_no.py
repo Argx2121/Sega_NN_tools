@@ -214,7 +214,7 @@ def model_import(filepath, settings):
         if block == expected_block:
             nn = ReadNn(f, file_path, settings.format, settings.debug).read_file()[1]
             if nn.model:
-                Model(nn, settings).execute()
+                Model(nn, file_path, settings).execute()
         else:
             show_not_read("NN Model Importer")
         f.close()
@@ -233,7 +233,7 @@ def model_import(filepath, settings):
             settings.format = getattr(nn_data, block[1].lower() + "n_list")[0][0]
             nn = ReadNn(f, file_path, settings.format, settings.debug).read_file()[1]
             if nn.model:
-                Model(nn, settings).execute()
+                Model(nn, file_path, settings).execute()
             settings.format = "Match__"
         else:
             show_not_read("NN Model Importer")

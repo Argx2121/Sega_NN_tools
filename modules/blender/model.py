@@ -6,7 +6,8 @@ from .model_assets import model_util, armature, mesh, materials
 
 
 class Model:
-    def __init__(self, nn, settings):
+    def __init__(self, nn, file_path, settings):
+        self.file_path = file_path
         self.model = nn.model
         self.settings = settings
         self.format = settings.format

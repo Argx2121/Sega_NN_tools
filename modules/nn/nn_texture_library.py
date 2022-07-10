@@ -67,7 +67,7 @@ class Read:
                 f.seek(texture_names[i] + self.post_info)
                 texture_names[i] = read_str_terminated(f)
             f.seek(end_of_block)
-        return [self.filepath + t for t in texture_names]
+        return texture_names
 
     def be(self):
         f = self.f
@@ -82,4 +82,4 @@ class Read:
             f.seek(texture_names[i] + self.post_info)
             texture_names[i] = read_str_terminated(f)
         f.seek(end_of_block)
-        return [self.filepath + t for t in texture_names]
+        return texture_names
