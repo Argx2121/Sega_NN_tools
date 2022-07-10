@@ -535,54 +535,15 @@ class Read:
                 data = read_float_tuple(f, 3 * count, ">")
                 for v in range(count):
                     v_positions.append(data[v * 3: v * 3 + 3])
-            elif d_type == 2:
+            else:
                 data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
+                mult_by = (0, 0, 1, 4, 16, 64, 256, 1024, 4096)[d_type]
+                # e.g. pos type 5: mult_by = 64
+                # type 0 and 1 are padding (they will never be called)
                 for v in range(count):
-                    v1 = data[v * 3] / 1
-                    v2 = data[v * 3 + 1] / 1
-                    v3 = data[v * 3 + 2] / 1
-                    v_positions.append((v1, v2, v3))
-            elif d_type == 3:
-                data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
-                for v in range(count):
-                    v1 = data[v * 3] / 4
-                    v2 = data[v * 3 + 1] / 4
-                    v3 = data[v * 3 + 2] / 4
-                    v_positions.append((v1, v2, v3))
-            elif d_type == 4:
-                data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
-                for v in range(count):
-                    v1 = data[v * 3] / 16
-                    v2 = data[v * 3 + 1] / 16
-                    v3 = data[v * 3 + 2] / 16
-                    v_positions.append((v1, v2, v3))
-            elif d_type == 5:
-                data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
-                for v in range(count):
-                    v1 = data[v * 3] / 64
-                    v2 = data[v * 3 + 1] / 64
-                    v3 = data[v * 3 + 2] / 64
-                    v_positions.append((v1, v2, v3))
-            elif d_type == 6:
-                data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
-                for v in range(count):
-                    v1 = data[v * 3] / 256
-                    v2 = data[v * 3 + 1] / 256
-                    v3 = data[v * 3 + 2] / 256
-                    v_positions.append((v1, v2, v3))
-            elif d_type == 7:
-                data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
-                for v in range(count):
-                    v1 = data[v * 3] / 1024
-                    v2 = data[v * 3 + 1] / 1024
-                    v3 = data[v * 3 + 2] / 1024
-                    v_positions.append((v1, v2, v3))
-            elif d_type == 8:
-                data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
-                for v in range(count):
-                    v1 = data[v * 3] / 4096
-                    v2 = data[v * 3 + 1] / 4096
-                    v3 = data[v * 3 + 2] / 4096
+                    v1 = data[v * 3] / mult_by
+                    v2 = data[v * 3 + 1] / mult_by
+                    v3 = data[v * 3 + 2] / mult_by
                     v_positions.append((v1, v2, v3))
 
         def get_norms(d_type, count):
