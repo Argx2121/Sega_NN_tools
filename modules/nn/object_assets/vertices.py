@@ -39,6 +39,7 @@ class MeshDataGno:
         "col_type", "col_count", "col_offset",
         "uv_type", "uv_count", "uv_offset",
         "bone_type", "bone_count", "bone_offset",
+        "data_bone_type", "data_bone_count", "data_bone_offset",
     ]
     vertex_type: int
     vertex_count: int
@@ -55,6 +56,9 @@ class MeshDataGno:
     bone_type: int
     bone_count: int
     bone_offset: int
+    data_bone_type: int
+    data_bone_count: int
+    data_bone_offset: int
 
 
 class Read:
@@ -506,15 +510,13 @@ class Read:
                 f.seek(8, 1)
                 bone_type, bone_total = read_short_tuple(f, 2, ">")
                 bone_offset = read_int(f, ">")
-                # data_bone_type, data_bone_total = read_short_tuple(f, 2, ">")
-                # data_bone_offset = read_int(f, ">")
-                # stores (as shorts) [bone count, bone offset (for use in previous data list)]
-                # not included as its not necessary
+                data_bone_type, data_bone_total = read_short_tuple(f, 2, ">")
+                data_bone_offset = read_int(f, ">")
 
                 self.mesh_info.append(
                     MeshDataGno(vert_type, vert_count, vert_offset, norm_type, norm_total, norm_offset,
                                 col_type, col_total, col_offset, uv_type, uv_total, uv_offset,
-                                bone_type, bone_total, bone_offset))
+                                bone_type, bone_total, bone_offset, data_bone_type, data_bone_total, data_bone_offset))
             elif t == 65536:
                 vert_info = []
                 for _ in range(4):  # looks to be set to 4
@@ -592,7 +594,7 @@ class Read:
                     v_v = - data[v * 2 + 1] / 1024 + 1
                     v_uvs.append((v_u, v_v))
 
-        def get_bones(d_type, count):
+        def get_bones(d_type, count, data_bone_total, data_bone_offset):
             start = f.tell()
             if d_type == 1:
                 data_byte = read_byte_tuple(f, 4 * count, ">")
@@ -603,18 +605,13 @@ class Read:
                     v_weights.append((data_short[v * 2] / 16384, 1 - data_short[v * 2] / 16384))
             if d_type == 8:
                 data_short = read_short_tuple(f, 2 * count, ">")
-                d_bone = data_short[0::2]
-                d_wei = data_short[1::2]
-                off = 0
-                while off < count:
-                    bone_l = []
-                    bone_wei_l = []
-                    while sum(bone_wei_l) < 0.999:
-                        bone_l.append(d_bone[off])
-                        bone_wei_l.append(d_wei[off] / 16384)
-                        off += 1
-                    v_bones.append(bone_l)
-                    v_weights.append(bone_wei_l)
+                data_short = list(zip(data_short[0::2], data_short[1::2]))
+                f.seek(self.start + data_bone_offset)
+                data_bone_short = read_short_tuple(f, 2 * data_bone_total, ">")
+                for bone_count, bone_offset in zip(data_bone_short[0::2], data_bone_short[1::2]):
+                    bone_data = data_short[bone_offset:bone_offset + bone_count]
+                    v_bones.append([a[0] for a in bone_data])
+                    v_weights.append([a[1] / 16384 for a in bone_data])
 
         # for the oldest gno known to man
         def pos():
@@ -659,7 +656,7 @@ class Read:
                     get_uvs(m.uv_type, m.uv_count)
                 if m.bone_offset:
                     f.seek(m.bone_offset + self.start)
-                    get_bones(m.bone_type, m.bone_count)
+                    get_bones(m.bone_type, m.bone_count, m.data_bone_count, m.data_bone_offset)
             elif t == 65536:
                 for info in m:
                     vertex_count = info.vertex_count
