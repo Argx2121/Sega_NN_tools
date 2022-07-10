@@ -1,6 +1,7 @@
 import bpy
 import addon_utils
 import requests
+import textwrap
 
 # noinspection PyArgumentList
 user_ver = [addon.bl_info.get('version') for addon in addon_utils.modules()
@@ -66,11 +67,11 @@ class NN_PT_About(GENERIC_panel, bpy.types.Panel):
                 "https://github.com/Argx2121/Sega_NN_tools/releases/latest"
         layout.label(text="NN tools by Arg!!")
         box = layout.box()
+        box.scale_y = 0.6
         box.label(text="Special thanks:")
-        box.label(text="firegodjr")
-        box.label(text="Radfordhound")
-        box.label(text="Sewer56")
-        box.label(text="Shadowth117")
-        box.label(text="Yacker")
+        letter_count = int(context.region.width // 8)
+        thanks_text = "firegodjr, Radfordhound, Sewer56, Shadowth117, Yacker"
+        wrapped_text = textwrap.TextWrapper(width=letter_count).wrap(text=thanks_text)
+        [box.label(text=a) for a in wrapped_text]
         layout.operator("wm.url_open", text="Discord Link").url = "https://discord.gg/CURRBfq"
         layout.operator("wm.url_open", text="GitHub Link").url = "https://github.com/Argx2121/Sega_NN_tools/"
