@@ -316,7 +316,11 @@ class Read:
         def sonic_riders_g():
             t_type = "none"
             t_settings = []
-            if TextureFlags.byte4bit1:
+            if texture_flags == 1074528514:
+                t_type = "emission"
+            elif texture_flags == 1074528516:
+                t_type = "emission"
+            elif TextureFlags.byte4bit1:
                 t_type = "diffuse"
             elif TextureFlags.byte4bit3:
                 t_type = "reflection"
