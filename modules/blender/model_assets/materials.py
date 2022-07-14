@@ -46,6 +46,7 @@ def _vertex_colours(tree, name):
 
 
 def _diffuse_rgba(tree, image, rgba, skip_textures):
+    image.name = "DiffuseTexture"
     rbg = tree.nodes.new(type="ShaderNodeRGB")
     rbg.outputs[0].default_value = (rgba.colour[0], rgba.colour[1], rgba.colour[2], 1)
 
@@ -292,6 +293,7 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
                 image_node = _make_image(tree, texture_name[m_tex_index], m_tex_set)
 
             if m_tex_type == "diffuse":
+                image_node.name = "DiffuseTexture"
                 _rgba(tree, m_col)  # generate even if they cant be used
                 _vertex_colours(tree, model_name_strip)
 
