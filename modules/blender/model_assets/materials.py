@@ -216,6 +216,7 @@ def material_complex(self):
                 displacement = _normal(tree, image_node, m_tex_set, skip_textures)
                 tree.links.new(n_end.inputs[5], displacement)
             elif m_tex_type == "emission":
+                image_node.name = "EmissionTexture"
                 tree.links.new(n_end.inputs[3], image_node.outputs[0])
             elif m_tex_type == "reflection":
                 reflection = _reflection(tree, image_node)
@@ -305,7 +306,7 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
 
                 tree.links.new(diffuse.inputs[-3], displacement)
             elif m_tex_type == "emission":
-
+                image_node.name = "EmissionTexture"
                 tree.links.new(diffuse.inputs[-5], image_node.outputs[0])
             elif m_tex_type == "bump":
                 displacement = _bump(tree, image_node)
