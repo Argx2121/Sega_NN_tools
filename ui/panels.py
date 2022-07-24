@@ -49,6 +49,7 @@ class EXTRACT_PT_Panel(GENERIC_panel, bpy.types.Panel):
         layout.operator("srpc.extract", text="Sonic Riders PC (NO EXTENSION)")
         layout.operator("srzg.extract", text="Sonic Riders Zero Gravity .pack")
         layout.operator("sfr.extract", text="Sonic Free Riders .pac / .pas")
+        layout.operator("sms.extract", text="Bleach: Shattered Blade .sms")
 
 
 class NN_PT_About(GENERIC_panel, bpy.types.Panel):

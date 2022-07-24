@@ -33,7 +33,7 @@ import bpy
 
 from .io.nn import import_no
 from .io.other import import_collision, import_splines, import_pathfinding, import_objects
-from .extract import srgc, srpc, amb, sfr, pkg, srzg, bnk
+from .extract import srgc, srpc, amb, sfr, pkg, srzg, bnk, sms
 from .ui import panels, preferences
 
 # classes
@@ -42,7 +42,7 @@ classes = (
     import_collision.ImportSegaNNCollision, import_splines.ImportSegaNNSplines,
     import_pathfinding.ImportSegaNNPathfinding, import_objects.ImportSegaNNObjects,
     srgc.SonicRGCTools, srpc.SonicRPCTools,
-    amb.Sonic4Tools, sfr.ExtractSfrTools, bnk.ExtractBnkTools, pkg.ExtractPkgTools,
+    amb.Sonic4Tools, sfr.ExtractSfrTools, bnk.ExtractBnkTools, pkg.ExtractPkgTools, sms.ExtractSmsTools,
     srzg.ExtractSrgzTools,
     panels.NN_PT_ImportPanel,
     panels.EXTRACT_PT_Panel,
