@@ -200,8 +200,6 @@ def make_mesh(self):
         if self.settings.clean_mesh:
             if self.format in {"KOnAfterSchoolLive_U", "SegaSuperstars_S"}:  # problematic games
                 model_util.clean_mesh_strict(obj)
-            elif self.format in {"SonicFreeRiders_E", "HouseOfTheDead4_L", "LovingDeadsHouseOfTheDeadEX_L"}:
-                model_util.clean_mesh_lazy(obj)
             else:
                 model_util.clean_mesh(obj)
 
