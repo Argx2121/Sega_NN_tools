@@ -308,8 +308,10 @@ class Read:
         def bleach_shattered_blade_g():
             t_type = "none"
             t_settings = []
-            if TextureFlags.byte4bit1:
+            if texture_flags == 1074528513:
                 t_type = "diffuse"
+            elif texture_flags == 1074528833:
+                t_type = "reflection_wx"
 
             return t_type, t_settings
 

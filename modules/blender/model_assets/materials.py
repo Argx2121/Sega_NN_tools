@@ -97,6 +97,22 @@ def _reflection(tree, image):
     return image.outputs[0]
 
 
+def _reflection_wx(tree, image, model_name_strip):
+    image.name = "ReflectionWxTexture"
+    ref_node = tree.nodes.new(type="ShaderNodeTexCoord")
+
+    wx_node = tree.nodes.new(type="ShaderNodeUVMap")
+    wx_node.uv_map = model_name_strip + "_WX_Map"
+
+    math_node = tree.nodes.new(type="ShaderNodeVectorMath")
+    math_node.operation = 'ADD'
+
+    tree.links.new(math_node.inputs[0], ref_node.outputs[6])
+    tree.links.new(math_node.inputs[1], wx_node.outputs[0])
+    tree.links.new(image.inputs[0], math_node.outputs[0])
+    return image.outputs[0]
+
+
 def _normal(tree, image, settings, skip_textures):
     image.name = "NormalTexture"
     if not skip_textures:
@@ -220,6 +236,8 @@ def material_complex(self):
                 tree.links.new(n_end.inputs[3], image_node.outputs[0])
             elif m_tex_type == "reflection":
                 reflection = _reflection(tree, image_node)
+            elif m_tex_type == "reflection_wx":
+                reflection = _reflection_wx(tree, image_node, model_name_strip)
             elif m_tex_type == "bump":
                 displacement = _bump(tree, image_node)
                 tree.links.new(n_end.inputs[5], displacement)
