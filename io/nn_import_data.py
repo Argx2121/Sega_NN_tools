@@ -175,7 +175,7 @@ determine_bone = {
 
     "SuperMonkeyBallStepAndRoll_G": 1,
     "SonicAndTheBlackKnight_G": 1,
-    "SonicUnleashed_G": 1,
+    "SonicUnleashed_G": 0.5,
     "SonicRidersZeroGravity_G": 0.5,
     "SonicAndTheSecretRings_G": 1,
     "BleachShatteredBlade_G": 1,
