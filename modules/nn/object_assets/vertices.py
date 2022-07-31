@@ -1477,8 +1477,6 @@ class Read:
                 off = 0
                 if BitFlags.position:
                     off = get_positions(off)
-                if BitFlags.wx:  # unknown float
-                    off += 4
                 if BitFlags.weights:
                     off = get_weights(off)
                 if BitFlags.normal:
@@ -1490,6 +1488,9 @@ class Read:
                     off = get_colours_byte(off)
                 if BitFlags.uv:
                     off = get_uvs(off)
+                if BitFlags.wx:
+                    off = get_uvs(off)
+                    off = get_wxs(off)
 
             def phantasy_star_universe_x():
                 off = 0
@@ -1562,7 +1563,7 @@ class Read:
 
             class BitFlags(Flag):
                 # 000KC0NP 0WWW0000 000000QU 00000000 KC0NW0P0 000000QU 00000000 00000000 SR PC
-                #  K = colours as shorts, not bytes Q = unknown, in psu Q is wx but srpc has only one float(?)
+                #  K = colours as shorts, not bytes Q = uv2
                 #  block order: POS Q WEIGH NORM COL UV SR PC
                 # 0M00C0NP 0WWW0I02 000000XU 00000000 0C0NW0P0 000W00XU 00000000 00000000 06
                 # X is wx - if both U and X are on its a different thing
