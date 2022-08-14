@@ -29,15 +29,14 @@ def make_mesh(self):
                 uv_tex.data[v_index + 1].uv = uv_short_hand[face_index[1]]
                 uv_tex.data[v_index + 2].uv = uv_short_hand[face_index[2]]
 
-        def make_uvs_faces():
-            uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV_Map")
+        def make_uvs_faces(uv_tex, uv_data, face_data):
             for vert_index in range(v_loop_count):
                 v_index = vert_index * 3
-                face_index = face_uvs[vert_index]
+                face_index = face_data[vert_index]
 
-                uv_tex.data[v_index].uv = uv_short_hand[face_index[0]]
-                uv_tex.data[v_index + 1].uv = uv_short_hand[face_index[1]]
-                uv_tex.data[v_index + 2].uv = uv_short_hand[face_index[2]]
+                uv_tex.data[v_index].uv = uv_data[face_index[0]]
+                uv_tex.data[v_index + 1].uv = uv_data[face_index[1]]
+                uv_tex.data[v_index + 2].uv = uv_data[face_index[2]]
 
         def make_wxs():
             wx_tex = mesh.uv_layers.new(name=model_name_strip + "_WX_Map")
@@ -48,16 +47,6 @@ def make_mesh(self):
                 wx_tex.data[v_index].uv = wx_short_hand[face_index[0]]
                 wx_tex.data[v_index + 1].uv = wx_short_hand[face_index[1]]
                 wx_tex.data[v_index + 2].uv = wx_short_hand[face_index[2]]
-
-        def make_wxs_faces():
-            wx_tex = mesh.uv_layers.new(name=model_name_strip + "_WX_Map")
-            for vert_index in range(v_loop_count):
-                v_index = vert_index * 3
-                face_index = face_wxs[vert_index]
-
-                wx_tex.data[v_index].uv = uv_short_hand[face_index[0]]
-                wx_tex.data[v_index + 1].uv = uv_short_hand[face_index[1]]
-                wx_tex.data[v_index + 2].uv = uv_short_hand[face_index[2]]
 
         def make_colours(is_col2):
             if is_col2:
@@ -166,10 +155,21 @@ def make_mesh(self):
         mesh.vertex_colors.new(name=model_name_strip + "_Vertex_Colours")
 
         if is_gno:
-            if self.model.uvs[sm.face]:
-                make_uvs_faces()
-                if self.model.wxs[sm.face]:
-                    make_wxs_faces()
+            if uv_short_hand:
+                uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV_Map")
+                make_uvs_faces(uv_tex, uv_short_hand, face_uvs)
+            if uv2_short_hand:
+                uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV2_Map")
+                make_uvs_faces(uv_tex, uv2_short_hand, face_uvs2)
+            elif face_uvs2:
+                uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV2_Map")
+                make_uvs_faces(uv_tex, uv_short_hand, face_uvs2)
+            if uv3_short_hand:
+                uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV3_Map")
+                make_uvs_faces(uv_tex, uv3_short_hand, face_uvs3)
+            elif face_uvs3:
+                uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV3_Map")
+                make_uvs_faces(uv_tex, uv_short_hand, face_uvs3)
         else:
             if uv_short_hand:
                 make_uvs()
@@ -249,15 +249,28 @@ def make_mesh(self):
             if self.model.col[sm.face]:
                 face_col, highest = face_clean_gno(self.model.col[sm.face], highest)
 
+            face_uvs, face_uvs2, face_uvs3 = [], [], []
             if self.model.uvs[sm.face]:
-                face_uvs, highest = face_clean_gno(self.model.uvs[sm.face], highest)
-
-            if self.model.wxs[sm.face]:
-                face_wxs, highest = face_clean_gno(self.model.wxs[sm.face], highest)
+                if self.model.uvs[sm.face][0]:
+                    face_uvs, highest = face_clean_gno(self.model.uvs[sm.face][0], highest)
+                if self.model.uvs[sm.face][1]:
+                    face_uvs2, highest = face_clean_gno(self.model.uvs[sm.face][1], highest)
+                if self.model.uvs[sm.face][2]:
+                    face_uvs3, highest = face_clean_gno(self.model.uvs[sm.face][2], highest)
+            uv_short_hand = []
+            uv2_short_hand = []
+            uv3_short_hand = []
+            if len(v_data.uvs) > 0:
+                uv_short_hand = v_data.uvs[0][lowest: highest]
+            if len(v_data.uvs) > 1:
+                uv2_short_hand = v_data.uvs[1][lowest: highest]
+            if len(v_data.uvs) > 2:
+                uv3_short_hand = v_data.uvs[2][lowest: highest]
+        else:
+            uv_short_hand = v_data.uvs[lowest: highest]
+            wx_short_hand = v_data.wxs[lowest: highest]
 
         v_loop_count = len(face_list)
-        uv_short_hand = v_data.uvs[lowest: highest]
-        wx_short_hand = v_data.wxs[lowest: highest]
         col1_short_hand = v_data.colours[0][lowest: highest]
         col2_short_hand = v_data.colours[1][lowest: highest]
         norm_short_hand = v_data.normals[lowest: highest]

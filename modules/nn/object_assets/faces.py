@@ -7,7 +7,7 @@ from ...util import *
 class Read:
     __slots__ = [
         "f", "start", "format_type", "debug",
-        "face_set_count", "face_info", "face_strip_list", "face_list", "uv_list", "wx_list", "norm_list", "col_list"
+        "face_set_count", "face_info", "face_strip_list", "face_list", "uv_list", "norm_list", "col_list"
     ]
 
     def __init__(self, var, face_set_count: int):
@@ -17,7 +17,6 @@ class Read:
         self.face_strip_list = []
         self.face_list = []
         self.uv_list = []
-        self.wx_list = []
         self.norm_list = []
         self.col_list = []
 
@@ -222,6 +221,28 @@ class Read:
             self.face_list.append(face_list_mesh)
 
     def _gno_indices(self, info_flag):
+
+        class ExtractFaces:
+            def __init__(self, face_list, face_count, multi):
+                self.face_list = face_list
+                self.face_count = face_count
+                self.multi = multi
+
+            def extract(self, off):
+                face_list = self.face_list
+                multi = self.multi
+                extracted = []
+                for face in range(self.face_count - 2):
+                    f1, f2, f3 = \
+                        face_list[(face + 0) * multi + off], \
+                        face_list[(face + 1) * multi + off], \
+                        face_list[(face + 2) * multi + off]
+                    if face & 1:
+                        extracted.append((f1, f2, f3))
+                    else:
+                        extracted.append((f2, f1, f3))
+                return extracted, off + 1
+
         # most use this setting
         def faces_type_4():
             f.seek(info.face_offset + self.start + 20)
@@ -257,77 +278,36 @@ class Read:
                 count = face_count * multi
                 face_list = read_short_tuple(f, count, ">")
                 face_start = read_byte(f, ">")
-                off = 0
 
-                for face in range(face_count - 2):
-                    f1, f2, f3 = \
-                        face_list[(face + 0) * multi], \
-                        face_list[(face + 1) * multi], \
-                        face_list[(face + 2) * multi]
-                    if face & 1:
-                        face_list_mesh.append((f1, f2, f3))
-                    else:
-                        face_list_mesh.append((f2, f1, f3))
-                off += 1
+                extract_faces = ExtractFaces(face_list, face_count, multi)
+                nonlocal face_list_mesh, norm_list_mesh, col_list_mesh, uv_list_mesh, uv2_list_mesh, uv3_list_mesh
+                a, off = extract_faces.extract(0)
+                face_list_mesh += a
 
                 if FaceFlags.norm:
-                    for face in range(face_count - 2):
-                        f1, f2, f3 = \
-                            face_list[(face + 0) * multi + off], \
-                            face_list[(face + 1) * multi + off], \
-                            face_list[(face + 2) * multi + off]
-                        if face & 1:
-                            norm_list_mesh.append((f1, f2, f3))
-                        else:
-                            norm_list_mesh.append((f2, f1, f3))
-                    off += 1
+                    a, off = extract_faces.extract(off)
+                    norm_list_mesh += a
 
                 if FaceFlags.col:
-                    for face in range(face_count - 2):
-                        f1, f2, f3 = \
-                            face_list[(face + 0) * multi + off], \
-                            face_list[(face + 1) * multi + off], \
-                            face_list[(face + 2) * multi + off]
-                        if face & 1:
-                            col_list_mesh.append((f1, f2, f3))
-                        else:
-                            col_list_mesh.append((f2, f1, f3))
-                    off += 1
+                    a, off = extract_faces.extract(off)
+                    col_list_mesh += a
 
                 if FaceFlags.uvs:
-                    for face in range(face_count - 2):
-                        f1, f2, f3 = \
-                            face_list[(face + 0) * multi + off], \
-                            face_list[(face + 1) * multi + off], \
-                            face_list[(face + 2) * multi + off]
-                        if face & 1:
-                            uv_list_mesh.append((f1, f2, f3))
-                        else:
-                            uv_list_mesh.append((f2, f1, f3))
-                    off += 1
+                    a, off = extract_faces.extract(off)
+                    uv_list_mesh += a
 
-                if FaceFlags.wxs:
-                    for face in range(face_count - 2):
-                        f1, f2, f3 = \
-                            face_list[(face + 0) * multi + off], \
-                            face_list[(face + 1) * multi + off], \
-                            face_list[(face + 2) * multi + off]
-                        if face & 1:
-                            uv_list_mesh.append((f1, f2, f3))
-                        else:
-                            uv_list_mesh.append((f2, f1, f3))
-                    off += 1
+                    if FaceFlags.wxs:
+                        a, off = extract_faces.extract(off)
+                        uv2_list_mesh += a
 
-                    for face in range(face_count - 2):
-                        f1, f2, f3 = \
-                            face_list[(face + 0) * multi + off], \
-                            face_list[(face + 1) * multi + off], \
-                            face_list[(face + 2) * multi + off]
-                        if face & 1:
-                            wx_list_mesh.append((f1, f2, f3))
-                        else:
-                            wx_list_mesh.append((f2, f1, f3))
-                    off += 1
+                        a, off = extract_faces.extract(off)
+                        uv3_list_mesh += a
+                elif FaceFlags.wxs:
+                    a, off = extract_faces.extract(off)
+                    uv_list_mesh += a
+
+                    a, off = extract_faces.extract(off)
+                    uv2_list_mesh += a
 
         # sonic unleashed uses this occasionally
         def faces_type_0():
@@ -378,52 +358,30 @@ class Read:
             f.seek(info.face_offset + self.start)
             for strip in face_strips:
                 indices = read_short_tuple(f, info.face_short_count * strip, ">")
-                off = 0
                 multi = info.face_short_count
                 face_list = indices
                 face_count = strip
 
-                for face in range(face_count - 2):
-                    f1, f2, f3 = \
-                        face_list[(face + 0) * multi], \
-                        face_list[(face + 1) * multi], \
-                        face_list[(face + 2) * multi]
-                    if face & 1:
-                        face_list_mesh.append((f1, f2, f3))
-                    else:
-                        face_list_mesh.append((f2, f1, f3))
-                off += 1
+                extract_faces = ExtractFaces(face_list, face_count, multi)
+                nonlocal face_list_mesh, norm_list_mesh, uv_list_mesh
+                a, off = extract_faces.extract(0)
+                face_list_mesh += a
 
                 # not enough samples to know what the requirements are for any of these
                 if multi == 3:
-                    for face in range(face_count - 2):
-                        f1, f2, f3 = \
-                            face_list[(face + 0) * multi + off], \
-                            face_list[(face + 1) * multi + off], \
-                            face_list[(face + 2) * multi + off]
-                        if face & 1:
-                            norm_list_mesh.append((f1, f2, f3))
-                        else:
-                            norm_list_mesh.append((f2, f1, f3))
-                    off += 1
+                    a, off = extract_faces.extract(off)
+                    norm_list_mesh += a
 
                 if multi == 3:
-                    for face in range(face_count - 2):
-                        f1, f2, f3 = \
-                            face_list[(face + 0) * multi + off], \
-                            face_list[(face + 1) * multi + off], \
-                            face_list[(face + 2) * multi + off]
-                        if face & 1:
-                            uv_list_mesh.append((f1, f2, f3))
-                        else:
-                            uv_list_mesh.append((f2, f1, f3))
-                    off += 1
+                    a, off = extract_faces.extract(off)
+                    uv_list_mesh += a
 
         f = self.f
         for info, inf_flag in zip(self.face_info, info_flag):  # for all sub meshes
             face_list_mesh = []
             uv_list_mesh = []
-            wx_list_mesh = []
+            uv2_list_mesh = []
+            uv3_list_mesh = []
             norm_list_mesh = []
             col_list_mesh = []
             if inf_flag == 4:
@@ -436,8 +394,7 @@ class Read:
             self.face_list.append(face_list_mesh)
             self.col_list.append(col_list_mesh)
             self.norm_list.append(norm_list_mesh)
-            self.uv_list.append(uv_list_mesh)
-            self.wx_list.append(wx_list_mesh)
+            self.uv_list.append((uv_list_mesh, uv2_list_mesh, uv3_list_mesh))
 
     def xno_zno(self):
         info_offset = self._le_offsets()
@@ -486,4 +443,4 @@ class Read:
         info_offset, info_flag = self._be_offsets_flags()
         self._gno_info(info_offset, info_flag)
         self._gno_indices(info_flag)
-        return self.face_list, self.uv_list, self.wx_list, self.norm_list, self.col_list
+        return self.face_list, self.uv_list, self.norm_list, self.col_list

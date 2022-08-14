@@ -38,6 +38,8 @@ class MeshDataGno:
         "norm_type", "norm_count", "norm_offset",
         "col_type", "col_count", "col_offset",
         "uv_type", "uv_count", "uv_offset",
+        "uv2_type", "uv2_count", "uv2_offset",
+        "uv3_type", "uv3_count", "uv3_offset",
         "bone_type", "bone_count", "bone_offset",
         "data_bone_type", "data_bone_count", "data_bone_offset",
     ]
@@ -53,6 +55,12 @@ class MeshDataGno:
     uv_type: int
     uv_count: int
     uv_offset: int
+    uv2_type: int
+    uv2_count: int
+    uv2_offset: int
+    uv3_type: int
+    uv3_count: int
+    uv3_offset: int
     bone_type: int
     bone_count: int
     bone_offset: int
@@ -515,7 +523,36 @@ class Read:
 
                 self.mesh_info.append(
                     MeshDataGno(vert_type, vert_count, vert_offset, norm_type, norm_total, norm_offset,
-                                col_type, col_total, col_offset, uv_type, uv_total, uv_offset,
+                                col_type, col_total, col_offset,
+                                uv_type, uv_total, uv_offset,
+                                0, 0, 0,
+                                0, 0, 0,
+                                bone_type, bone_total, bone_offset, data_bone_type, data_bone_total, data_bone_offset))
+            elif t == 16:
+                vert_type, vert_count = read_short_tuple(f, 2, ">")
+                vert_offset = read_int(f, ">")
+                norm_type, norm_total = read_short_tuple(f, 2, ">")
+                norm_offset = read_int(f, ">")
+                col_type, col_total = read_short_tuple(f, 2, ">")
+                col_offset = read_int(f, ">")
+                uv_type, uv_total = read_short_tuple(f, 2, ">")
+                uv_offset = read_int(f, ">")
+                uv2_type, uv2_total = read_short_tuple(f, 2, ">")
+                uv2_offset = read_int(f, ">")
+                uv3_type, uv3_total = read_short_tuple(f, 2, ">")
+                uv3_offset = read_int(f, ">")
+                f.seek(8, 1)
+                bone_type, bone_total = read_short_tuple(f, 2, ">")
+                bone_offset = read_int(f, ">")
+                data_bone_type, data_bone_total = read_short_tuple(f, 2, ">")
+                data_bone_offset = read_int(f, ">")
+
+                self.mesh_info.append(
+                    MeshDataGno(vert_type, vert_count, vert_offset, norm_type, norm_total, norm_offset,
+                                col_type, col_total, col_offset,
+                                uv_type, uv_total, uv_offset,
+                                uv2_type, uv2_total, uv2_offset,
+                                uv3_type, uv3_total, uv3_offset,
                                 bone_type, bone_total, bone_offset, data_bone_type, data_bone_total, data_bone_offset))
             elif t == 65536:
                 vert_info = []
@@ -576,23 +613,25 @@ class Read:
                         data_byte[v * 4 + 2] / div_by, data_byte[v * 4 + 3] / div_by))
 
         def get_uvs(d_type, count):
+            uv_data = []
             if d_type == 1:
                 data = read_float_tuple(f, 2 * count, ">")
                 for v in range(count):
                     v = v * 2
-                    v_uvs.append((data[v], - data[v + 1] + 1))
+                    uv_data.append((data[v], - data[v + 1] + 1))
             elif d_type == 2:
                 data = unpack(">" + str(2 * count) + "h", f.read(2 * count * 2))
                 for v in range(count):
                     v_u = data[v * 2] / 256
                     v_v = - data[v * 2 + 1] / 256 + 1
-                    v_uvs.append((v_u, v_v))
+                    uv_data.append((v_u, v_v))
             elif d_type == 3:
                 data = unpack(">" + str(2 * count) + "h", f.read(2 * count * 2))
                 for v in range(count):
                     v_u = data[v * 2] / 1024
                     v_v = - data[v * 2 + 1] / 1024 + 1
-                    v_uvs.append((v_u, v_v))
+                    uv_data.append((v_u, v_v))
+            return uv_data
 
         def get_bones(d_type, count, data_bone_total, data_bone_offset):
             start = f.tell()
@@ -626,8 +665,10 @@ class Read:
 
         def uv():
             data = read_float_tuple(f, 2 * vertex_count, ">")
+            uv_data = []
             for v in range(vertex_count):
-                v_uvs.append((data[v * 2], - data[v * 2 + 1] + 1))
+                uv_data.append((data[v * 2], - data[v * 2 + 1] + 1))
+            return uv_data
 
         def pos_wei():
             start = f.tell()
@@ -641,7 +682,7 @@ class Read:
 
         for t, m in zip(vert_flags, self.mesh_info):  # for all sub meshes
             v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [[], []], []
-            if t == 1:
+            if t in {1, 16}:
                 if m.vertex_offset:
                     f.seek(m.vertex_offset + self.start)
                     get_verts(m.vertex_type, m.vertex_count)
@@ -653,7 +694,13 @@ class Read:
                     get_colours(m.col_type, m.col_count)
                 if m.uv_offset:
                     f.seek(m.uv_offset + self.start)
-                    get_uvs(m.uv_type, m.uv_count)
+                    v_uvs = [get_uvs(m.uv_type, m.uv_count), ]
+                if m.uv2_offset:
+                    f.seek(m.uv2_offset + self.start)
+                    v_uvs.append(get_uvs(m.uv2_type, m.uv2_count))
+                if m.uv3_offset:
+                    f.seek(m.uv3_offset + self.start)
+                    v_uvs.append(get_uvs(m.uv3_type, m.uv3_count))
                 if m.bone_offset:
                     f.seek(m.bone_offset + self.start)
                     get_bones(m.bone_type, m.bone_count, m.data_bone_count, m.data_bone_offset)
@@ -668,11 +715,11 @@ class Read:
                     elif info.vertex_block_type == 2:
                         norm()
                     elif info.vertex_block_type == 32:
-                        uv()
+                        v_uvs = [uv(), ]
 
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, [], v_colours
                 ))
         return vertex_data, self.mesh_info
 
