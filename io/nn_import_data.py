@@ -118,6 +118,7 @@ gn_list = (
     ("SonicAndTheBlackKnight_G", "Sonic and the Black Knight", "Sonic and the Black Knight Model | 3 Mar 2009"),
     ("SonicRidersZeroGravity_G", "Sonic Riders Zero Gravity", "Sonic Riders Zero Gravity Model | 8 Jan 2008"),
     ("SonicUnleashed_G", "Sonic Unleashed", "Sonic Unleashed Model | 18 Nov 2008"),
+    ("GhostSquad_G", "Ghost Squad", "Ghost Squad Model | 23 Oct 2007"),
     ("SonicAndTheSecretRings_G", "Sonic and the Secret Rings", "Sonic and the Secret Rings Model | 20 Feb 2007"),
     ("BleachShatteredBlade_G", "Bleach: Shattered Blade", "Bleach: Shattered Blade Model | 14 Dec 2006"),
     ("SuperMonkeyBallBananaBlitz_G", "Super Monkey Ball: Banana Blitz",
@@ -175,6 +176,7 @@ determine_bone = {
 
     "SuperMonkeyBallStepAndRoll_G": 1,
     "SonicAndTheBlackKnight_G": 1,
+    "GhostSquad_G": 0.5,
     "SonicUnleashed_G": 0.5,
     "SonicRidersZeroGravity_G": 0.5,
     "SonicAndTheSecretRings_G": 1,
