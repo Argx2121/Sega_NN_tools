@@ -102,7 +102,7 @@ def _reflection_wx(tree, image, model_name_strip):
     ref_node = tree.nodes.new(type="ShaderNodeTexCoord")
 
     wx_node = tree.nodes.new(type="ShaderNodeUVMap")
-    wx_node.uv_map = model_name_strip + "_WX_Map"
+    wx_node.uv_map = model_name_strip + "_UV2_Map"
 
     math_node = tree.nodes.new(type="ShaderNodeVectorMath")
     math_node.operation = 'ADD'
@@ -136,7 +136,7 @@ def _bump(tree, image):
 
 def _wx_alpha(tree, colour, image, model_name_strip):
     node = tree.nodes.new(type="ShaderNodeUVMap")
-    node.uv_map = model_name_strip + "_WX_Map"
+    node.uv_map = model_name_strip + "_UV2_Map"
     tree.links.new(image.inputs[0], node.outputs[0])
 
     multi = tree.nodes.new(type="ShaderNodeMixRGB")
@@ -151,7 +151,7 @@ def _wx_alpha(tree, colour, image, model_name_strip):
 
 def _wx(tree, colour, image, model_name_strip):
     node = tree.nodes.new(type="ShaderNodeUVMap")
-    node.uv_map = model_name_strip + "_WX_Map"
+    node.uv_map = model_name_strip + "_UV2_Map"
     tree.links.new(image.inputs[0], node.outputs[0])
 
     multi = tree.nodes.new(type="ShaderNodeMixRGB")
