@@ -31,21 +31,20 @@ if __package__ + ".io" in sys.modules:  # Sega_NN_tools is already loaded in to 
 
 import bpy
 
-from .io.nn import import_no
+from .io.nn import import_no, export_no, optimise_no
 from .io.other import import_collision, import_splines, import_pathfinding, import_objects
-from .extract import srgc, srpc, amb, sfr, pkg, srzg, bnk, sms, gosgts
+from .extract import srgc, srpc, amb, sfr, pkg, srzg, bnk
 from .ui import panels, preferences
 
 # classes
 classes = (
-    import_no.ImportSegaNO, preferences.ImportSegaNN,
+    import_no.ImportSegaNO, preferences.ImportSegaNN, export_no.ExportSegaNO, optimise_no.OptimiseSegaNO,
     import_collision.ImportSegaNNCollision, import_splines.ImportSegaNNSplines,
     import_pathfinding.ImportSegaNNPathfinding, import_objects.ImportSegaNNObjects,
     srgc.SonicRGCTools, srpc.SonicRPCTools,
-    amb.Sonic4Tools, sfr.ExtractSfrTools, bnk.ExtractBnkTools, pkg.ExtractPkgTools, sms.ExtractSmsTools,
-    gosgts.ExtractGosGtsTools,
+    amb.Sonic4Tools, sfr.ExtractSfrTools, bnk.ExtractBnkTools, pkg.ExtractPkgTools,
     srzg.ExtractSrgzTools,
-    panels.NN_PT_ImportPanel,
+    panels.NN_PT_ImportPanel, panels.NN_PT_ExportPanel,
     panels.EXTRACT_PT_Panel,
     panels.NN_PT_About,
 )
@@ -56,9 +55,11 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.TOPBAR_MT_file_import.append(import_no.menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.append(export_no.menu_func_export)
 
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
     bpy.types.TOPBAR_MT_file_import.remove(import_no.menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.remove(export_no.menu_func_export)

@@ -271,3 +271,108 @@ class ReadModel:
         self._debug_2(m.build_mesh)
         f.seek(start_block + len_block + 8)  # seek end of block
         return m
+
+
+class WriteModel:
+    __slots__ = ["f", "format_type", "debug", "nof0_offsets", "model_info", "settings"]
+
+    def __init__(self, f, format_type, debug, nof0_offsets, model_info, settings):
+        self.f = f
+        self.format_type = format_type
+        self.debug = debug
+        self.nof0_offsets = nof0_offsets
+        self.model_info = model_info
+        self.settings = settings
+
+    def _run(self, text_index: int, function):
+        text_list = ["Writing Bones...", "Writing Materials...", "Writing Vertices...", "Writing Faces...",
+                     "Writing Meshes...", "Writing Model Info..."]
+        return console_out(text_list[text_index], function)
+
+    def gno(self):
+        f = self.f
+        nof0_offsets = self.nof0_offsets
+        model_info = self.model_info
+        format_type = self.format_type
+        bone_used = self.model_info.bone_used
+
+        start_block = f.tell()
+        block_name = "NGOB"
+        write_string(f, bytes(block_name, 'utf-8'))
+        write_integer(f, "<", 0, 0, 0)
+
+        bone_offset = self._run(0, bones.Write(f, model_info.bones).be_semi)
+
+        material_offset, nof0_offsets = self._run(
+            1, materials.Write(f, format_type, model_info.materials, nof0_offsets).gno)
+
+        vert_offset, nof0_offsets = self._run(
+            2, vertices.Write(
+                f, format_type, model_info.geometry, nof0_offsets, model_info.bones, bone_used, self.settings).gno)
+
+        face_offset, nof0_offsets = self._run(
+            3, faces.Write(f, format_type, model_info.geometry, nof0_offsets).gno)
+
+        mesh_offset, nof0_offsets = self._run(
+            4, meshes.Write(
+                f, format_type, model_info.meshes, nof0_offsets, len(model_info.bones), bone_used, model_info).be_9)
+
+        offsets = (bone_offset, material_offset, vert_offset, face_offset, mesh_offset)
+
+        info_offset, nof0_offsets = self._run(
+            5, model_data.Write(f, format_type, model_info, nof0_offsets, offsets, bone_used).be)
+
+        write_aligned(f, 16)
+
+        end_block = f.tell()
+        f.seek(start_block + 4)
+        write_integer(f, "<", end_block - 8 - start_block)
+        write_integer(f, ">", info_offset)
+        f.seek(end_block)
+
+        return nof0_offsets
+
+    def xno(self):
+        f = self.f
+        nof0_offsets = self.nof0_offsets
+        model_info = self.model_info
+        format_type = self.format_type
+        bone_used = self.model_info.bone_used
+
+        start_block = f.tell()
+        block_name = "NXOB"
+        write_string(f, bytes(block_name, 'utf-8'))
+        self.nof0_offsets.append(f.tell() + 16)
+        write_integer(f, "<", 0, 0, 0, 0, 0, 0, 1)
+
+        bone_offset = self._run(0, bones.Write(f, model_info.bones).le_full)
+
+        material_offset, nof0_offsets = self._run(
+            1, materials.Write(f, format_type, model_info.materials, nof0_offsets).xno)
+
+        face_offset, nof0_offsets = self._run(
+            3, faces.Write(f, format_type, model_info.geometry, nof0_offsets).xno)
+
+        vert_start = f.tell()
+        vert_offset, v_buff_end, nof0_offsets = self._run(
+            2, vertices.Write(
+                f, format_type, model_info.geometry, nof0_offsets, model_info.bones, bone_used, self.settings).xno)
+
+        mesh_offset, nof0_offsets = self._run(
+            4, meshes.Write(
+                f, format_type, model_info.meshes, nof0_offsets, len(model_info.bones), bone_used, model_info).le_10)
+
+        offsets = (bone_offset, material_offset, vert_offset, face_offset, mesh_offset)
+
+        info_offset, nof0_offsets = self._run(
+            5, model_data.Write(f, format_type, model_info, nof0_offsets, offsets, bone_used).le)
+
+        write_aligned(f, 16)
+
+        end_block = f.tell()
+        f.seek(start_block + 4)
+        write_integer(f, "<", end_block - 8 - start_block)
+        write_integer(f, "<", info_offset, 0, v_buff_end - vert_start, vert_start)
+        f.seek(end_block)
+
+        return nof0_offsets

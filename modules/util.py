@@ -141,6 +141,20 @@ def show_not_read(tool_name):
     bpy.context.window_manager.popup_menu(draw_func=draw, title=tool_name, icon="ERROR")
 
 
+def show_no_selection(tool_name):
+    """Shows a pop-up to tell the user no selection was made"""
+    def draw(self, context):
+        self.layout.label(text="No selection was made!")
+    bpy.context.window_manager.popup_menu(draw_func=draw, title=tool_name, icon="ERROR")
+
+
+def bad_mesh(tool_name):
+    """Shows a pop-up to tell the user that a mesh is invalid for exporting"""
+    def draw(self, context):
+        self.layout.label(text="One or more meshes have bad geometry! (quads, edges, etc)")
+    bpy.context.window_manager.popup_menu(draw_func=draw, title=tool_name, icon="ERROR")
+
+
 def toggle_console():
     """Toggles Blenders console if on windows"""
     from platform import system
@@ -627,8 +641,7 @@ def write_float(file: BinaryIO, endian: str, *value: float):
             The floats to write.
 
     """
-    for values in value:
-        file.write(pack(endian + "f", values))
+    file.write(pack(endian + str(len(value)) + "f", *value))
 
 
 def write_integer(file: BinaryIO, endian: str, *value: int):
@@ -646,8 +659,7 @@ def write_integer(file: BinaryIO, endian: str, *value: int):
             The integers to write.
 
     """
-    for values in value:
-        file.write(pack(endian + "I", values))
+    file.write(pack(endian + str(len(value)) + "I", *value))
 
 
 def write_short(file: BinaryIO, endian: str, *value: int):
@@ -665,8 +677,7 @@ def write_short(file: BinaryIO, endian: str, *value: int):
             The shorts to write.
 
     """
-    for values in value:
-        file.write(pack(endian + "H", values))
+    file.write(pack(endian + str(len(value)) + "H", *value))
 
 
 def write_byte(file: BinaryIO, endian: str, *value: int):
@@ -684,5 +695,4 @@ def write_byte(file: BinaryIO, endian: str, *value: int):
             The bytes to write.
 
     """
-    for values in value:
-        file.write(pack(endian + "B", values))
+    file.write(pack(endian + str(len(value)) + "B", *value))

@@ -308,17 +308,7 @@ class Read:
         def bleach_shattered_blade_g():
             t_type = "none"
             t_settings = []
-            if texture_flags == 1074528513:
-                t_type = "diffuse"
-            elif texture_flags == 1074528833:
-                t_type = "reflection_wx"
-
-            return t_type, t_settings
-
-        def ghost_squad_g():  # needs material rework for proper support
-            t_type = "none"
-            t_settings = []
-            if texture_flags == 1074528513 or texture_flags == 1075314945:
+            if TextureFlags.byte4bit1:
                 t_type = "diffuse"
 
             return t_type, t_settings
@@ -360,7 +350,6 @@ class Read:
             "SonicRiders_G": sonic_riders_g,
             "SonicUnleashed_G": sonic_unleashed_g,
             "SuperMonkeyBallBananaBlitz_G": super_monkey_ball_g,
-            "GhostSquad_G": ghost_squad_g,
         }
         f = self.f
 
@@ -854,3 +843,173 @@ class Read:
         self._lno_zno_info()
         self._zno_texture()
         return self._return_data_2()
+
+
+class Write:
+    __slots__ = [
+        "f", "format_type", "material_data", "nof0_offsets", "mat_offsets"
+    ]
+
+    def __init__(self, f, format_type, material_data, nof0_offsets):
+        self.f = f
+        self.format_type = format_type
+        self.material_data = material_data
+        self.nof0_offsets = nof0_offsets
+        self.mat_offsets = []
+
+    def _xno_colour(self):
+        f = self.f
+        for mat in self.material_data.material_list:
+            self.mat_offsets.append((f.tell(), 0, 0))
+            for a in mat.rgb:
+                write_float(f, "<", a)
+            f.seek(-4, 1)
+            write_float(f, "<", mat.alpha)
+            write_float(f, "<", 0.7529413, 0.7529413, 0.7529413, 1, 0.9, 0.9, 0.9, 1, 0, 0, 0, 1, 32, 0, 0, 0)
+
+    def _xno_unknown(self):
+        f = self.f
+        offset = f.tell()
+        self.mat_offsets = [[a[0], offset, 0] for a in self.mat_offsets]
+        write_integer(f, "<", 1, 770, 771, 0, 32774, 0, 1, 516, 0, 1, 515, 1, 0, 0, 0, 0)
+
+    def _gno_texture(self):
+        f = self.f
+        textures = self.material_data.texture_list
+        # todo possibly blender import all material data so i have to do less manually
+        # todo get material data correctly somehow lol?
+
+        for mat in self.material_data.material_list:
+            self.mat_offsets.append(f.tell())
+            mat_flags = 0
+            if mat.boolean:
+                mat_flags = mat_flags | 131072
+            if mat.unlit:
+                mat_flags = mat_flags | 256
+            if mat.v_col:
+                mat_flags = mat_flags | 1
+
+            if not mat.unlit and not mat.boolean:
+                mat_flags = mat_flags | 16777216
+
+            write_integer(f, ">", mat_flags)
+            for a in mat.rgb:
+                write_float(f, ">", a)
+            f.seek(-4, 1)
+            write_float(f, ">", mat.alpha)
+            write_float(f, ">", 0.7529413, 0.7529413, 0.7529413, 0.9, 0.9, 0.9, 2, 0.3)
+
+            write_integer(f, ">", 1, 4, 5, 5, 2, 0, 6, 7, 0, 0)
+            for image in mat.texture_list:
+                if image.type == "DiffuseTexture":
+                    write_integer(f, ">", 1074528513)
+                    # write index
+                    write_integer(f, ">", textures.index(image.name.image.filepath))
+                    write_integer(f, ">", 2147483648, 0)
+                    write_float(f, ">", 1)
+                elif image.type == "ReflectionTexture":
+                    write_integer(f, ">", 1074536452)
+                    # write index
+                    write_integer(f, ">", textures.index(image.name.image.filepath))
+                    write_integer(f, ">", 2147483648, 0)
+                    write_float(f, ">", 1)
+                elif image.type == "EmissionTexture":
+                    if len(mat.texture_list) > 1:
+                        write_integer(f, ">", 1074528516)
+                    else:
+                        write_integer(f, ">", 1074528514)
+                    # write index
+                    write_integer(f, ">", textures.index(image.name.image.filepath))
+                    write_integer(f, ">", 2147483648, 0)
+                    write_float(f, ">", 1)
+
+    def _xno_texture(self):
+        f = self.f
+        textures = self.material_data.texture_list
+        # todo way to represent material as flat
+
+        for i, mat in enumerate(self.material_data.material_list):
+            self.mat_offsets[i][2] = f.tell()
+            tex_types = [a.type for a in mat.texture_list]
+            if "DiffuseTexture" in tex_types and tex_types.index("DiffuseTexture"):
+                # this means its not at index 0
+                # which will fuck up shading
+                old_data = mat.texture_list.pop(tex_types.index("DiffuseTexture"))
+                mat.texture_list.insert(0, old_data)
+
+            for image in mat.texture_list:
+                if image.type == "DiffuseTexture":
+                    diff_flags = 1074528513
+                    if "ReflectionTexture" in tex_types:
+                        diff_flags = diff_flags | 3
+                    write_integer(f, "<", diff_flags)
+                    # write index
+                    write_integer(f, "<", textures.index(image.name.image.filepath))
+                    write_float(f, "<", 0, 0, 1, 0)
+                    write_integer(f, "<", 65540, 0, 0, 0, 0, 0)
+                elif image.type == "ReflectionTexture":
+                    write_integer(f, "<", 1074536452)
+                    # write index
+                    write_integer(f, "<", textures.index(image.name.image.filepath))
+                    write_float(f, "<", 0, 0, 1, 0)
+                    write_integer(f, "<", 65540, 0, 0, 0, 0, 0)
+                    # yes riders does suck
+                    write_integer(f, "<", 1074536454)
+                    # write index
+                    write_integer(f, "<", textures.index(image.name.image.filepath))
+                    write_float(f, "<", 0, 0, 1, 0)
+                    write_integer(f, "<", 65540, 0, 0, 0, 0, 0)
+            if "ReflectionTexture" in tex_types:
+                mat.texture_list.append(mat.texture_list[tex_types.index("ReflectionTexture")])
+
+    def _xno_info(self):
+        f = self.f
+        new_off = []
+        for offset, mat in zip(self.mat_offsets, self.material_data.material_list):
+            new_off.append(f.tell())
+            a = 16777248  # todo its the same concept :flushed:
+            if mat.v_col:
+                a = a | 16
+            write_integer(f, "<", a, 0)
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, "<", offset[0])
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, "<", offset[1])
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, "<", offset[2])
+            write_integer(f, "<", 0, 0, 0)
+        self.mat_offsets = new_off
+
+    def _gno_offsets(self):
+        f = self.f
+        for a, b in zip(self.material_data.material_list, self.mat_offsets):
+            a = len(a.texture_list)
+            a = 255 >> (7 - a)
+            write_short(f, ">", a, 65535)
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, ">", b)
+
+    def _xno_offsets(self):
+        f = self.f
+        for a, b in zip(self.material_data.material_list, self.mat_offsets):
+            a = len(a.texture_list)
+            if a:
+                a = 16 | a
+            write_integer(f, "<", a)
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, "<", b)
+
+    def gno(self):
+        self._gno_texture()
+        material_offset = self.f.tell()
+        self._gno_offsets()
+        return material_offset, self.nof0_offsets
+
+    def xno(self):
+        self._xno_colour()
+        self._xno_unknown()
+        self._xno_texture()
+        self._xno_info()
+        material_offset = self.f.tell()
+        self._xno_offsets()
+        return material_offset, self.nof0_offsets

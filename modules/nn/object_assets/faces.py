@@ -444,3 +444,159 @@ class Read:
         self._gno_info(info_offset, info_flag)
         self._gno_indices(info_flag)
         return self.face_list, self.uv_list, self.norm_list, self.col_list
+
+
+class Write:
+    __slots__ = [
+        "f", "format_type", "meshes", "nof0_offsets", "face_offsets"
+    ]
+
+    def __init__(self, f, format_type, meshes, nof0_offsets):
+        self.f = f
+        self.format_type = format_type
+        self.meshes = meshes
+        self.nof0_offsets = nof0_offsets
+        self.face_offsets = []
+
+    def _xno_indices(self):
+        f = self.f
+        for i, m in enumerate(self.meshes):
+            if not m:
+                continue
+            face_list = m.faces
+            for face_info in face_list:
+                info = [len(face_info.faces), 1, f.tell()]
+                write_short(f, "<", len(face_info.faces))
+                info.append(f.tell())
+                for face in face_info.faces:
+                    write_short(f, "<", face)
+                write_aligned(f, 4)
+                self.face_offsets.append(info)
+
+    def _xno_info(self):
+        f = self.f
+        new_offs = []
+        for i in self.face_offsets:
+            new_offs.append(f.tell())
+            write_integer(f, "<", 18448, i[0], i[1])
+            self.nof0_offsets.append(f.tell())
+            self.nof0_offsets.append(f.tell() + 4)
+            write_integer(f, "<", i[2], i[3], 0, 0, 0)
+        self.face_offsets = new_offs
+
+    def _gno_indices(self):
+        f = self.f
+        write_aligned(f, 32)
+        for i, m in enumerate(self.meshes):
+            if not m:
+                continue
+            face_list = m.faces
+            for face_info in face_list:
+                start = f.tell()
+                write_integer(f, ">", 139460608)
+
+                # this whole section is a guess
+                face_fl = 0
+                if face_info.normals_type:
+                    face_fl = face_fl | 24
+                if face_info.colours_type:
+                    face_fl = face_fl | 96
+                if face_info.uvs_type:
+                    face_fl = face_fl | 6
+                if not face_info.colours_type:
+                    face_fl = face_fl | 6  # i really dont understand these flags
+                write_short(f, "<", face_fl)
+                write_short(f, ">", 2144)
+
+                if face_info.has_wx:
+                    write_integer(f, ">", 15)
+                elif face_info.uvs_type:
+                    write_integer(f, ">", 3)
+                else:
+                    write_integer(f, ">", 0)
+
+                write_integer(f, ">", 268435472, 134217728)
+
+                face_flags = 0
+                face_type_count = 1
+
+                if face_info.colours_type:
+                    face_flags = face_flags | 1
+                    face_type_count += 1
+                if face_info.normals_type:
+                    face_flags = face_flags | 4
+                    face_type_count += 1
+                if face_info.has_wx:
+                    face_flags = face_flags | 32
+                    face_type_count += 2
+                elif face_info.uvs_type:
+                    face_flags = face_flags | 16
+                    face_type_count += 1
+
+                write_byte(f, ">", face_flags, 153)
+                write_short(f, ">", len(face_info.faces) // face_type_count)
+
+                write_short(f, ">", *face_info.faces)
+
+                write_aligned(f, 32)
+                self.face_offsets.append((start, f.tell(), i, face_info))
+
+    def _gno_info(self):
+        f = self.f
+        offsets = self.face_offsets
+        self.face_offsets = []
+        for offset in offsets:
+            self.face_offsets.append(f.tell())
+            a = 65536  # only position (does not include count bit)
+            type_count = len([a for a in [
+                True, offset[3].normals_type, offset[3].colours_type, offset[3].uvs_type, offset[3].has_wx
+            ] if a])
+            a = a | (43690 >> (16 - type_count*2))  # b10 = 1, b1010 = 2 etc.
+
+            if offset[3].colours_type:
+                a = a | 2097152
+            if offset[3].uvs_type:
+                a = a | 4194304
+            if offset[3].has_wx:
+                a = a | 134217728
+            if offset[2] in {1, 3}:  # complex
+                a = a | 268435456
+                if offset[3].normals_type:
+                    a = a | 262144
+            else:  # simple mesh
+                if offset[3].normals_type:
+                    a = a | 589824
+                if type_count > 2:
+                    a = a | 4194304
+
+            write_integer(f, ">", a)
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, ">", offset[0], offset[1] - offset[0], 0)
+
+    def _be_offsets_flags(self):
+        f = self.f
+        for a in self.face_offsets:
+            write_integer(f, ">", 4)
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, ">", a)
+
+    def _le_offsets(self):
+        f = self.f
+        for a in self.face_offsets:
+            write_integer(f, "<", 1)
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, "<", a)
+
+    def gno(self):
+        self._gno_indices()
+        self._gno_info()
+        face_offset = self.f.tell()
+        self._be_offsets_flags()
+        return face_offset, self.nof0_offsets
+
+    def xno(self):
+        self._xno_indices()
+        self._xno_info()
+        face_offset = self.f.tell()
+        self._le_offsets()
+        return face_offset, self.nof0_offsets

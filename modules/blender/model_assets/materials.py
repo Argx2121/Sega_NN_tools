@@ -2,6 +2,8 @@ import bpy
 import os
 import pathlib
 from platform import system
+from bpy.types import Object, Mesh
+from dataclasses import dataclass
 
 
 def sort_list(material_list):
@@ -97,22 +99,6 @@ def _reflection(tree, image):
     return image.outputs[0]
 
 
-def _reflection_wx(tree, image, model_name_strip):
-    image.name = "ReflectionWxTexture"
-    ref_node = tree.nodes.new(type="ShaderNodeTexCoord")
-
-    wx_node = tree.nodes.new(type="ShaderNodeUVMap")
-    wx_node.uv_map = model_name_strip + "_UV2_Map"
-
-    math_node = tree.nodes.new(type="ShaderNodeVectorMath")
-    math_node.operation = 'ADD'
-
-    tree.links.new(math_node.inputs[0], ref_node.outputs[6])
-    tree.links.new(math_node.inputs[1], wx_node.outputs[0])
-    tree.links.new(image.inputs[0], math_node.outputs[0])
-    return image.outputs[0]
-
-
 def _normal(tree, image, settings, skip_textures):
     image.name = "NormalTexture"
     if not skip_textures:
@@ -136,7 +122,7 @@ def _bump(tree, image):
 
 def _wx_alpha(tree, colour, image, model_name_strip):
     node = tree.nodes.new(type="ShaderNodeUVMap")
-    node.uv_map = model_name_strip + "_UV2_Map"
+    node.uv_map = model_name_strip + "_WX_Map"
     tree.links.new(image.inputs[0], node.outputs[0])
 
     multi = tree.nodes.new(type="ShaderNodeMixRGB")
@@ -151,7 +137,7 @@ def _wx_alpha(tree, colour, image, model_name_strip):
 
 def _wx(tree, colour, image, model_name_strip):
     node = tree.nodes.new(type="ShaderNodeUVMap")
-    node.uv_map = model_name_strip + "_UV2_Map"
+    node.uv_map = model_name_strip + "_WX_Map"
     tree.links.new(image.inputs[0], node.outputs[0])
 
     multi = tree.nodes.new(type="ShaderNodeMixRGB")
@@ -236,8 +222,6 @@ def material_complex(self):
                 tree.links.new(n_end.inputs[3], image_node.outputs[0])
             elif m_tex_type == "reflection":
                 reflection = _reflection(tree, image_node)
-            elif m_tex_type == "reflection_wx":
-                reflection = _reflection_wx(tree, image_node, model_name_strip)
             elif m_tex_type == "bump":
                 displacement = _bump(tree, image_node)
                 tree.links.new(n_end.inputs[5], displacement)
@@ -355,3 +339,95 @@ def make_bpy_textures(file_path: str, texture_names: list, recursive: bool):  # 
     if False not in png_check:
         return [bpy.data.images.load(tex[0]) for tex in path_list_png]
     return texture_names
+
+
+@dataclass
+class MaterialList:
+    material_list: list
+    texture_list: list
+
+
+@dataclass
+class Mat:
+    name: str
+    rgb: list
+    alpha: float
+    texture_list: list
+    # the 01 not set in 01 00 00 00 =
+    # yes colour, yes the one after, no the one after, no to the int, yes to the float (ordered)
+    #  so no highlights
+    v_col: bool  # 00 00 00 01
+    unlit: bool  # 00 00 01 00
+    boolean: bool  # 00 02 00 00
+    # if alpha and texture: 01 00 00 02 ?
+
+
+def get_materials(self):
+    obj: Object = self.armature
+    material_names = []
+    material_list = []
+    texture_list = []
+
+    @dataclass
+    class Texture:
+        __slots__ = ["type", "name"]
+        type: str
+        name: str
+
+    if self.settings.riders_default:
+        class ImageFake:
+            class image:
+                filepath = "bd_15.png"
+        # we have to parse blenders image path data later... (bpy.path.basename(node.image.filepath))
+        #  so we will fake it because the image won't actually be loaded into blender
+        texture_list = ["bd_15.png"]
+
+    for child in self.mesh_list:
+        child: Object
+        material_name = child.active_material.name
+        if material_name not in material_names:
+            material_names.append(material_name)
+
+    material_names.sort()
+
+    for material in material_names:
+        name = material
+        material = bpy.data.materials[material]
+        material.use_nodes = True
+        m_texture_list = []
+        rgb = (0.7529413, 0.7529413, 0.7529413, 1.0)
+        alpha = 1.0
+        # todo maybe theres a way to see all the links? like its just a list of links
+        # todo oh maybe I can see what fbx exporter does for materials
+        # todo but i forgot to actually store and use data type settings
+        # 😔
+        # need to make the material import useless data to rewrite it and need to make materials parse correctly somehow
+        # todo bpy.data.materials['sha06_Material_0001'].node_tree.nodes["Specular BSDF"].inputs[4].links[0].from_socket
+        #  matLinks = mat.node_tree.links might help too?
+
+        #     for ob_obj in objects:
+        #         # If obj is not a valid object for materials, wrapper will just return an empty tuple...
+        #         for ma_s in ob_obj.material_slots:
+        #             ma = ma_s.material
+        #             if ma is None:
+        #                 continue  # Empty slots!
+
+        for mat in material.node_tree.nodes[::]:
+            if mat.name == "DiffuseTexture":
+                m_texture_list.append(Texture("DiffuseTexture", mat))
+                if mat.image.filepath not in texture_list:
+                    texture_list.append(mat.image.filepath)
+            elif mat.name == "ReflectionTexture":
+                m_texture_list.append(Texture("ReflectionTexture", mat))
+                if mat.image.filepath not in texture_list:
+                    texture_list.append(mat.image.filepath)
+            elif mat.name == "EmissionTexture":
+                m_texture_list.append(Texture("EmissionTexture", mat))
+                if mat.image.filepath not in texture_list:
+                    texture_list.append(mat.image.filepath)
+            elif mat.name == "RGB":
+                rgb = mat.outputs[0].default_value[::]
+            elif mat.name == "Value":
+                alpha = mat.outputs[0].default_value
+        material_list.append(Mat(name, rgb, alpha, m_texture_list, False, False, False))
+    return MaterialList(material_list, texture_list)

@@ -247,3 +247,100 @@ class Read:
 
         return mi, start
 
+
+class Write:
+    __slots__ = [
+        "f", "format_type", "model", "nof0_offsets", "offsets", "bone"
+    ]
+
+    def __init__(self, f, format_type, model, nof0_offsets, offsets, bone):
+        self.f = f
+        self.format_type = format_type
+        self.model = model
+        self.nof0_offsets = nof0_offsets
+        self.offsets = offsets
+        self.bone = bone
+
+    def be(self):
+        f = self.f
+        model_data = self.model
+        offsets = self.offsets
+        info_offset = f.tell()
+
+        mesh_set_count = len(model_data.meshes.simple_opaque) + len(model_data.meshes.complex_opaque) + \
+                         len(model_data.meshes.simple_alpha) + len(model_data.meshes.complex_alpha)
+        bone_used = self.bone
+        vert_sets = 0
+
+        for m in model_data.geometry:
+            if not m:
+                continue
+            vert_sets += len(m.vertices)
+
+        mesh_sets = 0
+        if model_data.meshes.simple_opaque:
+            mesh_sets += 1
+        if model_data.meshes.complex_opaque:
+            mesh_sets += 1
+        if model_data.meshes.simple_alpha:
+            mesh_sets += 1
+        if model_data.meshes.complex_alpha:
+            mesh_sets += 1
+
+        write_float(f, ">", model_data.center[0], model_data.center[1], model_data.center[2], model_data.radius)
+        write_integer(f, ">", len(model_data.materials.material_list), offsets[1])
+        self.nof0_offsets.append(f.tell() - 4)
+        write_integer(f, ">", vert_sets, offsets[2])
+        self.nof0_offsets.append(f.tell() - 4)
+        write_integer(f, ">", mesh_set_count, offsets[3])
+        self.nof0_offsets.append(f.tell() - 4)
+        write_integer(
+            f, ">", len(model_data.bones), model_data.bone_depth, offsets[0], len(bone_used))
+        self.nof0_offsets.append(f.tell() - 8)
+        write_integer(f, ">", mesh_sets, offsets[4], len(model_data.materials.texture_list))
+        self.nof0_offsets.append(f.tell() - 8)
+        # mats, mat_off, verts, v_off, faces, f_off, bones, _, b_off, b_used, m_sets, off = read_int_tuple(f, 12, ">")
+
+        return info_offset, self.nof0_offsets
+
+    def le(self):
+        f = self.f
+        model_data = self.model
+        offsets = self.offsets
+        info_offset = f.tell()
+
+        mesh_set_count = len(model_data.meshes.simple_opaque) + len(model_data.meshes.complex_opaque) + \
+                         len(model_data.meshes.simple_alpha) + len(model_data.meshes.complex_alpha)
+        bone_used = self.bone
+        vert_sets = 0
+
+        for m in model_data.geometry:
+            if not m:
+                continue
+            vert_sets += len(m.vertices)  # todo missing indent? nest
+
+        mesh_sets = 0
+        if model_data.meshes.simple_opaque:
+            mesh_sets += 1
+        if model_data.meshes.complex_opaque:
+            mesh_sets += 1
+        if model_data.meshes.simple_alpha:
+            mesh_sets += 1
+        if model_data.meshes.complex_alpha:
+            mesh_sets += 1
+
+        write_float(f, "<", model_data.center[0], model_data.center[1], model_data.center[2], model_data.radius)
+        write_integer(f, "<", len(model_data.materials.material_list), offsets[1])
+        self.nof0_offsets.append(f.tell() - 4)
+        write_integer(f, "<", vert_sets, offsets[2])
+        self.nof0_offsets.append(f.tell() - 4)
+        write_integer(f, "<", mesh_set_count, offsets[3])
+        self.nof0_offsets.append(f.tell() - 4)
+        write_integer(
+            f, "<", len(model_data.bones), model_data.bone_depth, offsets[0], len(bone_used))
+        self.nof0_offsets.append(f.tell() - 8)
+        write_integer(f, "<", mesh_sets, offsets[4], len(model_data.materials.texture_list))
+        self.nof0_offsets.append(f.tell() - 8)
+        # mats, mat_off, verts, v_off, faces, f_off, bones, _, b_off, b_used, m_sets, off = read_int_tuple(f, 12, ">")
+
+        return info_offset, self.nof0_offsets

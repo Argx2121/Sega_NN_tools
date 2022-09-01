@@ -576,9 +576,9 @@ class Read:
                     v_positions.append(data[v * 3: v * 3 + 3])
             else:
                 data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
-                d_type -= 2
-                mult_by = 4 ** d_type
-                # 9 and 10 aren't on all formats
+                mult_by = (0, 0, 1, 4, 16, 64, 256, 1024, 4096)[d_type]
+                # e.g. pos type 5: mult_by = 64
+                # type 0 and 1 are padding (they will never be called)
                 for v in range(count):
                     v1 = data[v * 3] / mult_by
                     v2 = data[v * 3 + 1] / mult_by
@@ -1917,3 +1917,362 @@ class Read:
         self._le_offsets()
         self._xno_zno_info()
         return self._zno_vertices()
+
+
+@dataclass
+class GnoVertOffset:
+    pos_start: int
+    pos_count: int
+    pos_type: int
+    norm_start: int
+    norm_count: int
+    norm_type: int
+    col_start: int
+    col_count: int
+    col_type: int
+    uv_start: int
+    uv_count: int
+    uv_type: int
+    bone_start: int
+    bone_count: int
+    weight_type: int
+    bone2_start: int
+    bone2_count: int
+
+
+class Write:
+    __slots__ = [
+        "f", "format_type", "meshes", "nof0_offsets", "bones", "vert_offsets", "bone_used", "settings"
+    ]
+
+    def __init__(self, f, format_type, meshes, nof0_offsets, bones, bone_used, settings):
+        self.f = f
+        self.format_type = format_type
+        self.meshes = meshes
+        self.nof0_offsets = nof0_offsets
+        self.bones = bones
+        self.bone_used = bone_used
+        self.settings = settings
+        self.vert_offsets = []
+
+    @dataclass
+    class VertData:
+        offset: int
+        norm: bool
+        wei: bool
+        col: bool
+        uv: bool
+        wx: bool
+        block_size: int
+        count: int
+        bones: list
+
+    def _xno_vertices(self):
+        f = self.f
+
+        for m in self.meshes:
+            if not m:
+                continue
+            m = m.vertices
+            for mesh, bone_names in m:
+                vertex_start = f.tell()
+                norm = bool(mesh[0].normals)
+                wei = bool(mesh[0].weights)
+                colours = bool(mesh[0].colours)
+                uvs = bool(mesh[0].uvs)
+                wxs = bool(mesh[0].wxs)
+                if len(bone_names) > 4:
+                    # indices, weights
+                    for v in mesh:
+                        current_weights = list(v.weights)
+
+                        # get used groups
+                        used = [a for a in current_weights if a[1]][:4]
+                        used.sort()
+                        needed = [(0, 0) for a in range(4 - len(used))]
+                        used = used + needed
+                        # we do not write the last float :)
+                        v.weights = [[a[0] for a in used], [a[1] for a in used][:-1]]
+                elif len(bone_names) > 1:
+                    # the order of names in bone_names is the final order
+                    # the length can be 2, 3 or 4 names but 4 weights will always be stored
+                    for v in mesh:
+                        current_weights = list(v.weights)
+
+                        # get correct length
+                        used = set([a[0] for a in current_weights])
+                        possible = set(range(4))
+                        needed = [(a, 0) for a in list(possible - used)]
+                        new_weights = current_weights + needed
+                        new_weights.sort()  # order correctly
+                        v.weights = [a[1] for a in new_weights[:-1]]  # we do not write the last float :)
+                else:
+                    bone_names = []
+                block_size = 3 * 4
+                if norm:
+                    block_size += 3 * 4
+                if uvs:
+                    block_size += 2 * 4
+                if colours:
+                    if self.settings.cols == "short":
+                        block_size += 1 * 4
+                    block_size += 1 * 4
+                if bone_names:
+                    block_size += 3 * 4
+                if len(bone_names) > 4:
+                    block_size += 4
+                self.vert_offsets.append(self.VertData(
+                    vertex_start, norm, wei, colours, uvs, wxs, block_size, len(mesh), bone_names))
+                v_buff = b""
+                for v in mesh:
+                    v_buff += pack("<3f", *v.positions)
+                    if v.weights:
+                        if len(bone_names) > 4:
+                            v_buff += pack("<3f", *v.weights[1])
+                            v_buff += pack("<4B", *v.weights[0])
+                        else:
+                            v_buff += pack("<3f", *v.weights)
+                    if v.normals:
+                        v_buff += pack("<3f", *v.normals)
+                    if v.colours:
+                        if self.settings.cols == "short":
+                            for col in [v.colours[2], v.colours[1], v.colours[0], v.colours[3]]:
+                                v_buff += pack("<H", round(col * 65535))
+                        else:
+                            for col in [v.colours[2], v.colours[1], v.colours[0], v.colours[3]]:
+                                v_buff += pack("<B", round(col * 255))
+                    if v.uvs:
+                        v_buff += pack("<2f", *v.uvs)
+                    if v.wxs:
+                        v_buff += pack("<2f", *v.wxs)
+                f.write(v_buff)
+
+    def _gno_vertices(self):
+        f = self.f
+
+        for m in self.meshes:
+            if not m:
+                continue
+            m = m.vertices
+            for mesh in m:
+                pos_start = f.tell()
+                if mesh.positions_type == 1:
+                    for vert in mesh.positions:
+                        write_float(f, ">", vert[0], vert[1], vert[2])
+                else:
+                    for vert in mesh.positions:
+                        f.write(pack(">h", vert[0]))
+                        f.write(pack(">h", vert[1]))
+                        f.write(pack(">h", vert[2]))
+                write_aligned(f, 4)
+
+                norm_start = f.tell()
+                if mesh.normals_type == 1:
+                    for vert in mesh.normals:
+                        write_float(f, ">", vert[0], vert[1], vert[2])
+                elif mesh.normals_type == 2:
+                    for vert in mesh.normals:
+                        f.write(pack(">h", vert[0]))
+                        f.write(pack(">h", vert[1]))
+                        f.write(pack(">h", vert[2]))
+                else:
+                    for vert in mesh.normals:
+                        f.write(pack(">b", vert[0]))
+                        f.write(pack(">b", vert[1]))
+                        f.write(pack(">b", vert[2]))
+                write_aligned(f, 4)
+
+                col_start = f.tell()
+                if mesh.colours_type == 1:
+                    for vert in mesh.colours:
+                        f.write(pack(">B", vert[0]))
+                        f.write(pack(">B", vert[1]))
+                        f.write(pack(">B", vert[2]))
+                        f.write(pack(">B", vert[3]))
+                write_aligned(f, 4)
+
+                uv_start = f.tell()
+                if mesh.uvs_type == 1:
+                    for vert in mesh.uvs:
+                        write_float(f, ">", vert[0], vert[1])
+                else:
+                    for vert in mesh.uvs:
+                        f.write(pack(">h", vert[0]))
+                        f.write(pack(">h", vert[1]))
+                write_aligned(f, 4)
+
+                bone_start = f.tell()
+
+                bone_used = self.bone_used
+                weight_type = 0
+                bone_count = 0
+                bone2_start = 0
+                bone2_count = 0
+
+                if mesh.weights:
+                    if max(len(i) for i in mesh.weights) > 2:
+                        weight_type = 8
+                        for vert in mesh.weights:
+                            for v in vert:
+                                write_short(f, ">", bone_used.index(v[0]), round(v[1] * 16384))
+                        bone2_start = f.tell()
+                        bone2_count = len(mesh.weights)
+                        wei_list_len = [len(i) for i in mesh.weights]
+                        wei_list_index = 0
+                        for i in wei_list_len:
+                            write_short(f, ">", i, wei_list_index)
+                            wei_list_index += i
+                        bone_count = wei_list_index
+                    else:
+                        weight_type = 1
+                        wei_list = []
+                        bone_count = len(mesh.weights)
+                        for vert in mesh.weights:
+                            w_bone = []
+                            w_wei = []
+                            for i, wei in vert:
+                                bone = bone_used.index(i)
+                                w_bone.append(bone)
+                                w_wei.append(wei)
+                            w_bone.append(0)
+                            w_wei.append(0)
+                            wei_list.append((w_bone, w_wei))
+                        for wei in wei_list:
+                            # byte byte short / index index weight
+                            w_bone = wei[0]
+                            w_wei = wei[1]
+                            write_byte(f, ">", w_bone[0], w_bone[1])
+                            write_short(f, ">", round(w_wei[0] * 16384))
+                self.vert_offsets.append(GnoVertOffset(
+                    pos_start, len(mesh.positions), mesh.positions_type,
+                    norm_start, len(mesh.normals), mesh.normals_type,
+                    col_start, len(mesh.colours), mesh.colours_type,
+                    uv_start, len(mesh.uvs), mesh.uvs_type,
+                    bone_start, bone_count, weight_type,
+                    bone2_start, bone2_count
+                ))
+        write_aligned(f, 4)
+
+    def _gno_info(self):
+        f = self.f
+        offsets = self.vert_offsets
+        self.vert_offsets = []
+        for vert_info in offsets:
+            vert_info: GnoVertOffset
+            self.vert_offsets.append(f.tell())
+            write_short(f, ">", vert_info.pos_type, vert_info.pos_count)
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, ">", vert_info.pos_start)
+
+            if vert_info.norm_count:
+                write_short(f, ">", vert_info.norm_type, vert_info.norm_count)
+                self.nof0_offsets.append(f.tell())
+                write_integer(f, ">", vert_info.norm_start)
+            else:
+                write_integer(f, ">", 0, 0)
+
+            if vert_info.col_count:
+                write_short(f, ">", vert_info.col_type, vert_info.col_count)
+                self.nof0_offsets.append(f.tell())
+                write_integer(f, ">", vert_info.col_start)
+            else:
+                write_integer(f, ">", 0, 0)
+
+            if vert_info.uv_count:
+                write_short(f, ">", vert_info.uv_type, vert_info.uv_count)
+                self.nof0_offsets.append(f.tell())
+                write_integer(f, ">", vert_info.uv_start)
+            else:
+                write_integer(f, ">", 0, 0)
+
+            write_integer(f, ">", 0, 0)
+
+            if vert_info.bone_count:
+                write_short(f, ">", vert_info.weight_type, vert_info.bone_count)
+                self.nof0_offsets.append(f.tell())
+                write_integer(f, ">", vert_info.bone_start)
+            else:
+                write_integer(f, ">", 0, 0)
+
+            if vert_info.bone2_count:
+                write_short(f, ">", 1, vert_info.bone2_count)
+                self.nof0_offsets.append(f.tell())
+                write_integer(f, ">", vert_info.bone2_start)
+            else:
+                write_integer(f, ">", 0, 0)
+
+    def _xno_info(self):
+        f = self.f
+        new_off = []
+        for info in self.vert_offsets:
+            info: Write.VertData
+            start_bone = 0
+            bone_count = 0
+            if info.bones:
+                start_bone = f.tell()
+                bone_count = len(info.bones)
+                for b in info.bones:
+                    write_integer(f, "<", self.bone_used.index(b))
+            new_off.append(f.tell())
+            flag1 = 1  # position flags
+            flag2 = 2
+            if info.norm:
+                flag1 = flag1 | 2
+                flag2 = flag2 | 16
+            if info.uv:
+                flag1 = flag1 | 65536
+                flag2 = flag2 | 256
+            if info.col:
+                if self.settings.cols == "short":
+                    flag1 = flag1 | 16
+                    flag2 = flag2 | 128
+                else:
+                    flag1 = flag1 | 8
+                    flag2 = flag2 | 64
+            if bone_count > 4:
+                flag1 = flag1 | 1024
+            if bone_count:
+                flag1 = flag1 | 28672
+                flag2 = flag2 | 8
+
+            write_integer(f, "<", flag1, flag2)
+            self.nof0_offsets.append(f.tell() + 8)
+            write_integer(f, "<", info.block_size, info.count, info.offset, bone_count, start_bone)
+            if start_bone:
+                self.nof0_offsets.append(f.tell() - 4)
+            write_integer(f, "<", 0, 0, 0, 0, 0)
+        self.vert_offsets = new_off
+        # 000KC0NP 0WWW0000 000000QU 00000000 KC0NW0P0 000000QU 00000000 00000000 SR PC
+        #  K = colours as shorts, not bytes Q = unknown, in psu Q is wx but srpc has only one float(?)
+        #  block order: POS Q WEIGH NORM COL UV SR PC
+        # 0M00C0NP 0WWW0I02 000000XU 00000000 0C0NW0P0 000W00XU 00000000 00000000 06
+
+    def _be_offsets(self):
+        f = self.f
+        for a in self.vert_offsets:
+            write_integer(f, ">", 1)
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, ">", a)
+
+    def _le_offsets(self):
+        f = self.f
+        for a in self.vert_offsets:
+            write_integer(f, "<", 1)
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, "<", a)
+
+    def gno(self):
+        self._gno_vertices()
+        self._gno_info()
+        vert_offset = self.f.tell()
+        self._be_offsets()
+        return vert_offset, self.nof0_offsets
+
+    def xno(self):
+        self._xno_vertices()
+        v_buff_end = self.f.tell()
+        write_aligned(self.f, 4)
+        self._xno_info()
+        vert_offset = self.f.tell()
+        self._le_offsets()
+        return vert_offset, v_buff_end, self.nof0_offsets

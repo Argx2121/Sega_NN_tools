@@ -112,3 +112,145 @@ class Read:
             )
             for _ in range(self.bone_count)]
         return bone_data
+
+
+class Write:
+    __slots__ = ["f", "bones"]
+
+    def __init__(self, f, bones):
+        self.f = f
+        self.bones = bones
+
+    def be_semi(self):
+        f = self.f
+        start = f.tell()
+        for b in self.bones:
+            for var in b.flags:
+                f.write(pack(">B", var))
+            f.write(pack(">h", b.used))
+            f.write(pack(">h", b.parent))
+            f.write(pack(">h", b.child))
+            f.write(pack(">h", b.sibling))
+            for var in b.position:
+                write_float(f, ">", var)
+            for var in b.rotation:
+                f.write(pack(">i", round(var / (180 / 32767))))
+            for var in b.scale:
+                write_float(f, ">", var)
+            bmat = b.matrix
+            for var in bmat[0]:
+                write_float(f, ">", var)
+            for var in bmat[1]:
+                write_float(f, ">", var)
+            for var in bmat[2]:
+                write_float(f, ">", var)
+
+            for var in b.center:
+                write_float(f, ">", var)
+            write_float(f, ">", b.radius)
+            write_float(f, ">", b.unknown)
+            for var in b.length:
+                write_float(f, ">", var)
+        return start
+
+    def le_semi(self):
+        f = self.f
+        start = f.tell()
+        for b in self.bones:
+            b.flags.reverse()
+            for var in b.flags:
+                f.write(pack("<B", var))
+            f.write(pack("<h", b.used))
+            f.write(pack("<h", b.parent))
+            f.write(pack("<h", b.child))
+            f.write(pack("<h", b.sibling))
+            for var in b.position:
+                write_float(f, "<", var)
+            for var in b.rotation:
+                f.write(pack("<i", round(var / (180 / 32767))))
+            for var in b.scale:
+                write_float(f, "<", var)
+            bmat = b.matrix
+            for var in bmat[0]:
+                write_float(f, "<", var)
+            for var in bmat[1]:
+                write_float(f, "<", var)
+            for var in bmat[2]:
+                write_float(f, "<", var)
+
+            for var in b.center:
+                write_float(f, "<", var)
+            write_float(f, "<", b.radius)
+            write_float(f, "<", b.unknown)
+            for var in b.length:
+                write_float(f, "<", var)
+        return start
+
+    def be_full(self):
+        f = self.f
+        start = f.tell()
+        for b in self.bones:
+            for var in b.flags:
+                f.write(pack(">B", var))
+            f.write(pack(">h", b.used))
+            f.write(pack(">h", b.parent))
+            f.write(pack(">h", b.child))
+            f.write(pack(">h", b.sibling))
+            for var in b.position:
+                write_float(f, ">", var)
+            for var in b.rotation:
+                f.write(pack(">i", round(var / (180 / 32767))))
+            for var in b.scale:
+                write_float(f, ">", var)
+            bmat = b.matrix.transposed()
+            for var in bmat[0]:
+                write_float(f, ">", var)
+            for var in bmat[1]:
+                write_float(f, ">", var)
+            for var in bmat[2]:
+                write_float(f, ">", var)
+            for var in bmat[3]:
+                write_float(f, ">", var)
+
+            for var in b.center:
+                write_float(f, ">", var)
+            write_float(f, ">", b.radius)
+            write_float(f, ">", b.unknown)
+            for var in b.length:
+                write_float(f, ">", var)
+        return start
+
+    def le_full(self):
+        f = self.f
+        start = f.tell()
+        for b in self.bones:
+            b.flags.reverse()
+            for var in b.flags:
+                f.write(pack("<B", var))
+            f.write(pack("<h", b.used))
+            f.write(pack("<h", b.parent))
+            f.write(pack("<h", b.child))
+            f.write(pack("<h", b.sibling))
+            for var in b.position:
+                write_float(f, "<", var)
+            for var in b.rotation:
+                f.write(pack("<i", round(var / (180 / 32767))))
+            for var in b.scale:
+                write_float(f, "<", var)
+            bmat = b.matrix.transposed()
+            for var in bmat[0]:
+                write_float(f, "<", var)
+            for var in bmat[1]:
+                write_float(f, "<", var)
+            for var in bmat[2]:
+                write_float(f, "<", var)
+            for var in bmat[3]:
+                write_float(f, "<", var)
+
+            for var in b.center:
+                write_float(f, "<", var)
+            write_float(f, "<", b.radius)
+            write_float(f, "<", b.unknown)
+            for var in b.length:
+                write_float(f, "<", var)
+        return start

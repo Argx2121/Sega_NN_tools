@@ -172,7 +172,7 @@ class ReadNn:
         else:
             endian = "<"
 
-        f.seek(start + 20)
+        f.seek(start + 20)  # use NOF0 offset
         f.seek(read_int(f, endian) + start)
 
         b_name = read_str(f, 4)
@@ -196,6 +196,61 @@ class ReadNn:
             file_name = "Unnamed_File_" + str(index) + "." + block_type.lower() + block
             index += 1
         return file_name, index
+
+    def write_model(self, model_info, settings):
+        f = self.f
+        format_type = self.format_type
+        nof0_offsets = []
+        block_count = 1
+        big_endian = False
+        version_number = 1
+        alignment = 32
+        if format_type[-1] in self.big_endian:
+            big_endian = True
+
+        if model_info.materials.texture_list and settings.texture_block:
+            if big_endian:
+                nof0_offsets = nn_texture_library.Write(
+                    f, format_type, model_info.materials.texture_list, nof0_offsets).be()
+            else:
+                nof0_offsets = nn_texture_library.Write(
+                    f, format_type, model_info.materials.texture_list, nof0_offsets).le()
+            block_count += 1
+
+        # NXEF
+
+        if settings.bone_block:
+            if big_endian:
+                nof0_offsets = nn_node_names.Write(
+                    f, format_type, [b.name for b in model_info.bones], nof0_offsets).be()
+            else:
+                nof0_offsets = nn_node_names.Write(
+                    f, format_type, [b.name for b in model_info.bones], nof0_offsets).le()
+            block_count += 1
+
+        if format_type[-1] == "G":
+            version_number = 1
+            nof0_offsets = nn_object.WriteModel(f, format_type, self.debug, nof0_offsets, model_info, settings).gno()
+        elif format_type[-1] == "X":
+            version_number = 1
+            nof0_offsets = nn_object.WriteModel(f, format_type, self.debug, nof0_offsets, model_info, settings).xno()
+
+        offset_file_start = f.tell()
+        if big_endian:
+            nn_offset_file.Write(f, nof0_offsets).be()
+        else:
+            nn_offset_file.Write(f, nof0_offsets).le()
+        offset_file_end = f.tell()
+
+        if settings.name:
+            nn_file_name.Write(f, model_info.name).generic()
+        nn_end.Write(f, alignment).generic()
+
+        f.seek(0)
+        if big_endian:
+            nn_information_file.Write(f, format_type, block_count, offset_file_start, offset_file_end, version_number).be()
+        else:
+            nn_information_file.Write(f, format_type, block_count, offset_file_start, offset_file_end, version_number).le()
 
     # block definitions
     # specific

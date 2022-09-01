@@ -1,5 +1,20 @@
 # Import data
 
+no_export_list = (
+    # Extra import functions
+    # ("None__", "Set Format", "Set model format"),
+    # Formats
+    # ("C", "CNO", "Cno"),
+    # ("E", "ENO", "Eno"),
+    ("G", "GNO", "Gno"),
+    # ("I", "INO", "Ino"),
+    # ("L", "LNO", "Lno"),
+    # ("S", "SNO", "Sno"),
+    # ("U", "UNO", "Uno"),
+    ("X", "XNO", "Xno"),
+    # ("Z", "ZNO", "Zno"),
+)
+
 no_list = (
     # Extra import functions
     ("Match__", "Match", "Tries to match the file with a known format (Experimental!!)"),
@@ -118,7 +133,6 @@ gn_list = (
     ("SonicAndTheBlackKnight_G", "Sonic and the Black Knight", "Sonic and the Black Knight Model | 3 Mar 2009"),
     ("SonicRidersZeroGravity_G", "Sonic Riders Zero Gravity", "Sonic Riders Zero Gravity Model | 8 Jan 2008"),
     ("SonicUnleashed_G", "Sonic Unleashed", "Sonic Unleashed Model | 18 Nov 2008"),
-    ("GhostSquad_G", "Ghost Squad", "Ghost Squad Model | 23 Oct 2007"),
     ("SonicAndTheSecretRings_G", "Sonic and the Secret Rings", "Sonic and the Secret Rings Model | 20 Feb 2007"),
     ("BleachShatteredBlade_G", "Bleach: Shattered Blade", "Bleach: Shattered Blade Model | 14 Dec 2006"),
     ("SuperMonkeyBallBananaBlitz_G", "Super Monkey Ball: Banana Blitz",
@@ -176,8 +190,7 @@ determine_bone = {
 
     "SuperMonkeyBallStepAndRoll_G": 1,
     "SonicAndTheBlackKnight_G": 1,
-    "GhostSquad_G": 0.5,
-    "SonicUnleashed_G": 0.5,
+    "SonicUnleashed_G": 1,
     "SonicRidersZeroGravity_G": 0.5,
     "SonicAndTheSecretRings_G": 1,
     "BleachShatteredBlade_G": 1,
