@@ -224,6 +224,7 @@ class Write:
         f = self.f
         start = f.tell()
         for b in self.bones:
+            # b.flags[2] = 0  # todo needed for zno
             b.flags.reverse()
             for var in b.flags:
                 f.write(pack("<B", var))

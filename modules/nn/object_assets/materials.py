@@ -878,11 +878,28 @@ class Write:
             write_float(f, "<", mat.alpha)
             write_float(f, "<", 0.7529413, 0.7529413, 0.7529413, 1, 0.9, 0.9, 0.9, 1, 0, 0, 0, 1, 32, 0, 0, 0)
 
+    def _zno_colour(self):
+        f = self.f
+        for mat in self.material_data.material_list:
+            self.mat_offsets.append((f.tell(), 0, 0))
+            write_integer(f, "<", 2)  # unsure
+            for a in mat.rgb:
+                write_float(f, "<", a)
+            f.seek(-4, 1)
+            write_float(f, "<", mat.alpha)
+            write_float(f, "<", 0.7529413, 0.7529413, 0.7529413, 1, 0.0, 0.0, 0.0, 1, 1, 1, 1, 0, 8, 1)
+
     def _xno_unknown(self):
         f = self.f
         offset = f.tell()
         self.mat_offsets = [[a[0], offset, 0] for a in self.mat_offsets]
         write_integer(f, "<", 1, 770, 771, 0, 32774, 0, 1, 516, 0, 1, 515, 1, 0, 0, 0, 0)
+
+    def _zno_unknown(self):
+        f = self.f
+        offset = f.tell()
+        self.mat_offsets = [[a[0], offset, 0] for a in self.mat_offsets]
+        write_integer(f, "<", 25, 393221, 393221, 0, 352649217, 262149, 0)
 
     def _gno_texture(self):
         f = self.f
@@ -980,6 +997,46 @@ class Write:
             if "ReflectionTexture" in tex_types:
                 mat.texture_list.append(mat.texture_list[tex_types.index("ReflectionTexture")])
 
+    def _zno_texture(self):
+        f = self.f
+        textures = self.material_data.texture_list
+        # todo way to represent material as flat
+
+        for i, mat in enumerate(self.material_data.material_list):
+            self.mat_offsets[i][2] = f.tell()
+            tex_types = [a.type for a in mat.texture_list]
+            if "DiffuseTexture" in tex_types and tex_types.index("DiffuseTexture"):
+                # this means its not at index 0
+                # which will fuck up shading
+                old_data = mat.texture_list.pop(tex_types.index("DiffuseTexture"))
+                mat.texture_list.insert(0, old_data)
+
+            for image in mat.texture_list:
+                if image.type == "DiffuseTexture":
+                    diff_flags = 1610612738
+                    if "ReflectionTexture" in tex_types:
+                        diff_flags = diff_flags | 3
+                    write_integer(f, "<", diff_flags)
+                    # write index
+                    write_integer(f, "<", textures.index(image.name.image.filepath))
+                    write_float(f, "<", 0, 1, 0, 0, 1, 1)
+                    write_integer(f, "<", 65537, 0, 0, 0, 0, 0, 0, 0)
+                elif image.type == "ReflectionTexture":
+                    continue
+                    write_integer(f, "<", 1074536452)
+                    # write index
+                    write_integer(f, "<", textures.index(image.name.image.filepath))
+                    write_float(f, "<", 0, 0, 1, 0)
+                    write_integer(f, "<", 65540, 0, 0, 0, 0, 0)
+                    # yes riders does suck
+                    write_integer(f, "<", 1074536454)
+                    # write index
+                    write_integer(f, "<", textures.index(image.name.image.filepath))
+                    write_float(f, "<", 0, 0, 1, 0)
+                    write_integer(f, "<", 65540, 0, 0, 0, 0, 0)
+            if "ReflectionTexture" in tex_types:
+                mat.texture_list.append(mat.texture_list[tex_types.index("ReflectionTexture")])
+
     def _xno_info(self):
         f = self.f
         new_off = []
@@ -996,6 +1053,30 @@ class Write:
             self.nof0_offsets.append(f.tell())
             write_integer(f, "<", offset[2])
             write_integer(f, "<", 0, 0, 0)
+        self.mat_offsets = new_off
+
+    def _zno_info(self):
+        f = self.f
+        new_off = []
+        for offset, mat in zip(self.mat_offsets, self.material_data.material_list):
+            new_off.append(f.tell())
+            a = 16777248  # todo its the same concept :flushed:
+            # todo all of these are temp hehe
+            if mat.v_col:
+                a = a | 16
+            write_integer(f, "<", 0, 0)
+            # 0, 0 (idk)
+            # mat colour off, funny data off,
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, "<", offset[0])
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, "<", offset[1])
+            # two flag type ints probably
+            write_integer(f, "<", 2, 1)
+            # texture offset, texture count
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, "<", offset[2])
+            write_integer(f, "<", len(mat.texture_list))
         self.mat_offsets = new_off
 
     def _gno_offsets(self):
@@ -1017,6 +1098,13 @@ class Write:
             self.nof0_offsets.append(f.tell())
             write_integer(f, "<", b)
 
+    def _zno_offsets(self):
+        f = self.f
+        for a in self.mat_offsets:
+            write_integer(f, ">", 48)  # haha epic
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, "<", a)
+
     def gno(self):
         self._gno_texture()
         material_offset = self.f.tell()
@@ -1030,4 +1118,13 @@ class Write:
         self._xno_info()
         material_offset = self.f.tell()
         self._xno_offsets()
+        return material_offset, self.nof0_offsets
+
+    def zno(self):
+        self._zno_colour()
+        self._zno_unknown()
+        self._zno_texture()
+        self._zno_info()
+        material_offset = self.f.tell()
+        self._zno_offsets()
         return material_offset, self.nof0_offsets

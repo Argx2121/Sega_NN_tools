@@ -173,6 +173,8 @@ class OptimiseSegaNO(bpy.types.Operator):
                     a for a in arma.children if
                     a.type == "MESH" and len(a.data.polygons) > 0 and len(a.vertex_groups) > 128]
                 # max bone count is 128 per mesh or 256 (it could be signed)
+                #                     a.type == "MESH" and len(a.data.polygons) > 0 and len(a.vertex_groups) > 16]
+                #                 # todo please make a new function
                 for obj in mesh_list:
                     model_complex_split(context, obj)
                 # unfortunately i will reuse code because i do not care
@@ -199,8 +201,7 @@ class OptimiseSegaNO(bpy.types.Operator):
                 a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0 and len(a.data.materials) > 1]
             for obj in mesh_list:
                 model_material_split(context, obj)
-            # i think its signed so the split value will be 32767 rounded down because uvs may have different count
-            #  also i cannot split this based off what would tri strip best sorry gang
+            # i cannot split this based off what would tri strip best sorry gang
             mesh_list_f = [
                 a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 30000]
             for obj in mesh_list_f:

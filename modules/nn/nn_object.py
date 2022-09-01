@@ -376,3 +376,53 @@ class WriteModel:
         f.seek(end_block)
 
         return nof0_offsets
+
+    def zno(self):
+        f = self.f
+        nof0_offsets = self.nof0_offsets
+        model_info = self.model_info
+        format_type = self.format_type
+        bone_used = self.model_info.bone_used
+
+        start_block = f.tell()
+        block_name = "NZOB"
+        write_string(f, bytes(block_name, 'utf-8'))
+        self.nof0_offsets.append(f.tell() + 16)
+        write_integer(f, "<", 0, 0, 3, 0, 0, 0, 0)
+
+        bone_offset = self._run(0, bones.Write(f, model_info.bones).le_full)
+
+        import codecs
+        cred_bytes = codecs.encode(self.settings.credits, "utf-8")  # todo is this needed
+        cred_bytes = codecs.decode(cred_bytes, "hex")
+        f.write(cred_bytes)
+
+        material_offset, nof0_offsets = self._run(
+            1, materials.Write(f, format_type, model_info.materials, nof0_offsets).zno)
+
+        face_offset, nof0_offsets = self._run(
+            3, faces.Write(f, format_type, model_info.geometry, nof0_offsets).xno)
+
+        vert_start = f.tell()
+        vert_offset, v_buff_end, nof0_offsets = self._run(
+            2, vertices.Write(
+                f, format_type, model_info.geometry, nof0_offsets, model_info.bones, bone_used, self.settings).zno)
+
+        mesh_offset, nof0_offsets = self._run(
+            4, meshes.Write(
+                f, format_type, model_info.meshes, nof0_offsets, len(model_info.bones), bone_used, model_info).le_10)
+
+        offsets = (bone_offset, material_offset, vert_offset, face_offset, mesh_offset)
+
+        info_offset, nof0_offsets = self._run(
+            5, model_data.Write(f, format_type, model_info, nof0_offsets, offsets, bone_used).le)
+
+        write_aligned(f, 16)
+
+        end_block = f.tell()
+        f.seek(start_block + 4)
+        write_integer(f, "<", end_block - 8 - start_block)
+        write_integer(f, "<", info_offset, 0, v_buff_end - vert_start, vert_start)
+        f.seek(end_block)
+
+        return nof0_offsets

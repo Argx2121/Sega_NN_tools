@@ -2247,6 +2247,63 @@ class Write:
         #  block order: POS Q WEIGH NORM COL UV SR PC
         # 0M00C0NP 0WWW0I02 000000XU 00000000 0C0NW0P0 000W00XU 00000000 00000000 06
 
+    def _zno_info(self):
+        f = self.f
+        new_off = []
+        for info in self.vert_offsets:
+            info: Write.VertData
+            start_bone = 0
+            bone_count = 0
+            if info.bones:
+                start_bone = f.tell()
+                bone_count = len(info.bones)
+                for b in info.bones:
+                    write_integer(f, "<", self.bone_used.index(b))
+            new_off.append(f.tell())
+            flag1 = 1  # position flags
+            flag2 = 2
+
+                # uv = block_type >> 16 & 1
+                # position = block_type >> 25 & 1
+                # normal = block_type >> 28 & 1
+                # colour_short = block_type >> 31 & 1
+                # colour_byte = block_type >> 30 & 1
+                # weights = block_type >> 27 & 1
+                # weight_indices = block_type >> 50 & 1
+                # wx = block_type >> 17 & 1
+                # unnamed = block_type >> 48 & 1
+
+            if info.norm:
+                flag1 = flag1 | 2
+                flag2 = flag2 | 16
+            if info.uv:
+                flag1 = flag1 | 65536
+                flag2 = flag2 | 256
+            if info.col:
+                if self.settings.cols == "short":
+                    flag1 = flag1 | 16
+                    flag2 = flag2 | 128
+                else:
+                    flag1 = flag1 | 8
+                    flag2 = flag2 | 64
+            if bone_count > 4:
+                flag1 = flag1 | 1024
+            if bone_count:
+                flag1 = flag1 | 28672
+                flag2 = flag2 | 8
+
+            write_integer(f, "<", flag1, flag2)
+            self.nof0_offsets.append(f.tell() + 8)
+            write_integer(f, "<", info.block_size, info.count, info.offset, bone_count, start_bone)
+            if start_bone:
+                self.nof0_offsets.append(f.tell() - 4)
+            write_integer(f, "<", 0, 0, 0, 0, 0)
+        self.vert_offsets = new_off
+        # 000KC0NP 0WWW0000 000000QU 00000000 KC0NW0P0 000000QU 00000000 00000000 SR PC
+        #  K = colours as shorts, not bytes Q = unknown, in psu Q is wx but srpc has only one float(?)
+        #  block order: POS Q WEIGH NORM COL UV SR PC
+        # 0M00C0NP 0WWW0I02 000000XU 00000000 0C0NW0P0 000W00XU 00000000 00000000 06
+
     def _be_offsets(self):
         f = self.f
         for a in self.vert_offsets:
@@ -2269,6 +2326,15 @@ class Write:
         return vert_offset, self.nof0_offsets
 
     def xno(self):
+        self._xno_vertices()
+        v_buff_end = self.f.tell()
+        write_aligned(self.f, 4)
+        self._xno_info()
+        vert_offset = self.f.tell()
+        self._le_offsets()
+        return vert_offset, v_buff_end, self.nof0_offsets
+
+    def zno(self):
         self._xno_vertices()
         v_buff_end = self.f.tell()
         write_aligned(self.f, 4)

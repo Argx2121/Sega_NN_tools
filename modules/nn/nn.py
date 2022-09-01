@@ -234,6 +234,9 @@ class ReadNn:
         elif format_type[-1] == "X":
             version_number = 1
             nof0_offsets = nn_object.WriteModel(f, format_type, self.debug, nof0_offsets, model_info, settings).xno()
+        elif format_type[-1] == "Z":
+            version_number = 1
+            nof0_offsets = nn_object.WriteModel(f, format_type, self.debug, nof0_offsets, model_info, settings).zno()
 
         offset_file_start = f.tell()
         if big_endian:
