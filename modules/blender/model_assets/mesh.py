@@ -41,7 +41,7 @@ def make_mesh(self):
                 uv_tex.data[v_index + 2].uv = uv_data[face_index[2]]
 
         def make_wxs():
-            wx_tex = mesh.uv_layers.new(name=model_name_strip + "_WX_Map")
+            wx_tex = mesh.uv_layers.new(name=model_name_strip + "_UV2_Map")
             for vert_index in range(v_loop_count):
                 v_index = vert_index * 3
                 face_index = face_list[vert_index]
@@ -202,8 +202,6 @@ def make_mesh(self):
         if self.settings.clean_mesh:
             if self.format in {"KOnAfterSchoolLive_U", "SegaSuperstars_S"}:  # problematic games
                 model_util.clean_mesh_strict(obj)
-            elif self.format in {"SonicFreeRiders_E", "HouseOfTheDead4_L", "LovingDeadsHouseOfTheDeadEX_L"}:
-                model_util.clean_mesh_lazy(obj)
             else:
                 model_util.clean_mesh(obj)
 

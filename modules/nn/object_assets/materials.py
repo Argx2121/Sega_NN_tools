@@ -308,7 +308,17 @@ class Read:
         def bleach_shattered_blade_g():
             t_type = "none"
             t_settings = []
-            if TextureFlags.byte4bit1:
+            if texture_flags == 1074528513:
+                t_type = "diffuse"
+            elif texture_flags == 1074528833:
+                t_type = "reflection_wx"
+
+            return t_type, t_settings
+
+        def ghost_squad_g():  # needs material rework for proper support
+            t_type = "none"
+            t_settings = []
+            if texture_flags == 1074528513 or texture_flags == 1075314945:
                 t_type = "diffuse"
 
             return t_type, t_settings
@@ -350,6 +360,7 @@ class Read:
             "SonicRiders_G": sonic_riders_g,
             "SonicUnleashed_G": sonic_unleashed_g,
             "SuperMonkeyBallBananaBlitz_G": super_monkey_ball_g,
+            "GhostSquad_G": ghost_squad_g,
         }
         f = self.f
 

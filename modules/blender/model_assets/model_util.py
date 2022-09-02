@@ -22,23 +22,6 @@ def make_names(self):
 def clean_mesh(obj):  # removing illegal faces is done in mesh generation
     bm = bmesh.new()
     bm.from_mesh(obj.data)
-    bm.verts.ensure_lookup_table()
-    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0000001)
-    bm.to_mesh(obj.data)
-    bm.free()
-
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    bm.faces.ensure_lookup_table()
-    verts = [v for v in bm.verts if not v.link_faces]
-    bmesh.ops.delete(bm, geom=verts, context="VERTS")
-    bm.to_mesh(obj.data)
-    bm.free()
-
-
-def clean_mesh_lazy(obj):
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
     bm.faces.ensure_lookup_table()
     verts = [v for v in bm.verts if not v.link_faces]
     bmesh.ops.delete(bm, geom=verts, context="VERTS")
@@ -47,13 +30,6 @@ def clean_mesh_lazy(obj):
 
 
 def clean_mesh_strict(obj):
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    bm.verts.ensure_lookup_table()
-    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.00001)
-    bm.to_mesh(obj.data)
-    bm.free()
-
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     bm.faces.ensure_lookup_table()

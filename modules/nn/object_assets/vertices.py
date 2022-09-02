@@ -576,9 +576,9 @@ class Read:
                     v_positions.append(data[v * 3: v * 3 + 3])
             else:
                 data = unpack(">" + str(3 * count) + "h", f.read(3 * count * 2))
-                mult_by = (0, 0, 1, 4, 16, 64, 256, 1024, 4096)[d_type]
-                # e.g. pos type 5: mult_by = 64
-                # type 0 and 1 are padding (they will never be called)
+                d_type -= 2
+                mult_by = 4 ** d_type
+                # 9 and 10 aren't on all formats
                 for v in range(count):
                     v1 = data[v * 3] / mult_by
                     v2 = data[v * 3 + 1] / mult_by
