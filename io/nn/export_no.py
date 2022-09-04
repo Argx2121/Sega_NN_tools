@@ -204,6 +204,7 @@ class ExportSegaNO(bpy.types.Operator, ExportHelper):
 
         layout = self.layout
         preferences = bpy.context.preferences.addons[__package__.partition(".")[0]].preferences
+        bpy.context.space_data.params.filename = "Uses Armature name as file name!"
         layout.label(text="Sega NN exporter settings:", icon="KEYFRAME_HLT")
 
         nn_format = self.nn_format
