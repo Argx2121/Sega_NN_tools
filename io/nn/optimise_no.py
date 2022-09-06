@@ -135,6 +135,16 @@ class OptimiseSegaNO(bpy.types.Operator):
 
             # because we split the mesh into simple and complex with only the used v groups used
             #  we can build a list of complex only meshes to check
+
+            mesh_list_a = [
+                a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0 and len(a.vertex_groups) == 0]
+            mesh_list_b = [
+                a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0 and len(a.vertex_groups) > 0]
+            for obj in mesh_list_a:
+                enforce_weight(obj, arma)
+            for obj in mesh_list_b:
+                ensure_weights(obj)
+
             mesh_list = [
                 a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0 and len(a.vertex_groups) > 1]
             if self.nn_format == "G":
@@ -241,6 +251,22 @@ def remove_extra_bones(obj):
     for i, bone in zip(bone_used, [a.name for a in obj.vertex_groups]):
         if not i:
             obj.vertex_groups.remove(obj.vertex_groups[bone])
+
+
+def enforce_weight(obj, arma):
+    obj.vertex_groups.new(name=arma.data.bones[0].name)
+    obj.vertex_groups[0].add(list(range(len(obj.data.vertices))), 1, "REPLACE")
+
+
+def ensure_weights(obj):
+    v_ind = set()
+
+    for i, vert in enumerate(obj.data.vertices):
+        net_wei = sum([group.weight for group in vert.groups[::]])
+        if net_wei == 0.0:
+            # if we have any weights assigned at all the tool will handle it, even if it doesn't add to 1.0
+            v_ind.add(i)
+    obj.vertex_groups[0].add(list(v_ind), 1, "REPLACE")
 
 
 def triangulate(mesh):
