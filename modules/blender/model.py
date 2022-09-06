@@ -133,7 +133,8 @@ class ModelInfo:
             for tex in mat.texture_list:
                 img_alpha = set(tex.name.image.pixels[::][3::4])
                 # sometimes bpy.data.images[mat.image].pixels[3::4] as a slice issue (warning it's not an int?)
-                if len(img_alpha) > 1 or 1 > list(img_alpha)[0]:
+                if len(img_alpha) > 1 or (list(img_alpha) and 1 > list(img_alpha)[0]):
+                    # check if the texture has pixels (if texture path was valid but files were moved)
                     m.opaque = False
                     continue
             if 1 > mat.alpha:

@@ -431,15 +431,16 @@ def get_materials(self):
         #                 continue  # Empty slots!
 
         for mat in material.node_tree.nodes[::]:
-            if mat.name == "DiffuseTexture":
+            # check if we read this type, if this image node actually has a texture
+            if mat.name == "DiffuseTexture" and mat.image:
                 m_texture_list.append(Texture("DiffuseTexture", mat))
-                if mat.image.filepath not in texture_list:
+                if mat.image and mat.image.filepath not in texture_list:
                     texture_list.append(mat.image.filepath)
-            elif mat.name == "ReflectionTexture":
+            elif mat.name == "ReflectionTexture" and mat.image:
                 m_texture_list.append(Texture("ReflectionTexture", mat))
                 if mat.image.filepath not in texture_list:
                     texture_list.append(mat.image.filepath)
-            elif mat.name == "EmissionTexture":
+            elif mat.name == "EmissionTexture" and mat.image:
                 m_texture_list.append(Texture("EmissionTexture", mat))
                 if mat.image.filepath not in texture_list:
                     texture_list.append(mat.image.filepath)
