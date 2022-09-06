@@ -114,6 +114,7 @@ class OptimiseSegaNO(bpy.types.Operator):
             mesh_list = [a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0]
             for obj in mesh_list:  # these functions don't split the mesh
                 remove_extra_bones(obj)
+                remove_wrong_bones(obj, arma)
                 triangulate(obj.data)
                 rotate_mesh(arma, obj)
 
@@ -251,6 +252,15 @@ def remove_extra_bones(obj):
     for i, bone in zip(bone_used, [a.name for a in obj.vertex_groups]):
         if not i:
             obj.vertex_groups.remove(obj.vertex_groups[bone])
+
+
+def remove_wrong_bones(obj, arma):
+    valid_bones = [a.name for a in arma.data.bones]
+    used_bones = [a.name for a in obj.vertex_groups]
+    invalid_bones = list(set(used_bones) - set(valid_bones))
+
+    for bone in invalid_bones:
+        obj.vertex_groups.remove(obj.vertex_groups[bone])
 
 
 def enforce_weight(obj, arma):
