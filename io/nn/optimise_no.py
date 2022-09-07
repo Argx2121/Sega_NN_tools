@@ -292,8 +292,12 @@ def rotate_mesh(arma, obj):
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.make_single_user(object=True, obdata=True, material=False, animation=False)
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    obj.data.transform(obj.matrix_world)
+    obj.matrix_parent_inverse = arma.matrix_world.inverted()
     obj.rotation_euler[0] = -1.5707963267949
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=False)
+    from mathutils import Matrix
+    obj.matrix_world = Matrix()
     obj.rotation_euler[0] = 1.5707963267949
 
     obj.select_set(False)
