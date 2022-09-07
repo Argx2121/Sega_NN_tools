@@ -76,8 +76,6 @@ class OptimiseSegaNO(bpy.types.Operator):
         preferences = bpy.context.preferences.addons[__package__.partition(".")[0]].preferences
         layout.label(text="Sega NN exporter settings:", icon="KEYFRAME_HLT")
 
-        # todo what if mesh hidden lol
-
         nn_format = self.nn_format
         layout.row().prop(self, "nn_format")
         # gno data differences are only material flags
@@ -100,6 +98,7 @@ class OptimiseSegaNO(bpy.types.Operator):
 
         for arma in arma_list:
             # nn has y up, blender has z up, we will also apply transforms for the armature (except location)
+            arma.hide_set(False)
             arma.select_set(True)
             bpy.context.view_layer.objects.active = arma
             bpy.ops.object.make_single_user(object=True, obdata=True, material=False, animation=False)
@@ -113,6 +112,7 @@ class OptimiseSegaNO(bpy.types.Operator):
 
             mesh_list = [a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0]
             for obj in mesh_list:  # these functions don't split the mesh
+                obj.hide_set(False)
                 remove_extra_bones(obj)
                 remove_wrong_bones(obj, arma)
                 triangulate(obj.data)
