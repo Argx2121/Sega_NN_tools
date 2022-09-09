@@ -102,6 +102,7 @@ class OptimiseSegaNO(bpy.types.Operator):
             arma.select_set(True)
             bpy.context.view_layer.objects.active = arma
             bpy.ops.object.make_single_user(object=True, obdata=True, material=False, animation=False)
+            arma.location = 0, 0, 0
             bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
             arma.rotation_euler[0] = -1.5707963267949
             bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
@@ -154,7 +155,7 @@ class OptimiseSegaNO(bpy.types.Operator):
                     model_complex_split_gno(context, obj)
             else:  # check if more than 4 weights per vert
                 check = [mesh_weight_check(obj) for obj in mesh_list]
-                if len(set(check)) > 1 or list(set(check))[0]:
+                if check and (len(set(check)) > 1 or list(set(check))[0]):
                     mesh_names = [obj.name for obj in mesh_list]
                     bad_meshes = [mesh_name for is_bad, mesh_name in zip(check, mesh_names) if is_bad]
 
@@ -177,7 +178,7 @@ class OptimiseSegaNO(bpy.types.Operator):
                 # unfortunately i will reuse code because i do not care
             elif self.nn_format == "X":
                 check = [mesh_index_weight_check(obj) for obj in mesh_list]
-                if len(set(check)) > 1 or list(set(check))[0]:
+                if check and (len(set(check)) > 1 or list(set(check))[0]):
                     mesh_names = [obj.name for obj in mesh_list]
                     bad_meshes = [mesh_name for is_bad, mesh_name in zip(check, mesh_names) if is_bad]
 
