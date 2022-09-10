@@ -911,6 +911,13 @@ class Write:
             write_float(f, ">", 0.7529413, 0.7529413, 0.7529413, 0.9, 0.9, 0.9, 2, 0.3)
 
             write_integer(f, ">", 1, 4, 5, 5, 2, 0, 6, 7, 0, 0)
+            tex_types = [a.type for a in mat.texture_list]
+            if "DiffuseTexture" in tex_types and tex_types.index("DiffuseTexture"):
+                # this means its not at index 0
+                # which will mess up shading
+                old_data = mat.texture_list.pop(tex_types.index("DiffuseTexture"))
+                mat.texture_list.insert(0, old_data)
+
             for image in mat.texture_list:
                 if image.type == "DiffuseTexture":
                     write_integer(f, ">", 1074528513)
