@@ -660,77 +660,38 @@ def model_material_split(context, old_obj):
     old_obj.select_set(True)
     bpy.context.view_layer.objects.active = old_obj
 
-    def test_funct():
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_mode(type="VERT")
-        bpy.ops.mesh.select_all(action='DESELECT')
-        bpy.ops.object.mode_set(mode='OBJECT')  # Switch to Object to get selection
+    bpy.ops.object.duplicate(linked=0, mode='TRANSLATION')
+    bpy.ops.object.modifier_add(type='DATA_TRANSFER')
+    bpy.context.object.modifiers["DataTransfer"].object = old_obj
+    bpy.context.object.modifiers["DataTransfer"].use_loop_data = True
+    bpy.context.object.modifiers["DataTransfer"].data_types_loops = {'CUSTOM_NORMAL'}
+    bpy.context.object.modifiers["DataTransfer"].loop_mapping = 'NEAREST_POLYNOR'
 
-        # test if mesh needs splitting
-        m_group = []
-        for face in old_obj.data.polygons:
-            m_group.append(face.material_index)
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.separate(type='MATERIAL')
+    bpy.ops.object.mode_set(mode='OBJECT')
 
-        if len(set(m_group)) == 1:
-            # if there's only one material used (you could have 10 materials assigned but only use one
-            material = old_obj.material_slots[old_obj.data.polygons[0].material_index].material
-            old_obj.data.materials.clear()
-            old_obj.data.materials.append(material)
-            bpy.context.active_object.select_set(False)
-            return False
-        return True
+    mesh_after = [ob for ob in bpy.data.objects if ob.type == 'MESH']
 
-    def main_funct():
-        bpy.ops.object.duplicate(linked=0, mode='TRANSLATION')
-        bpy.ops.object.modifier_add(type='DATA_TRANSFER')
-        bpy.context.object.modifiers["DataTransfer"].object = old_obj
-        bpy.context.object.modifiers["DataTransfer"].use_loop_data = True
-        bpy.context.object.modifiers["DataTransfer"].data_types_loops = {'CUSTOM_NORMAL'}
-        bpy.context.object.modifiers["DataTransfer"].loop_mapping = 'NEAREST_POLYNOR'
-        new_obj = bpy.context.active_object
-        new_mesh = new_obj.data
+    bpy.ops.object.select_all(action='DESELECT')
 
-        while True:
-            m_group = []
-            for face in new_mesh.polygons:
-                m_group.append(face.material_index)
+    for i in mesh_before:
+        mesh_after.remove(i)
 
-            if not len(set(m_group)) > 1:
-                break
-
-            m_group_select = max(m_group)
-            for i, face in enumerate(m_group):
-                if face == m_group_select:
-                    new_mesh.polygons[i].select = True
-
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.separate(type='SELECTED')
-            bpy.ops.object.mode_set(mode='OBJECT')
-
-        mesh_after = [ob for ob in bpy.data.objects if ob.type == 'MESH']
-
-        bpy.ops.object.select_all(action='DESELECT')
-
-        for i in mesh_before:
-            mesh_after.remove(i)
-
+    bpy.context.view_layer.objects.active = None
+    for obj in mesh_after:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.modifier_apply(modifier="DataTransfer")
         bpy.context.view_layer.objects.active = None
-        for obj in mesh_after:
-            obj.select_set(True)
-            bpy.context.view_layer.objects.active = obj
-            bpy.ops.object.modifier_apply(modifier="DataTransfer")
-            bpy.context.view_layer.objects.active = None
-            obj.select_set(False)
-            material = obj.material_slots[obj.data.polygons[0].material_index].material
-            obj.data.materials.clear()
-            obj.data.materials.append(material)
+        obj.select_set(False)
+        material = obj.material_slots[obj.data.polygons[0].material_index].material
+        obj.data.materials.clear()
+        obj.data.materials.append(material)
 
-        old_obj.select_set(True)
-        bpy.context.view_layer.objects.active = old_obj
-        bpy.ops.object.delete(use_global=False, confirm=False)
-
-    if test_funct():
-        main_funct()
+    old_obj.select_set(True)
+    bpy.context.view_layer.objects.active = old_obj
+    bpy.ops.object.delete(use_global=False, confirm=False)
 
 
 def model_face_split(context, old_obj):
