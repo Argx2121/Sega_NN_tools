@@ -97,6 +97,12 @@ class ExportSegaNO(bpy.types.Operator, ExportHelper):
         default=False,
     )
 
+    order: BoolProperty(
+        name="Write texture order file",
+        description="Write texture order file (for texture packing)",
+        default=True,
+    )
+
     presets: EnumProperty(
         name="Preset",
         description="Preset to pull the datatypes from",
@@ -220,6 +226,7 @@ class ExportSegaNO(bpy.types.Operator, ExportHelper):
         box.row().prop(self, "name")
         box.row().prop(self, "texture_block")
         box.row().prop(self, "bone_block")
+        box.row().prop(self, "order")
 
         game_format = getattr(self, nn_format, nn_format)
         if game_format == "SonicRiders_G":
@@ -255,6 +262,7 @@ class ExportSegaNO(bpy.types.Operator, ExportHelper):
             self.split,
             self.texture_block,
             self.bone_block,
+            self.order,
             self.riders_default,
         )
 
@@ -282,6 +290,7 @@ class Settings:
     split: int
     texture_block: bool
     bone_block: bool
+    order: bool
     riders_default: bool
 
 

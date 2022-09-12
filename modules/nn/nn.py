@@ -252,6 +252,13 @@ class ReadNn:
         else:
             nn_information_file.Write(f, format_type, block_count, offset_file_start, offset_file_end, version_number).le()
 
+        if settings.order and model_info.materials.texture_list:
+            tex_names = [bpy.path.basename(a).rsplit(".", 1)[0] for a in model_info.materials.texture_list]
+            tex_names = '\n'.join(tex_names)
+            nf = open(self.filepath + ".order.txt", 'w')
+            nf.write(tex_names)
+            nf.close()
+
     # block definitions
     # specific
     def _info_1(self):
