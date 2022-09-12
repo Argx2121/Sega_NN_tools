@@ -84,7 +84,7 @@ class SetListPair:  # sewer made me do this
 
 class TriStripper:
     def __init__(self, data):
-        self.stripper_path = pathlib.Path(__file__).parent.absolute().joinpath("NvTriStrip.exe")
+        self.stripper_path = str(pathlib.Path(__file__).parent.absolute().joinpath("NvTriStrip.exe"))
         self.data = data
         self.pos_list = copy.deepcopy(data[0])
 
