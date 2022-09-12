@@ -84,24 +84,12 @@ class SetListPair:  # sewer made me do this
 
 class TriStripper:
     def __init__(self, data):
-        self.stripper_path = str(pathlib.Path(__file__).parent.absolute().joinpath("NvTriStrip.exe"))
         self.data = data
         self.pos_list = copy.deepcopy(data[0])
 
     def to_tri_strip(self, v_indices):
-        stripper_path = self.stripper_path
-        p = subprocess.Popen([stripper_path, "-s"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True,
-                             universal_newlines=True)
-
-        input_string = ""
-        for index in v_indices:
-            input_string = input_string + str(index) + " \n "
-        input_string = input_string + "-1 \n"
-
-        strip = p.communicate(input=input_string)[0]
-        p.terminate()
-        strip = strip.split("\n")[-2].split(" ")[:-1]
-        return [int(x) for x in strip]
+        from .pyffi_tstrip.tristrip import stripify
+        return stripify(v_indices, stitchstrips=True)[0]
 
     def mesh(self):
         pos_org, pos_index, normal_index, colour_index, uv_index, wx_index = self.data
@@ -361,7 +349,7 @@ class TriStripper:
             return faces_all_flat
 
         edit_faces_for_loops()
-        tri_strips = self.to_tri_strip(pos_index)
+        tri_strips = self.to_tri_strip([pos_index[i:i + 3] for i in range(0, len(pos_index), 3)])
         return update_triangles()
 
 

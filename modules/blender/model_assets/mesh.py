@@ -1089,9 +1089,8 @@ class GenerateMeshes:
             vertex_data = vertex_data[vertex_off: vertex_off + vertex_count]
 
             for f1, f2, f3 in zip(vertex_data[::3], vertex_data[1::3], vertex_data[2::3]):
-                face_indices.append(vertex_data_unique.index(f1))
-                face_indices.append(vertex_data_unique.index(f2))
-                face_indices.append(vertex_data_unique.index(f3))
+                face_indices.append(
+                    (vertex_data_unique.index(f1), vertex_data_unique.index(f2), vertex_data_unique.index(f3)))
 
             faces = model_util.TriStripper(([], )).to_tri_strip(face_indices)
             vertex_off += vertex_count  # this means the next mesh will have the correct starting value
