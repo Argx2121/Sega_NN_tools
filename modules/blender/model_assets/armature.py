@@ -100,6 +100,7 @@ class Bone:
     radius: float
     unknown: float
     length: tuple
+    lock: bool
 
 
 def to_euler_angles_zyx(q: Quaternion):
@@ -110,11 +111,7 @@ def to_euler_angles_zyx(q: Quaternion):
     q : Quaternion
         The Quaternion to convert.
     """
-    # Adapted from: http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
-    # Not sure why the algorithms posted on the web which use `2 * (q.w * q.x + q.y * q.z)` for heading don't work.
-    # (incl. StackOverflow, Wikipedia).
-    # Below algorithm is based on the website above, and based on combines `Quaternion -> Matrix` and
-    # `Matrix -> Euler` conversions.
+    # Unit test from: http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
     sqw = q.w * q.w
     sqx = q.x * q.x
     sqy = q.y * q.y
@@ -124,20 +121,21 @@ def to_euler_angles_zyx(q: Quaternion):
     # Unit vector to correct for non-normalised quaternions. Just in case.
     unit = sqx + sqy + sqz + sqw
 
-    # Accounting for 'singularities', or rather, Gimbal Lock. Might wanna add another `9` here. I dunno, your call.
-    if test > 0.4999999 * unit:
-        return Vector((0, 2 * atan2(q.x, q.w), pi * 0.5))
-    if test < -0.4999999 * unit:
-        return Vector((0, -2 * atan2(q.x, q.w), -pi * 0.5))
+    # Accounting for 'singularities', or rather, Gimbal Lock.
+    # Honestly I'm unsure about why this has to be done, and why it only has to be done when all the signs are the same
+    #  but that's nn for you
+    if test > 0.4999999 * unit and (copysign(1, q.x) == copysign(1, q.y) == copysign(1, q.z) == copysign(1, q.w)):
+        rotation = (q.inverted() @ Euler((0, -radians(180), 0)).to_quaternion()).inverted()
+        rot = rotation.to_euler('XZY')
+        return Vector((rot.x, rot.y, rot.z)), True
+    if test < -0.4999999 * unit and (copysign(1, q.x) == copysign(1, q.y) == copysign(1, q.z) == copysign(1, q.w)):
+        rotation = (q.inverted() @ Euler((0, -radians(180), 0)).to_quaternion()).inverted()
+        rot = rotation.to_euler('XZY')
+        return Vector((rot.x, rot.y, rot.z)), True
 
-    # Angle applied first: Heading (X)
-    # Angle applied second: Attitude (Y)
-    # Angle applied third: Bank (Z)
-    heading = atan2(2.0 * q.y * q.w - 2.0 * q.x * q.z, 1.0 - 2.0 * (sqy + sqz))  # Y
-    attitude = asin(2.0 * q.x * q.y + 2.0 * q.z * q.w)  # X
-    bank = atan2(2.0 * q.x * q.w - 2.0 * q.y * q.z, 1.0 - 2.0 * (sqx + sqz))  # Z
+    rot = q.to_euler('XZY')
 
-    return Vector((bank, heading, attitude))  # ZYX
+    return Vector((rot.x, rot.y, rot.z)), False
 
 
 def get_bones(self):
@@ -261,21 +259,14 @@ def get_bones(self):
 
         # Apply properties
         translation, rotation, sca = Matrix(child).decompose()
-        rotation = to_euler_angles_zyx(rotation)
+        rotation, lock = to_euler_angles_zyx(rotation)
 
-        # Based on game code
-        #if b_flag & 0x1C0000 != 0:
-        #    rotation.y = 0
-        #    rotation.z = 0
-
-        # HACK for Sonic Riders:
-        # Fixes rotations in certain bones that use XYZ instead of XZY despite specifying XZY flag.
-        #if b_flag & 0x1C0000 == 0:
-        #    pass
-            #print(b_flag[0], b_flag[1], b_flag[2], b_flag[3])
-            #if (secondByte[1] == 0x01) // If XZY
-            #secondByte[1] = 0x04; // Specify
-            #XYZ
+        if bone.parent:
+            if bone_list[par].lock:
+                translation, q, sca = Matrix(child).decompose()
+                rotation = (q.inverted() @ Euler((-radians(180), 0, 0)).to_quaternion()).inverted()
+                translation.rotate(Euler((-radians(180), 0, 0)))
+                rotation, lock = to_euler_angles_zyx(rotation)
 
         # Shouldn't happen, but just in case.
         if math.isnan(rotation.x):
@@ -306,7 +297,7 @@ def get_bones(self):
         flags[3] = flags[3] | 128
 
         bone_list.append(Bone(
-            flags, bone.name, b_mat, pos, rot, sca, par, used, chi, sib, center, radius, unknown, length))
+            flags, bone.name, b_mat, pos, rot, sca, par, used, chi, sib, center, radius, unknown, length, lock))
 
     self.armature.location = original_position
     return bone_list, bone_depth, used_bones
