@@ -632,6 +632,9 @@ class Read:
         def sonic_2006_x():
             t_type = "none"
             t_settings = []
+            # need to wait for material refactor for all of these
+            # also 06 likes to use the same flags to refer to different things
+            # actual pain
             if TextureFlags.byte1bit4:
                 t_type = "none"
             elif TextureFlags.byte1bit1 and TextureFlags.byte1bit2:
@@ -641,7 +644,7 @@ class Read:
             elif TextureFlags.byte1bit2 and TextureFlags.byte1bit3:  # 6
                 t_type = "none"  # normal does 5 and 6 so if more than one image with 5 ignore the one that also has 6
             elif TextureFlags.byte1bit1 and not TextureFlags.byte1bit2 and not TextureFlags.byte1bit3:
-                t_type = "reflection"
+                t_type = "diffuse"
 
             if TextureFlags.clamp_y or TextureFlags.clamp_x:
                 t_settings.append("clamp")

@@ -1580,6 +1580,8 @@ class Read:
                     off = get_normals(off)
                 if BitFlags.colour_byte:
                     off += 4
+                    # off = get_colours_byte(off)
+                    # would like to support this better but need material refactor
 
                 if BitFlags.wx and BitFlags.uv:
                     off = get_uvs(off)
