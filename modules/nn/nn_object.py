@@ -392,11 +392,6 @@ class WriteModel:
 
         bone_offset = self._run(0, bones.Write(f, model_info.bones).le_full)
 
-        import codecs
-        cred_bytes = codecs.encode(self.settings.credits, "utf-8")  # todo is this needed
-        cred_bytes = codecs.decode(cred_bytes, "hex")
-        f.write(cred_bytes)
-
         material_offset, nof0_offsets = self._run(
             1, materials.Write(f, format_type, model_info.materials, nof0_offsets).zno)
 
