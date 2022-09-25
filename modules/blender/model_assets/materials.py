@@ -195,9 +195,8 @@ def material_complex(self):
         material.use_nodes = True
         tree = material.node_tree
 
-        material.blend_method = "HASHED"
+        material.blend_method = m.transparency
         material.show_transparent_back = False
-        # ideally transparency would only be used if needed but there isn't a way to tell at the moment
         # show_transparent_back is usually needed off however if used on shadows 06 model it messes up the normals
         # if black means transparent and the image has gradients, separate hsv -> image input, v output
         tree.nodes.remove(tree.nodes["Principled BSDF"])
@@ -294,6 +293,7 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
         m_col = m.colour
         material.use_nodes = True
         tree = material.node_tree
+        material.blend_method = m.transparency
 
         colour = False
 

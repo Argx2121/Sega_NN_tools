@@ -18,7 +18,7 @@ class Read:
         __slots__ = [
             "bounds_position", "bounds_scale", "material_count", "material_offset", "vertex_count", "vertex_offset",
             "face_count", "face_offset", "bone_count", "bone_offset", "bone_used_count",
-            "mesh_sets", "mesh_count", "mesh_offset"
+            "mesh_sets", "mesh_type", "mesh_count", "mesh_offset"
         ]
         bounds_position: Tuple[float, ...]
         bounds_scale: float
@@ -32,6 +32,7 @@ class Read:
         bone_offset: int
         bone_used_count: int
         mesh_sets: int
+        mesh_type: list
         mesh_count: list
         mesh_offset: list
 
@@ -44,7 +45,7 @@ class Read:
 
         mi = self.ModelInfo(
             bounds[:3:], bounds[3], mats, mat_off, verts, v_off, faces, f_off, bones, b_off,
-            b_used, m_sets, [0], [0])
+            b_used, m_sets, [0], [0], [0])
 
         if b_off > n_start + 32:  # make sure pointers are fine
             start = n_start + 32 - b_off
@@ -57,6 +58,7 @@ class Read:
         f.seek(off + start)
         var = read_int_tuple(f, 5 * m_sets)
 
+        mi.mesh_type = var[0::5]
         mi.mesh_count = var[1::5]
         mi.mesh_offset = var[2::5]
 
@@ -71,7 +73,7 @@ class Read:
 
         mi = self.ModelInfo(
             bounds[:3:], bounds[3], mats, mat_off, verts, v_off, faces, f_off, bones, b_off,
-            b_used, m_sets, [0], [0])
+            b_used, m_sets, [0], [0], [0])
 
         if b_off > n_start + 32:  # make sure pointers are fine
             start = n_start + 32 - b_off
@@ -84,6 +86,7 @@ class Read:
         f.seek(off + start)
         var = read_int_tuple(f, 5 * m_sets, ">")
 
+        mi.mesh_type = var[0::5]
         mi.mesh_count = var[1::5]
         mi.mesh_offset = var[2::5]
 
@@ -98,7 +101,7 @@ class Read:
 
         mi = self.ModelInfo(
             bounds[:3:], bounds[3], mats, mat_off, verts, v_off, faces, f_off, bones, b_off,
-            b_used, m_sets, [0], [0])
+            b_used, m_sets, [0], [0], [0])
 
         if b_off > n_start + 16:  # make sure pointers are fine
             start = n_start + 16 - b_off
@@ -110,6 +113,7 @@ class Read:
         f.seek(off + start)
         var = read_int_tuple(f, 5 * m_sets)
 
+        mi.mesh_type = var[0::5]
         mi.mesh_count = var[1::5]
         mi.mesh_offset = var[2::5]
 
@@ -124,7 +128,7 @@ class Read:
 
         mi = self.ModelInfo(
             bounds[:3:], bounds[3], mats, mat_off, verts, v_off, faces, f_off, bones, b_off,
-            b_used, m_sets, [0], [0])
+            b_used, m_sets, [0], [0], [0])
 
         if b_off > n_start + 16:  # make sure pointers are fine
             start = n_start + 16 - b_off
@@ -136,6 +140,7 @@ class Read:
         f.seek(off + start)
         var = read_int_tuple(f, 5 * m_sets, ">")
 
+        mi.mesh_type = var[0::5]
         mi.mesh_count = var[1::5]
         mi.mesh_offset = var[2::5]
 
@@ -154,7 +159,7 @@ class Read:
 
             mi = self.ModelInfo(
                 bounds[:3:], bounds[3], mats, mat_off, verts, v_off, faces, f_off, bones, b_off,
-                b_used, m_sets, [0], [0])
+                b_used, m_sets, [0], [0], [0])
 
             if b_off > n_start + 16:  # make sure pointers are fine
                 start = n_start + 16 - b_off
@@ -166,6 +171,7 @@ class Read:
             f.seek(off + start)
             var = read_int_tuple(f, 6 * m_sets)
 
+            mi.mesh_type = var[0::6]
             mi.mesh_count = var[1::6]
             mi.mesh_offset = var[2::6]
         else:
@@ -173,7 +179,7 @@ class Read:
 
             mi = self.ModelInfo(
                 bounds[:3:], bounds[3], mats, mat_off, verts, v_off, faces, f_off, bones, b_off,
-                b_used, m_sets, [0], [0])
+                b_used, m_sets, [0], [0], [0])
 
             if b_off > n_start + 16:  # make sure pointers are fine
                 start = n_start + 16 - b_off
@@ -185,6 +191,7 @@ class Read:
             f.seek(off + start)
             var = read_int_tuple(f, 5 * m_sets)
 
+            mi.mesh_type = var[0::5]
             mi.mesh_count = var[1::5]
             mi.mesh_offset = var[2::5]
 
@@ -199,7 +206,7 @@ class Read:
 
         mi = self.ModelInfo(
             bounds[:3:], bounds[3], mats, mat_off, verts, v_off, faces, f_off, bones, b_off,
-            b_used, m_sets, [0], [0])
+            b_used, m_sets, [0], [0], [0])
 
         if b_off > n_start + 16:  # make sure pointers are fine
             start = n_start + 16 - b_off
@@ -211,6 +218,7 @@ class Read:
         f.seek(off + start)
         var = read_int_tuple(f, 5 * m_sets)
 
+        mi.mesh_type = var[0::5]
         mi.mesh_count = var[1::5]
         mi.mesh_offset = var[2::5]
 
@@ -230,7 +238,7 @@ class Read:
 
         mi = self.ModelInfo(
             bounds[:3:], bounds[3], mats, mat_off, verts, v_off, faces, f_off, bones, b_off,
-            b_used, m_sets, [0], [0])
+            b_used, m_sets, [0], [0], [0])
 
         # we can't check if pointers are fine
         if not m_sets:
@@ -241,6 +249,7 @@ class Read:
         f.seek(off)
         var = read_int_tuple(f, 8 * m_sets)
 
+        mi.mesh_type = var[0::8]
         mi.mesh_count = var[1::8]
         mi.mesh_offset = var[2::8]
         start = 0

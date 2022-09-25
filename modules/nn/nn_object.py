@@ -55,6 +55,22 @@ class ReadModel:
         if self.debug:
             print(build_mesh)
 
+    @staticmethod
+    def _get_transparency_groups(d, m):
+        sum_value = 0
+        for m_type, m_count in zip(d.mesh_type, d.mesh_count):
+            material_indices = [a.material for a in m.build_mesh[sum_value:sum_value + m_count]]
+            material_indices = list(set(material_indices))
+            sum_value += m_count
+            alpha_type = 'OPAQUE'
+            if m_type >> 1 & 1:
+                alpha_type = 'BLEND'
+            elif m_type >> 2 & 1:
+                alpha_type = 'CLIP'
+
+            for a in material_indices:
+                m.materials[a].transparency = alpha_type
+
     def cno(self) -> ModelData:
         start_block, len_block = self._start()
         f = self.f
@@ -71,6 +87,7 @@ class ReadModel:
         m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).cno)
         m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).cno)
         m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).be_12)
+        self._get_transparency_groups(d, m)
 
         self._debug_2(m.build_mesh)
         f.seek(start_block + len_block + 8)  # seek end of block
@@ -95,6 +112,7 @@ class ReadModel:
         m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).be_10)
 
         m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).eno)
+        self._get_transparency_groups(d, m)
 
         self._debug_2(m.build_mesh)
         # f.seek(start_block + len_block + 8)  # seek end of block - sonic free riders has broken block len
@@ -120,6 +138,7 @@ class ReadModel:
         m.faces, m.uvs, m.norm, m.col = self._run(d.face_offset, 3, faces.Read(info, d.face_count).gno)
         m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).gno)
         m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).be_9)
+        self._get_transparency_groups(d, m)
 
         self._debug_2(m.build_mesh)
         f.seek(start_block + len_block + 8)  # seek end of block
@@ -141,6 +160,7 @@ class ReadModel:
         m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).ino)
         m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).ino)
         m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_12)
+        self._get_transparency_groups(d, m)
 
         self._debug_2(m.build_mesh)
         f.seek(start_block + len_block + 8)  # seek end of block
@@ -163,6 +183,7 @@ class ReadModel:
             m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).lno_s4e2)
             m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).lno_s4e2)
             m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_14)
+            self._get_transparency_groups(d, m)
 
             self._debug_2(m.build_mesh)
             f.seek(4, 1)
@@ -178,6 +199,7 @@ class ReadModel:
             m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).lno)
             m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).lno)
             m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_12)
+            self._get_transparency_groups(d, m)
 
             self._debug_2(m.build_mesh)
             f.seek(start_block + len_block + 8)  # seek end of block
@@ -203,6 +225,7 @@ class ReadModel:
         console_out_post(var)
 
         m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_9_face)
+        self._get_transparency_groups(d, m)
 
         self._debug_2(m.build_mesh)
         f.seek(start_block + len_block + 8)  # seek end of block
@@ -223,6 +246,7 @@ class ReadModel:
         m.materials = self._run(d.material_offset, 2, materials.Read(info, d.material_count).uno)
         m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).uno)
         m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_9_face)
+        self._get_transparency_groups(d, m)
 
         m.faces = implicit_faces(m.vertices)
 
@@ -246,6 +270,7 @@ class ReadModel:
         m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).xno_zno)
         m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).xno)
         m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_10)
+        self._get_transparency_groups(d, m)
 
         self._debug_2(m.build_mesh)
         f.seek(start_block + len_block + 8)  # seek end of block
@@ -267,6 +292,7 @@ class ReadModel:
         m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).xno_zno)
         m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).zno)
         m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_10)
+        self._get_transparency_groups(d, m)
 
         self._debug_2(m.build_mesh)
         f.seek(start_block + len_block + 8)  # seek end of block
