@@ -110,6 +110,7 @@ nf_list = (
 # [game (CaramelCaps) + _ + nn indicator (Capitalised)],
 # [game title],
 # [game + filetype | release date]
+# NN version from exe if possible
 
 # Therefore sonic riders (xbox) released 21st February 2006 becomes:
 # [SonicRiders_X], [Sonic Riders], [Sonic Riders Model | 21 Feb 2006]
@@ -130,15 +131,47 @@ en_list = (
 gn_list = (
     ("SuperMonkeyBallStepAndRoll_G", "Super Monkey Ball: Step & Roll",
      "Super Monkey Ball: Step & Roll Model | 9 Feb 2010"),
+    # SEGA NN Library for Wii
+    # nn Ver 1.20.20 Build:Oct 28 2008 15:51:05
+    # 1.20.20
     ("SonicAndTheBlackKnight_G", "Sonic and the Black Knight", "Sonic and the Black Knight Model | 3 Mar 2009"),
-    ("SonicRidersZeroGravity_G", "Sonic Riders Zero Gravity", "Sonic Riders Zero Gravity Model | 8 Jan 2008"),
+    # SEGA NN Library for Wii
+    # nn Ver 1.20.20 Build:Oct 28 2008 15:51:05
+    # 1.20.20
     ("SonicUnleashed_G", "Sonic Unleashed", "Sonic Unleashed Model | 18 Nov 2008"),
+    # SEGA NN Library for GAMECUBE
+    # nn Ver 1.20.14 Build:Jun 24 2008 14:38:57
+    # 1.20.14
+    ("SonicRidersZeroGravity_G", "Sonic Riders Zero Gravity", "Sonic Riders Zero Gravity Model | 8 Jan 2008"),
+    # SEGA NN Library for GAMECUBE
+    # nn Ver 1.20.04 Build:May 14 2007 17:00:21
+    # 1.20.04
     ("GhostSquad_G", "Ghost Squad", "Ghost Squad Model | 23 Oct 2007"),
+    # SEGA NN Library for GAMECUBE
+    # nn Ver 1.20.02 Build:Dec 12 2006 17:30:14
+    # 1.20.02
     ("SonicAndTheSecretRings_G", "Sonic and the Secret Rings", "Sonic and the Secret Rings Model | 20 Feb 2007"),
+    # SEGA NN Library for GAMECUBE
+    # nn Ver 1.19.095 Build:Oct 10 2006 15:39:36
+    # 1.19.095
     ("BleachShatteredBlade_G", "Bleach: Shattered Blade", "Bleach: Shattered Blade Model | 14 Dec 2006"),
+    # SEGA NN Library for GAMECUBE
+    # nn Ver 1.19.095 Build:Oct 10 2006 15:39:36
+    # 1.19.095
     ("SuperMonkeyBallBananaBlitz_G", "Super Monkey Ball: Banana Blitz",
      "Super Monkey Ball: Banana Blitz | 19 Nov 2006"),
+    # SEGA NN Library for GAMECUBE
+    # nn Ver 1.19.09 Build:Jun 22 2006 19:57:49
+    # 1.19.09
     ("SonicRiders_G", "Sonic Riders", "Sonic Riders Model | 21 Feb 2006"),
+    # UNKNOWN
+
+    # Dabi Tsuku 3 - Derby-ba o Tsukurou!
+    # SEGA NN Library for GAMECUBE
+    # nn Ver 1.07.02 Build:Sep  9 2003 11:06:38
+    #
+    # %s Version %s
+    # (C) SEGA Corporation Creative Center Graphics Sect.
 )
 
 in_list = (
@@ -151,16 +184,38 @@ in_list = (
 ln_list = (
     ("SonicTheHedgehog4EpisodeII_L", "Sonic the Hedgehog 4: Episode II",
      "Sonic the Hedgehog 4: Episode II Model | 7 Oct 2010"),
+    # UNKNOWN
     ("LovingDeadsHouseOfTheDeadEX_L", "Loving Deads: The House of the Dead EX",
      "Loving Deads: The House of the Dead EX Model | 2009"),
+    # UNKNOWN
     ("HouseOfTheDead4_L", "The House of the Dead 4", "The House of the Dead 4 Model | 30 Dec 2005"),
+    # SEGA NN Library for Lindbergh
+    # nn Ver 1.03.03 Build:Oct 21 2005 16:30:13
+
+    # Too Spicy
+    # SEGA NN Library for LINDBERGH 1.04.03
+    # nn Ver 1.04.03 Build:Feb 15 2007 01:59:38
 )
 
 sn_list = (
     ("SonicRidersZeroGravity_S", "Sonic Riders Zero Gravity", "Sonic Riders Zero Gravity Model | 8 Jan 2008"),
+    # SEGA NN Library for PlayStation2
+    # nn Ver 1.18.56 Build:Dec 26 2006 17:14:10
+    # 1.18.56
+    # %s Version %s
+    # (C) SEGA Corporation Creative Center Graphics Sect.
     ("SegaSuperstars_S", "Sega Superstars", "Sega Superstars Model | 22 Oct 2004"),
+    # UNKNOWN
     ("SegaAges2500SeriesVol5GoldenAxe_S", "Sega Ages 2500 Series Vol. 5: Golden Axe",
      "Sega Ages 2500 Golden Axe Model | 25 Sep 2003"),
+    # UNKNOWN
+
+    # Sonic Riders
+    # SEGA NN Library for PlayStation2
+    # nn Ver 1.18.43 Build:Oct  7 2005 16:13:05
+    # 1.18.43
+    # %s Version %s
+    # (C) SEGA Corporation Creative Center Graphics Sect.
 )
 
 un_list = (
@@ -175,8 +230,35 @@ xn_list = (
 
 zn_list = (
     ("TransformersHumanAlliance_Z", "Transformers: Human Alliance", "Transformers Human Alliance Model | 2013"),
+    # 1.01.06
+    # nn Ver 1.01.06 Build:Aug 28 2013 14:10:27
+    # SEGA NN Library for DirectX G2.0
+
+    # K.O. Drive
+    # 1.01.06
+    # nn Ver 1.01.06 Build:Mar  1 2013 16:40:02
+    # SEGA NN Library for DirectX G2.0
+
+    # Sonic 4 Episode 2
+    # 1.01.06
+    # nn Ver 1.01.06 Build:Mar  4 2012 18:46:50
+    # SEGA NN Library for DirectX G2.0
     ("Sonic4Episode1_Z", "Sonic 4 Ep 1", "Sonic 4 Episode 1 Model | 7 Oct 2010"),
+    # UNKNOWN
     ("SegaGoldenGun_Z", "Sega Golden Gun", "Sega Golden Gun Model | 2010"),
+    # 1.01.06
+    # nn Ver 1.01.06 Build:Dec 10 2010 17:09:04
+    # SEGA NN Library for DirectX G2.0
+
+    # Let's Go Safari
+    # 1.01.06
+    # nn Ver 1.01.06 Build:Jun 26 2009 08:18:57
+    # SEGA NN Library for DirectX G2.0
+
+    # Super Monkey Ball Ticket Blitz
+    # 1.01.06
+    # nn Ver 1.01.06 Build:Jun 26 2009 08:18:57
+    # SEGA NN Library for DirectX G2.0
 )
 
 
