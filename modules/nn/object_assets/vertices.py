@@ -2098,6 +2098,7 @@ class Write:
                 write_aligned(f, 4)
 
                 norm_start = f.tell()
+                # todo remove values if theyre similar. merge them if first 5 values of float are the same
                 if mesh.normals_type == 1:
                     for vert in mesh.normals:
                         write_float(f, ">", vert[0], vert[1], vert[2])

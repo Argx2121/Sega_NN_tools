@@ -22,7 +22,7 @@ def make_mesh(self):
 
     def build_mesh():
         def make_uvs():
-            uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV_Map")
+            uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV1_Map")
             for vert_index in range(v_loop_count):
                 v_index = vert_index * 3
                 face_index = face_list[vert_index]
@@ -156,7 +156,7 @@ def make_mesh(self):
 
         if is_gno:
             if uv_short_hand:
-                uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV_Map")
+                uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV1_Map")
                 make_uvs_faces(uv_tex, uv_short_hand, face_uvs)
             if uv2_short_hand:
                 uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV2_Map")

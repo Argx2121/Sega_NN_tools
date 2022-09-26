@@ -19,8 +19,10 @@ def sort_list(material_list):
 def _make_image(tree, image, settings):
     node = tree.nodes.new(type="ShaderNodeTexImage")
     node.image = image
-    if "clamp" in settings:
-        node.extension = "EXTEND"
+    node.interpolation = settings.interpolation
+    node.projection = settings.projection
+    node.extension = settings.extension
+    node.texture_mapping.scale = [settings.scale[0], settings.scale[1], 1]
     return node
 
 
@@ -47,13 +49,12 @@ def _vertex_colours(tree, name):
     return node.outputs["Color"]
 
 
-def _diffuse_rgba(tree, image, rgba, skip_textures):
-    image.name = "DiffuseTexture"
+def _diffuse_rgba(tree, image, m_colour, skip_textures):
     rbg = tree.nodes.new(type="ShaderNodeRGB")
-    rbg.outputs["Color"].default_value = (rgba.colour[0], rgba.colour[1], rgba.colour[2], 1)
+    rbg.outputs["Color"].default_value = m_colour.diffuse
 
     alpha = tree.nodes.new(type="ShaderNodeValue")
-    alpha.outputs["Value"].default_value = rgba.alpha
+    alpha.outputs["Value"].default_value = m_colour.diffuse[-1]
 
     # image alpha - (rgba alpha * -1 + 1), clamped
     multiply_add = tree.nodes.new(type="ShaderNodeMath")
@@ -80,16 +81,16 @@ def _diffuse_rgba(tree, image, rgba, skip_textures):
     return _mix_rgb(tree, image.outputs["Color"], rbg.outputs["Color"]), alpha_invert.outputs["Color"]
 
 
-def _rgba(tree, rgba):
-    rbg = tree.nodes.new(type="ShaderNodeRGB")
-    rbg.outputs["Color"].default_value = (rgba.colour[0], rgba.colour[1], rgba.colour[2], 1)
+def _rgba(tree, m_colour):
+    rgb = tree.nodes.new(type="ShaderNodeRGB")
+    rgb.outputs["Color"].default_value = m_colour.diffuse
 
     alpha = tree.nodes.new(type="ShaderNodeValue")
-    alpha.outputs["Value"].default_value = rgba.alpha
+    alpha.outputs["Value"].default_value = m_colour.diffuse[-1]
     alpha_invert = tree.nodes.new(type="ShaderNodeInvert")
     tree.links.new(alpha_invert.inputs["Color"], alpha.outputs["Value"])
 
-    return rbg.outputs["Color"], alpha_invert.outputs["Color"]
+    return rgb.outputs["Color"], alpha_invert.outputs["Color"]
 
 
 def _reflection(tree, image):
@@ -121,10 +122,7 @@ def _normal(tree, image, settings, skip_textures):
         image.image.colorspace_settings.name = 'Non-Color'
     node = tree.nodes.new(type="ShaderNodeNormalMap")
     tree.links.new(node.inputs["Color"], image.outputs["Color"])
-    if "world" in settings:
-        node.space = 'WORLD'
-    elif "object" in settings:
-        node.space = 'OBJECT'
+    node.space = settings.space
     return node.outputs["Normal"]
 
 
@@ -173,6 +171,7 @@ def material_complex(self):
     material_list = self.model.materials
     model_name_strip = self.model_name_strip
     file_path = self.file_path
+    model_format = self.format
 
     material_list = sort_list(material_list)
 
@@ -197,43 +196,180 @@ def material_complex(self):
 
         material.blend_method = m.transparency
         material.show_transparent_back = False
+        material.use_backface_culling = True
         # show_transparent_back is usually needed off however if used on shadows 06 model it messes up the normals
         # if black means transparent and the image has gradients, separate hsv -> image input, v output
         tree.nodes.remove(tree.nodes["Principled BSDF"])
 
-        # noinspection SpellCheckingInspection
-        n_end = tree.nodes.new(type="ShaderNodeEeveeSpecular")
-        n_end.inputs["Roughness"].default_value = 0.5
-
-        tree.links.new(tree.nodes["Material Output"].inputs["Surface"], n_end.outputs["BSDF"])
-
         colour = False
         alpha = 1
         reflection = False
+        spectacular = False
+        emission = False
 
-        for t_index in range(m_texture_count):
-            m_tex = m.texture[t_index]
-            m_tex_type = m_tex.type
-            m_tex_set = m_tex.setting
-            m_tex_index = m_tex.index
+        if model_format[-1] == "G":
+            bpy.context.scene.eevee.use_bloom = True
+            gno_shader = tree.nodes.new('ShaderNodeGroup')
+            gno_shader.node_tree = bpy.data.node_groups['NN Shader']
 
-            if m_tex_type == "none":
-                continue
+            if m.unshaded:
+                gno_shader.inputs["Unshaded"].default_value = 1
+            if m.black_alpha:
+                gno_shader.inputs["Black is alpha"].default_value = 1
 
-            if skip_textures:
-                image_node = _make_image(tree, None, m_tex_set)
-            else:
-                image_node = _make_image(tree, texture_name[m_tex_index], m_tex_set)
+            gno_shader.inputs["Ambient"].default_value = m_col.ambient
+            gno_shader.inputs["Specular"].default_value = m_col.specular
+            gno_shader.inputs["Emission"].default_value = m_col.emission
+            gno_shader.inputs["Specular Gloss"].default_value = m_col.shininess
+            gno_shader.inputs["Specular Level"].default_value = m_col.specular_value
+
+            colour_init = tree.nodes.new('ShaderNodeGroup')
+            colour_init.node_tree = bpy.data.node_groups['NN Colour Init']
+
+            colour_init.inputs["Material Colour"].default_value = m_col.diffuse
+            colour_init.inputs["Material Alpha"].default_value = m_col.diffuse[-1]
+
+            if m.v_colour:
+                node = tree.nodes.new(type="ShaderNodeVertexColor")
+                tree.links.new(colour_init.inputs["Vertex Colour"], node.outputs[0])
+                tree.links.new(colour_init.inputs["Vertex Alpha"], node.outputs[1])
+
+            tree.links.new(tree.nodes["Material Output"].inputs[0], gno_shader.outputs[0])
+
+            diff_col = colour_init.outputs["Diffuse Colour"]
+            diff_alpha = colour_init.outputs["Diffuse Alpha"]
+            spec_col = False
+            diff_end_connected = False
+            diff_end_image = False
+            diff_end_mix = False
+
+            for t_index in range(m_texture_count):
+                m_tex = m.texture[t_index]
+                m_tex_type = m_tex.type
+                m_tex_index = m_tex.index
+                m_mix = m_tex.texture_flags
+
+                if skip_textures:
+                    image_node = _make_image(tree, None, m_tex)
+                else:
+                    image_node = _make_image(tree, texture_name[m_tex_index], m_tex)
+
+                if m_mix.reflection:
+                    node = tree.nodes.new('ShaderNodeGroup')
+                    node.node_tree = bpy.data.node_groups['NN Reflection']
+                    tree.links.new(image_node.inputs[0], node.outputs[0])
+                elif m_mix.reflection_2 and not m_mix.mix:
+                    node = tree.nodes.new('ShaderNodeGroup')
+                    node.node_tree = bpy.data.node_groups['NN Reflection']
+                    tree.links.new(image_node.inputs[0], node.outputs[0])
+                    # black knight gives me so much pain
+                elif m_mix.uv1:
+                    node = tree.nodes.new(type="ShaderNodeUVMap")
+                    node.uv_map = model_name_strip + "_UV1_Map"
+                    tree.links.new(image_node.inputs[0], node.outputs[0])
+                elif m_mix.uv2:
+                    node = tree.nodes.new(type="ShaderNodeUVMap")
+                    node.uv_map = model_name_strip + "_UV2_Map"
+                    tree.links.new(image_node.inputs[0], node.outputs[0])
+                elif m_mix.uv3:
+                    node = tree.nodes.new(type="ShaderNodeUVMap")
+                    node.uv_map = model_name_strip + "_UV3_Map"
+                    tree.links.new(image_node.inputs[0], node.outputs[0])
+                elif m_mix.uv4:
+                    node = tree.nodes.new(type="ShaderNodeUVMap")
+                    node.uv_map = model_name_strip + "_UV4_Map"
+                    tree.links.new(image_node.inputs[0], node.outputs[0])
+
+                if m_mix.specular:  # specular doesnt mix with any
+                    spec_col = image_node.outputs[0]
+                elif m_mix.unknown1 and m_mix.reflection_2:
+                    for link in tree.links:
+                        if link.to_node.name == mix_node.name and link.to_socket.name == "Colour 2":
+                            spec_col = link.from_node.outputs[0]
+                            tree.links.remove(link)
+                            break
+                    tree.links.new(mix_node.inputs["Colour 2"], image_node.outputs[0])
+                else:
+                    mix_node = tree.nodes.new('ShaderNodeGroup')
+                    mix_node.node_tree = bpy.data.node_groups['NN Image Mixer']
+
+                    mix_type = "0"
+                    if m_mix.multiply:
+                        mix_type = "0"
+                    elif m_mix.mix:
+                        mix_type = "1"
+                    elif m_mix.add:
+                        mix_type = "2"
+                    elif m_mix.add_branch:
+                        mix_type = "2"
+                    elif m_mix.subtract:
+                        mix_type = "3"
+                    elif m_mix.unknown1 and not m_mix.reflection_2:
+                        mix_type = "1"
+                    mix_node.inputs['Blend'].blend_type = mix_type
+
+                    mix_node.inputs["Colour 2 Multiplier"].default_value = m_tex.alpha
+
+                    tree.links.new(mix_node.inputs["Colour 1"], diff_col)
+                    tree.links.new(mix_node.inputs["Alpha 1"], diff_alpha)
+
+                    diff_col = mix_node.outputs["Colour"]
+                    diff_alpha = mix_node.outputs["Alpha"]
+
+                    if diff_end_image:
+                        tree.links.new(mix_node.inputs["Colour 1"], diff_end_image.outputs[0])
+                        tree.links.new(mix_node.inputs["Alpha 1"], diff_end_image.outputs[1])
+                        tree.links.new(diff_end_mix.inputs["Colour 2"], mix_node.outputs[0])
+                        tree.links.new(diff_end_mix.inputs["Alpha 2"], mix_node.outputs[1])
+                        diff_end_image = False
+
+                    if m_mix.add_branch:
+                        diff_end_image = image_node
+                        diff_end_mix = mix_node
+                        diff_end_connected = True
+                        tree.links.new(gno_shader.inputs["Colour"], diff_col)
+                        tree.links.new(gno_shader.inputs["Alpha"], diff_alpha)
+                    else:
+                        tree.links.new(mix_node.inputs["Colour 2"], image_node.outputs[0])
+                        tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
+
+            if not diff_end_connected:
+                tree.links.new(gno_shader.inputs["Colour"], diff_col)
+                tree.links.new(gno_shader.inputs["Alpha"], diff_alpha)
+            if spec_col:
+                tree.links.new(gno_shader.inputs["Specular"], spec_col)
+
+        else:
+
+            # noinspection SpellCheckingInspection
+            n_end = tree.nodes.new(type="ShaderNodeEeveeSpecular")
+            n_end.inputs["Roughness"].default_value = 0.5
+
+            tree.links.new(tree.nodes["Material Output"].inputs["Surface"], n_end.outputs["BSDF"])
+
+            for t_index in range(m_texture_count):
+                m_tex = m.texture[t_index]
+                m_tex_type = m_tex.type
+                m_tex_index = m_tex.index
+
+                if m_tex_type == "none":
+                    continue
+
+                if skip_textures:
+                    image_node = _make_image(tree, None, m_tex)
+                else:
+                    image_node = _make_image(tree, texture_name[m_tex_index], m_tex)
 
             if m_tex_type == "diffuse":
                 colour, alpha = _diffuse_rgba(tree, image_node, m_col, skip_textures)
                 vertex_colours = _vertex_colours(tree, model_name_strip)
                 colour = _mix_rgb(tree, colour, vertex_colours)
             elif m_tex_type == "normal":
-                displacement = _normal(tree, image_node, m_tex_set, skip_textures)
+                displacement = _normal(tree, image_node, m_tex, skip_textures)
                 tree.links.new(n_end.inputs["Normal"], displacement)
             elif m_tex_type == "emission":
                 image_node.name = "EmissionTexture"
+                emission = image_node.outputs[0]
                 tree.links.new(n_end.inputs["Emissive Color"], image_node.outputs["Color"])
             elif m_tex_type == "reflection":
                 reflection = _reflection(tree, image_node)
@@ -243,25 +379,33 @@ def material_complex(self):
                 displacement = _bump(tree, image_node)
                 tree.links.new(n_end.inputs["Normal"], displacement)
             elif m_tex_type == "spectacular":  # guys what lmao
+                spectacular = image_node.outputs[0]
                 tree.links.new(n_end.inputs["Specular"], image_node.outputs["Color"])
             elif m_tex_type == "wx_alpha":
                 colour = _wx_alpha(tree, colour, image_node, model_name_strip)
             elif m_tex_type == "wx":
                 colour = _wx(tree, colour, image_node, model_name_strip)
 
-        if not colour:  # if a diffuse texture hasn't been found
-            colour, alpha = _rgba(tree, m_col)
-            vertex_colours = _vertex_colours(tree, model_name_strip)
-            colour = _mix_rgb(tree, colour, vertex_colours)
+            if not colour:  # if a diffuse texture hasn't been found
+                colour, alpha = _rgba(tree, m_col)
+                vertex_colours = _vertex_colours(tree, model_name_strip)
+                colour = _mix_rgb(tree, colour, vertex_colours)
 
-        if reflection:
-            colour = _mix_colour_reflection(tree, colour, reflection)
-            # for some reason shadow 06 and probably other character models
-            #  like eye reflection colour output for fac in transparency shader
-            #  there isn't a way to determine if this needs to be set up though
+            if reflection:
+                colour = _mix_colour_reflection(tree, colour, reflection)
+                # for some reason shadow 06 and probably other character models
+                #  like eye reflection colour output for fac in transparency shader
+                #  there isn't a way to determine if this needs to be set up though
 
         tree.links.new(n_end.inputs["Base Color"], colour)
         tree.links.new(n_end.inputs["Transparency"], alpha)
+
+
+def link_uv(m_tex, model_name_strip, tree, node):
+    if 5 > m_tex.uv:
+        uv_node = tree.nodes.new(type="ShaderNodeUVMap")
+        uv_node.uv_map = model_name_strip + "_UV" + str(m_tex.uv) + "_Map"
+        tree.links.new(node.inputs[0], uv_node.outputs[0])
 
 
 def material_simple(self):  # for exporting to fbx etc, so keep it simple.
@@ -296,33 +440,31 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
         material.blend_method = m.transparency
 
         colour = False
+        diffuse = tree.nodes["Principled BSDF"]
 
         for t_index in range(m_texture_count):
             m_tex = m.texture[t_index]
             m_tex_type = m_tex.type
-            m_tex_set = m_tex.setting
             m_tex_index = m_tex.index
-
-            diffuse = tree.nodes["Principled BSDF"]
 
             if m_tex_type == "none":
                 continue
 
             if skip_textures:
-                image_node = _make_image(tree, None, m_tex_set)
+                image_node = _make_image(tree, None, m_tex)
             else:
-                image_node = _make_image(tree, texture_name[m_tex_index], m_tex_set)
+                image_node = _make_image(tree, texture_name[m_tex_index], m_tex)
 
             if m_tex_type == "diffuse":
                 image_node.name = "DiffuseTexture"
-                _rgba(tree, m_col)  # generate even if they cant be used
+                _rgba(tree, m_col)
                 _vertex_colours(tree, model_name_strip)
 
                 colour = True
 
                 tree.links.new(diffuse.inputs["Base Color"], image_node.outputs["Color"])
             elif m_tex_type == "normal":
-                displacement = _normal(tree, image_node, m_tex_set, skip_textures)
+                displacement = _normal(tree, image_node, m_tex, skip_textures)
 
                 tree.links.new(diffuse.inputs["Normal"], displacement)
             elif m_tex_type == "emission":
@@ -338,8 +480,14 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
                 tree.links.new(diffuse.inputs["Normal"], displacement)
 
         if not colour:  # if a diffuse texture hasn't been found
-            _rgba(tree, m_col)
-            _vertex_colours(tree, model_name_strip)
+            rgb = tree.nodes.new(type="ShaderNodeRGB")
+            rgb.outputs[0].default_value = m_col.diffuse
+
+            alpha = tree.nodes.new(type="ShaderNodeValue")
+            alpha.outputs[0].default_value = m_col.diffuse[-1]
+
+            tree.links.new(diffuse.inputs[0], rgb.outputs[0])
+            tree.links.new(diffuse.inputs[-5], alpha.outputs[0])
 
 
 def make_bpy_textures(file_path: str, texture_names: list, recursive: bool):  # get textures if they exist

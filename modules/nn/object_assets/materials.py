@@ -8,7 +8,7 @@ class Read:
     __slots__ = [
         "f", "start", "format_type", "debug",
         "material_count", "texture_count", "info_offset", "colour_offset",
-        "texture_offset", "colour_list", "texture_list"
+        "texture_offset", "colour_list", "texture_list", "mat_set_list"
     ]
 
     def __init__(self, var, material_count: int):
@@ -20,6 +20,7 @@ class Read:
         self.texture_offset = []
         self.colour_list = []
         self.texture_list = []
+        self.mat_set_list = []
 
     @dataclass
     class MaterialSettings:
@@ -29,25 +30,39 @@ class Read:
         index: int
 
     @dataclass
-    class Colour:  # there is other info available but we only use these
-        __slots__ = ["colour", "alpha"]
-        colour: tuple
-        alpha: float
+    class Colour:  # todo get colour from all types
+        __slots__ = ["diffuse", "ambient", "specular", "emission", "specular_value", "shininess"]
+        diffuse: tuple
+        ambient: tuple
+        specular: tuple
+        emission: tuple
+        specular_value: float
+        shininess: float
 
     @dataclass
     class Texture:
-        __slots__ = ["type", "setting", "index"]
+        # __slots__ = ["type", "interpolation", "projection", "extension", "space", "index", "alpha", "scale", "uv"]
         type: str
-        setting: list
+        interpolation: str
+        projection: str
+        extension: str
+        space: str
         index: int
+        alpha: float
+        scale: tuple
+        uv: int
+        texture_flags: Flag
 
     @dataclass
     class Material:
-        __slots__ = ["texture_count", "colour", "texture", "transparency"]
+        __slots__ = ["texture_count", "colour", "texture", "transparency", "black_alpha", "v_colour", "unshaded"]
         texture_count: int
         colour: Any
         texture: Any
         transparency: str
+        black_alpha: bool
+        v_colour: bool
+        unshaded: bool
 
     def _le_offsets(self):
         self.info_offset = read_int_tuple(self.f, self.material_count * 2)[1::2]
@@ -139,20 +154,26 @@ class Read:
         f = self.f
         for offset in self.colour_offset:
             f.seek(offset + self.start)
-            self.colour_list.append(self.Colour(read_float_tuple(f, 3), read_float(f)))
+            self.colour_list.append(self.Colour(
+                read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
+                2, read_float(f) / 160)  # maybe just div by 100?
+            )
 
     def _cno_eno_colour(self):
         f = self.f
-        for offset in self.colour_offset:
-            f.seek(offset + self.start + 16)
-            var_1 = read_float(f, ">")
-            var = read_float_tuple(f, 3, ">")
-            self.colour_list.append(self.Colour(var, var_1))
+        for offset in self.colour_offset:  # todo test these
+            f.seek(offset + self.start + 4)
+            # the material setting here isn't really needed
+            #  if they don't use a colour property it is also nulled
+            # 2 = all data types
+            self.colour_list.append(self.Colour(
+                read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"),
+                read_float_tuple(f, 4, ">"), read_float(f, ">") / 1280, read_float(f, ">")
+            ))
 
     def _cno_texture(self):
         def house_of_the_dead_4_c():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.norm:
                 t_type = "normal"
             elif TextureFlags.diff:
@@ -161,8 +182,9 @@ class Read:
                 t_type = "none"  # "spectacular"  # looks broken
             elif TextureFlags.ref:
                 t_type = "none"  # "reflection"  # looks broken
+                # t_proj = 'SPHERE'
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         format_dict = {
             "HouseOfTheDead4_C": house_of_the_dead_4_c,
@@ -193,16 +215,22 @@ class Read:
                         sp = texture_flags >> 3 & 1
                         ref = texture_flags >> 5 & 1
 
-                    var, tex_set = format_dict[self.format_type]()
+                    t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
+                    t_index = read_int(f, ">")
+                    f.seek(4, 1)
+                    t_alpha = read_float(f, ">")
+                    f.seek(8, 1)
+                    t_scale = read_float_tuple(f, 2, ">")
+                    t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
-                    texture_list.append(self.Texture(var, tex_set, read_int(f, ">")))
-                    f.seek(56, 1)
+                    texture_list.append(self.Texture(
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                    f.seek(32, 1)
             self.texture_list.append(texture_list)
 
     def _eno_texture(self):
         def sonic_free_riders_e():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.norm:
                 t_type = "normal"
             elif TextureFlags.diff:
@@ -210,11 +238,10 @@ class Read:
             elif TextureFlags.ref:
                 t_type = "reflection"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def sonic_the_hedgehog_4_episode_i_prototype_e():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.norm:
                 t_type = "normal"
             elif TextureFlags.diff:
@@ -222,7 +249,7 @@ class Read:
             elif TextureFlags.ref:
                 t_type = "reflection"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         format_dict = {
             "SonicFreeRiders_E": sonic_free_riders_e,
@@ -250,39 +277,53 @@ class Read:
                         diff = texture_flags >> 1 & 1
                         ref = texture_flags >> 5 & 1
 
-                    var, tex_set = format_dict[self.format_type]()
+                    t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
+                    t_index = read_int(f, ">")
+                    f.seek(4, 1)
+                    t_alpha = read_float(f, ">")
+                    f.seek(8, 1)
+                    t_scale = read_float_tuple(f, 2, ">")
+                    t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
-                    texture_list.append(self.Texture(var, tex_set, read_int(f, ">")))
-                    f.seek(56, 1)
+                    texture_list.append(self.Texture(
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                    f.seek(32, 1)
             self.texture_list.append(texture_list)
 
     def _gno_texture(self):
         def super_monkey_ball_g():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte4bit1:
                 t_type = "diffuse"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def sonic_and_the_black_knight_g():
-            t_type = "none"
-            t_settings = []
-            if TextureFlags.byte4bit4:
-                t_type = "none"  # "spectacular"
-            elif TextureFlags.byte4bit2:
-                t_type = "none"  # "reflection"
-            elif TextureFlags.byte4bit1:
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
+            mix_type = texture_flags & 255
+            if TextureFlags.byte3bit6:  # is reflection map
+                if TextureFlags.byte4bit1 and TextureFlags.byte4bit2 and \
+                        not TextureFlags.byte4bit3 and TextureFlags.byte4bit4:  # add
+                    t_type = "reflection"
+                elif TextureFlags.byte4bit1:  # multiply
+                    t_type = "reflection_multi"
+            elif texture_flags >> 8 & 255 == 2 and mix_type in {71, 2}:
+                t_type = "emission"
+            elif mix_type == 66:
+                t_type = "specular_ref_alpha"
+            elif mix_type == 71:
+                t_type = "reflection"
+            elif mix_type == 1:
                 t_type = "diffuse"
+            elif mix_type in {9, 73, 66}:
+                t_type = "specular"
+            if not texture_flags >> 30 & 1:
+                print("FUCK")
 
-            if not TextureFlags.byte4bit1 and TextureFlags.byte4bit2:
-                t_type = "wx_alpha"
-
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def sonic_and_the_secret_rings_g():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte4bit4:
                 t_type = "none"  # "spectacular"
             elif TextureFlags.byte4bit2:
@@ -295,39 +336,34 @@ class Read:
             if not TextureFlags.byte4bit1:
                 t_type = "none"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def sonic_riders_zero_gravity_g():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte4bit2:
                 t_type = "reflection"
             elif TextureFlags.byte4bit1:
                 t_type = "diffuse"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def bleach_shattered_blade_g():
-            t_type = "none"
-            t_settings = []
-            if texture_flags == 1074528513:
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
+            if TextureFlags.byte4bit1:
                 t_type = "diffuse"
-            elif texture_flags == 1074528833:
-                t_type = "reflection_wx"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def ghost_squad_g():  # needs material rework for proper support
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if texture_flags == 1074528513 or texture_flags == 1075314945:
                 t_type = "diffuse"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def sonic_riders_g():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
+
             if texture_flags == 1074528514:
                 t_type = "emission"
             elif texture_flags == 1074528516:
@@ -338,11 +374,10 @@ class Read:
                 t_type = "reflection"
             elif TextureFlags.byte4bit4:
                 t_type = "none"
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def sonic_unleashed_g():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte4bit1 and not TextureFlags.byte4bit4 and not TextureFlags.byte4bit2:
                 t_type = "diffuse"
             elif TextureFlags.byte4bit2 and TextureFlags.byte4bit4:
@@ -351,7 +386,7 @@ class Read:
                 t_type = "none"
             elif TextureFlags.byte4bit4:
                 t_type = "none"
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         format_dict = {
             "SuperMonkeyBallStepAndRoll_G": super_monkey_ball_g,
@@ -368,14 +403,67 @@ class Read:
 
         for offset, count in zip(self.texture_offset, self.texture_count):
             texture_list = []
-            f.seek(offset + self.start + 4)
-            self.colour_list.append(self.Colour(read_float_tuple(f, 3, ">"), read_float(f, ">")))
-            f.seek(72, 1)
+            f.seek(offset + self.start)
+            # 0 = no specular 1 = all, 00 02 00 00 = boolean mesh
+            mat_type = read_int(f, ">")
+            v_col = mat_type & 1
+            unlit = mat_type >> 8 & 1
 
-            for _ in range(count):
+            diffuse = read_float_tuple(f, 4, ">")
+            ambient = list(read_float_tuple(f, 3, ">"))
+            ambient += [1.0]
+            specular = list(read_float_tuple(f, 3, ">"))
+            specular += [1.0]
+            emission = (0, 0, 0, 1)
+            specular_value = read_float(f, ">")
+            shininess = read_float(f, ">")
+
+            # speclevel and specgloss
+            self.colour_list.append(self.Colour(
+                diffuse, tuple(ambient), tuple(specular), emission, specular_value, shininess
+            ))
+            mat_data = read_int_tuple(f, 10, ">")
+            black_alpha = False
+            # todo game specific
+            if mat_data[-1] == 134217728:
+                black_alpha = True
+                unlit = True
+
+            self.mat_set_list.append((black_alpha, v_col, unlit))
+
+            for index in range(count):
                 texture_flags = read_int(f, ">")
 
                 class TextureFlags(Flag):
+
+                    # 0x40
+                    # no idea what it does ??
+                    # 0x0C
+                    # no idea what it does
+                    # 0x01, 0x2, 0x20
+                    # uv1, uv2 or reflection, checks in that order  uv2 is guess btw but i think mostly does uvs
+                    # i think this byte is just to store uv index or lack of one (reflection)
+                    # > 0x01
+                    # this and last one probably vary between games
+                    # usually 01
+
+                    # 01 = MULTIPLY
+                    # 02 = DO NOT COMBINE, ONLY USE TEXTURE (makes unshaded) for first index tetxure
+                    # so basically mix
+                    # 04 = ADD
+                    # 08 is really weird as subtract it acts strange
+                    # its more of a blender issue than a mixing issue it is subtract blenders just weird
+                    # 08 = SUBTRACT (if texture in 1st index is diffuse or this is texture in 1st index)
+                    # 08 changes from subtract to specular if another mix type is set
+                    # 09 = specular
+                    # 40 0C 20 09 or 40 0C 20 0A reflection only at the specular
+                    # 8 and 2
+                    # gl max_shininess = 128f;
+                    # 40 = combine with colour as well
+                    # so branch 1 = 0X branch 2 = 4X
+                    # so if you have one texture and its set as 4X itll be double shaded essentially
+
+
                     # byte 1
 
                     # byte 2
@@ -388,26 +476,78 @@ class Read:
                     byte4bit3 = texture_flags >> 2 & 1
                     byte4bit2 = texture_flags >> 1 & 1
                     byte4bit1 = texture_flags >> 0 & 1
+                    # ---- NEW DATA ----
+                    # byte 1
+                    ignore_uv_offset = texture_flags >> 30 & 1
 
-                var, tex_set = format_dict[self.format_type]()
+                    # byte 2
+                    # don't know for this one
+                    # 0x0C
 
-                texture_list.append(self.Texture(var, tex_set, read_int(f, ">")))
-                f.seek(12, 1)
+                    # byte 3
+                    # vector type (reflection or uv map - multiple cannot be set)
+                    reflection_2 = mat_data[-1] == 8 and (index == 2 or index == 1)
+                    reflection = texture_flags >> 13 & 1 and not reflection_2
+                    uv4 = texture_flags >> 11 & 1
+                    uv3 = texture_flags >> 10 & 1
+                    uv2 = texture_flags >> 9 & 1
+                    uv1 = texture_flags >> 8 & 1
+
+                    # byte 4
+                    # mixing
+                    # the colour might be a bit different in blender because the colour space is different
+                    unknown_mix = texture_flags >> 6 & 1
+                    subtract_bit = texture_flags >> 3 & 1
+                    add_bit = texture_flags >> 2 & 1
+                    mix_bit = texture_flags >> 1 & 1
+                    multiply_bit = texture_flags >> 0 & 1
+                    # please note that specifying a specular texture starts a new node chain
+                    # also you need to have a diffuse texture if you want a specular texture
+                    unknown0 = multiply_bit and mix_bit and add_bit and subtract_bit
+                    unknown1 = multiply_bit and mix_bit and add_bit and not subtract_bit
+                    add_branch = multiply_bit and mix_bit and not add_bit and subtract_bit
+                    unknown3 = multiply_bit and mix_bit and not add_bit and not subtract_bit
+                    unknown4 = multiply_bit and not mix_bit and add_bit and subtract_bit
+                    unknown5 = multiply_bit and not mix_bit and add_bit and not subtract_bit
+                    specular = multiply_bit and not mix_bit and not add_bit and subtract_bit
+                    multiply = multiply_bit and not mix_bit and not add_bit and not subtract_bit
+                    unknown8 = not multiply_bit and mix_bit and add_bit and subtract_bit
+                    unknown9 = not multiply_bit and mix_bit and add_bit and not subtract_bit
+                    unknown10 = not multiply_bit and mix_bit and not add_bit and subtract_bit
+                    mix = not multiply_bit and mix_bit and not add_bit and not subtract_bit
+                    unknown12 = not multiply_bit and not mix_bit and add_bit and subtract_bit
+                    add = not multiply_bit and not mix_bit and add_bit and not subtract_bit
+                    subtract = not multiply_bit and not mix_bit and not add_bit and subtract_bit
+                    unknown15 = not multiply_bit and not mix_bit and not add_bit and not subtract_bit
+
+                t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
+                t_index = read_int(f, ">")
+                f.seek(8, 1)
+                t_alpha = read_float(f, ">")
+                t_scale = (1, 1)
+                t_uv = len(format(texture_flags >> 8 & 255, "b"))
+
+                texture_list.append(self.Texture(
+                    t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv, TextureFlags))
 
             if self.format_type == "SonicAndTheBlackKnight_G":
                 tex_formats = [a.type for a in texture_list]
                 if tex_formats.count("diffuse") > 1:
-                    texture_list[::-1][tex_formats[::-1].index("diffuse")].type = "none"
+                    mask_ind = tex_formats[tex_formats.index("diffuse") + 1::].index("diffuse")
+                    tex_format = tex_formats[tex_formats.index("diffuse") + 1::][mask_ind - 1] + "_mask"
+                    texture_list[mask_ind + len(tex_formats) -
+                                 len(tex_formats[tex_formats.index("diffuse") + 1::])].type = tex_format
+                if tex_formats.count("reflection") > 1:
+                    texture_list[tex_formats.index("reflection")].type = "reflection_multi"
             self.texture_list.append(texture_list)
 
     def _ino_texture(self):
         def sonic_4_episode_1_i():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte2bit1:
                 t_type = "diffuse"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         format_dict = {
             "SonicTheHedgehog4EpisodeI_I": sonic_4_episode_1_i,
@@ -433,44 +573,45 @@ class Read:
 
                         # byte 4
 
-                    var, tex_set = format_dict[self.format_type]()
-
-                    texture_list.append(self.Texture(var, tex_set, read_int(f)))
-                    f.seek(44, 1)
+                    t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
+                    t_index = read_int(f)
+                    # unfortunately I cannot test this so these are assumptions
+                    f.seek(16, 1)
+                    t_alpha = 1
+                    t_scale = read_float_tuple(f, 2)
+                    t_uv = len(format(texture_flags >> 8 & 255, "b"))
+                    texture_list.append(self.Texture(
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                    f.seek(20, 1)
             self.texture_list.append(texture_list)
 
     def _lno_texture(self):
         def house_of_the_dead_4_l():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte1bit1:
                 t_type = "normal"
-                t_settings.append("world")
             elif TextureFlags.byte1bit2:
                 t_type = "diffuse"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def loving_deads_house_of_the_dead_ex_l():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte1bit1:
                 t_type = "normal"
-                t_settings.append("object")
             elif TextureFlags.byte1bit2:
                 t_type = "diffuse"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def sonic_the_hedgehog4_episode_ii_l():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte1bit1:
                 t_type = "normal"
             elif TextureFlags.byte1bit2:
                 t_type = "diffuse"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         format_dict = {
             "SonicTheHedgehog4EpisodeII_L": sonic_the_hedgehog4_episode_ii_l,
@@ -502,26 +643,31 @@ class Read:
 
                         # byte 4
 
-                    var, tex_set = format_dict[self.format_type]()
+                    t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
+                    t_index = read_int(f)
+                    f.seek(4, 1)
+                    t_alpha = read_float(f)
+                    f.seek(8, 1)
+                    t_scale = read_float_tuple(f, 2)
+                    t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
-                    texture_list.append(self.Texture(var, tex_set, read_int(f)))
-                    f.seek(56, 1)
+                    texture_list.append(self.Texture(
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                    f.seek(32, 1)
             self.texture_list.append(texture_list)
 
     def _sno_texture(self):
         def sonic_riders_zero_gravity_s():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte2bit1:
                 t_type = "diffuse"
             elif TextureFlags.byte2bit3:
                 t_type = "reflection"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def sega_superstars_s():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte2bit1:
                 t_type = "diffuse"
             if TextureFlags.byte2bit2:
@@ -529,17 +675,16 @@ class Read:
             elif TextureFlags.byte2bit3:
                 t_type = "reflection"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def sega_ages_2500_series_vol_5_golden_axe_s():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte2bit1:
                 t_type = "diffuse"
             elif TextureFlags.byte2bit3:
                 t_type = "reflection"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         format_dict = {
             "SonicRidersZeroGravity_S": sonic_riders_zero_gravity_s,
@@ -568,21 +713,25 @@ class Read:
 
                         # byte 4
 
-                    var, tex_set = format_dict[self.format_type]()
+                    t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
                     f.seek(2, 1)
-                    texture_list.append(self.Texture(var, tex_set, read_short(f)))
+                    t_index = read_short(f)
+                    t_alpha = 1
+                    t_scale = (1, 1)
+                    t_uv = len(format(texture_flags >> 8 & 255, "b"))
+                    texture_list.append(self.Texture(
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
                     f.seek(104, 1)
             self.texture_list.append(texture_list)
 
     def _uno_texture(self):
         def k_on_after_school_live_u():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             # Only seen diffuse
             if TextureFlags.byte1bit1 and TextureFlags.byte1bit2 and TextureFlags.byte1bit4:
                 t_type = "diffuse"
 
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         format_dict = {
             "KOnAfterSchoolLive_U": k_on_after_school_live_u,
@@ -610,16 +759,20 @@ class Read:
 
                         # byte 4
 
-                    var, tex_set = format_dict[self.format_type]()
+                    t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
+                    t_index = read_int(f)
+                    t_alpha = read_float(f)
+                    t_scale = (1, 1)
+                    t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
-                    texture_list.append(self.Texture(var, tex_set, read_int(f)))
-                    f.seek(16, 1)
+                    texture_list.append(self.Texture(
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                    f.seek(12, 1)
             self.texture_list.append(texture_list)
 
     def _xno_texture(self):
         def sonic_riders_x():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte1bit1 and TextureFlags.diffuse_2:
                 t_type = "diffuse"
             elif TextureFlags.byte1bit3 and TextureFlags.reflection_2 and not TextureFlags.byte1bit2:
@@ -628,15 +781,11 @@ class Read:
                 t_type = "none"
 
             if TextureFlags.clamp_y or TextureFlags.clamp_x:
-                t_settings.append("clamp")
-            return t_type, t_settings
+                t_ext = "EXTEND"
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def sonic_2006_x():
-            t_type = "none"
-            t_settings = []
-            # need to wait for material refactor for all of these
-            # also 06 likes to use the same flags to refer to different things
-            # actual pain
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte1bit4:
                 t_type = "none"
             elif TextureFlags.byte1bit1 and TextureFlags.byte1bit2:
@@ -649,8 +798,8 @@ class Read:
                 t_type = "diffuse"
 
             if TextureFlags.clamp_y or TextureFlags.clamp_x:
-                t_settings.append("clamp")
-            return t_type, t_settings
+                t_ext = "EXTEND"
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         format_dict = {
             "SonicRiders_X": sonic_riders_x, "PhantasyStarUniverse_X": sonic_riders_x,  # need more info for psu
@@ -690,16 +839,22 @@ class Read:
                         # 01000000 : don't use texture offset floats right after texture index
                         #  first is x second is y as floats
 
-                    var, tex_set = format_dict[self.format_type]()
+                    t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
+                    t_index = read_int(f)
+                    f.seek(8, 1)
+                    t_alpha = read_float(f)
+                    t_scale = (1, 1)
+                    t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
-                    texture_list.append(self.Texture(var, tex_set, read_int(f)))
-                    f.seek(40, 1)
+                    texture_list.append(self.Texture(
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                    f.seek(28, 1)
 
                 if self.format_type == "Sonic2006_X":
                     tex_formats = [a.type for a in texture_list]
                     if tex_formats.count("spectacular") > 1:
                         texture_list[tex_formats.index("spectacular") + 1].type = "normal"
-                        texture_list[tex_formats.index("spectacular") + 1].setting.append("world")
+                        texture_list[tex_formats.index("spectacular") + 1].space = "world"
                     while tex_formats.count("spectacular") > 0:
                         texture_list[tex_formats.index("spectacular")].type = "none"
                         tex_formats = [a.type for a in texture_list]
@@ -707,19 +862,18 @@ class Read:
 
     def _zno_texture(self):
         def sonic_4_episode_1_z():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte1bit3:
                 t_type = "none"
             elif TextureFlags.byte1bit2:
                 t_type = "diffuse"
             # unsure how to use shading
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def transformers_human_alliance_z():
             # the normal maps are channel packed so they can't be added
-            t_type = "none"
-            t_settings = []
+            # todo yes they can
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte1bit1:
                 t_type = "none"  # "normal"
             elif TextureFlags.byte1bit2:
@@ -730,11 +884,10 @@ class Read:
                 t_type = "reflection"
             elif TextureFlags.byte2bit4:
                 t_type = "spectacular"
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         def sega_golden_gun_z():
-            t_type = "none"
-            t_settings = []
+            t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             if TextureFlags.byte1bit1:
                 t_type = "none"  # "normal"
             elif TextureFlags.byte1bit2:
@@ -745,7 +898,7 @@ class Read:
                 t_type = "reflection"
             elif TextureFlags.byte2bit4:
                 t_type = "spectacular"
-            return t_type, t_settings
+            return t_type, t_interp, t_proj, t_ext, t_space
 
         format_dict = {
             "Sonic4Episode1_Z": sonic_4_episode_1_z,
@@ -777,23 +930,41 @@ class Read:
 
                         # byte 4
 
-                    var, tex_set = format_dict[self.format_type]()
+                    t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
+                    t_index = read_int(f)
+                    f.seek(4, 1)
+                    t_alpha = read_float(f)
+                    f.seek(8, 1)
+                    t_scale = read_float_tuple(f, 2)
+                    t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
-                    texture_list.append(self.Texture(var, tex_set, read_int(f)))
-                    f.seek(56, 1)
+                    texture_list.append(self.Texture(
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                    f.seek(32, 1)
             self.texture_list.append(texture_list)
 
     def _return_data_1(self):
         material_list = []
         for i in range(self.material_count):
-            material_list.append(self.Material(self.texture_count[i], self.colour_list[i], self.texture_list[i], "OPAQUE"))
+            material_list.append(self.Material(
+                self.texture_count[i], self.colour_list[i], self.texture_list[i], "OPAQUE", False, True, False))
         return material_list
 
     def _return_data_2(self):
         material_list = []
         for i in range(self.material_count):
             material_list.append(self.Material(
-                self.texture_count[i], self.Colour((0.75, 0.75, 0.75), 1), self.texture_list[i], "OPAQUE"))
+                self.texture_count[i],
+                self.Colour(
+                    (0.75, 0.75, 0.75, 1), (0.75, 0.75, 0.75, 1), (0.9, 0.9, 0.9, 1), (0, 0, 0, 1), 0.2, 2),
+                self.texture_list[i], "OPAQUE", False, True, False))
+        return material_list
+
+    def _return_data_3(self):
+        material_list = []
+        for i in range(self.material_count):
+            material_list.append(self.Material(
+                self.texture_count[i], self.colour_list[i], self.texture_list[i], "OPAQUE", *self.mat_set_list[i]))
         return material_list
 
     def cno(self):
@@ -813,7 +984,7 @@ class Read:
     def gno(self):
         self._gno_offsets()
         self._gno_texture()
-        return self._return_data_1()
+        return self._return_data_3()
 
     def ino(self):
         if self.format_type == "SonicTheHedgehog4EpisodeI_I":
