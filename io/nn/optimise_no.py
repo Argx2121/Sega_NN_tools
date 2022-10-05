@@ -63,7 +63,7 @@ class OptimiseSegaNO(bpy.types.Operator):
     X: EnumProperty(
         name="Game",
         description="Game the asset is from (to get the correct game variant)",
-        items=xn_list,
+        items=xn_list[-1::],
     )
     Z: EnumProperty(
         name="Game",
