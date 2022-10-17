@@ -120,6 +120,10 @@ nf_list = (
 
 cn_list = (
     ("HouseOfTheDead4_C", "The House of the Dead 4", "The House of the Dead 4 Model | 17 Apr 2012"),
+    ("SonicTheHedgehog4EpisodeI_C", "Sonic the Hedgehog 4: Episode I",
+     "Sonic the Hedgehog 4: Episode I Model | 7 Oct 2010"),
+    ("SonicTheHedgehog4EpisodeII_C", "Sonic the Hedgehog 4: Episode II",
+     "Sonic the Hedgehog 4: Episode II Model | 7 Oct 2010"),
 )
 
 en_list = (
@@ -267,6 +271,8 @@ determine_bone = {
     "Match__": 1,
     # Formats
     "HouseOfTheDead4_C": 2,
+    "SonicTheHedgehog4EpisodeI_C": 2,
+    "SonicTheHedgehog4EpisodeII_C": 2,
 
     "SonicFreeRiders_E": 0.5,
     "SonicTheHedgehog4EpisodeIPrototype_E": 2,

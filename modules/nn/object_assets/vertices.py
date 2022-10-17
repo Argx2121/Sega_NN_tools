@@ -207,8 +207,31 @@ class Read:
                 elif BitFlags.uv:
                     off = get_uvs(off)
 
+            def sonic4():
+                off = 0
+                if BitFlags.position:
+                    off = get_positions(off)
+
+                if BitFlags.weight_indices:
+                    off = get_weights_with_indices(off)
+                elif BitFlags.weights:
+                    off = get_weights(off)
+
+                if BitFlags.normals:
+                    off = get_normals(off)
+
+                if BitFlags.colours:
+                    off += 8
+
+                if BitFlags.wx:
+                    off = get_uvs(off)
+                    off = get_wxs(off)
+                elif BitFlags.uv:
+                    off = get_uvs(off)
+
             format_dict = {
                 "HouseOfTheDead4_C": house_of_the_dead_4_c,
+                "SonicTheHedgehog4EpisodeI_C": sonic4, "SonicTheHedgehog4EpisodeII_C": sonic4,
             }
             format_dict[self.format_type]()
 
@@ -221,11 +244,12 @@ class Read:
             vertex_buffer_len = vertex_count * block_len
 
             class BitFlags(Flag):
-                # 00000000 000?00XU 0000IW0? 0?0??0/P house of the dead 4
+                # 00000000 000?00XU 0000IW0? 0?0??0NP house of the dead 4
                 # 00000000 00010010 00001101 01011011
                 # either have U or X on - you shouldn't have both
                 # order:
                 # Pos Weights boneIndices ? Uvs wX ?
+                # 00000000 00010001 00000000 00000011 s4e2
 
                 position = block_type & 1
                 colours = block_type >> 3 & 1

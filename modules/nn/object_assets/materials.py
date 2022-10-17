@@ -166,6 +166,7 @@ class Read:
 
         format_dict = {
             "HouseOfTheDead4_C": house_of_the_dead_4_c,
+            "SonicTheHedgehog4EpisodeI_C": house_of_the_dead_4_c, "SonicTheHedgehog4EpisodeII_C": house_of_the_dead_4_c,
         }
         f = self.f
         material_count = self.material_count

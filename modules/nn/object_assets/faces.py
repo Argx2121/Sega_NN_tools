@@ -193,14 +193,31 @@ class Read:
             for i in range(len(info.face_short_count)):  # for each tri strip
                 f.seek(info.face_offset[i] + self.start)
                 face_count = info.face_short_count[i]
-                face_list = read_short_tuple(f, face_count, ">")
-                face_count -= 2
-                for loop in range(face_count // 2):
-                    loop *= 2
-                    face_list_mesh.append((face_list[loop], face_list[loop + 1], face_list[loop + 2]))
-                    face_list_mesh.append((face_list[loop + 2], face_list[loop + 1], face_list[loop + 3]))
-                if face_count % 2 != 0:
-                    face_list_mesh.append((face_list[- 3], face_list[- 2], face_list[- 1]))
+                face_list = unpack(">" + str(face_count) + "h", f.read(face_count * 2))
+                if -1 in face_list:
+                    # null terminated tri strips ?? in s4e2 cno ?? its more likely than you think
+                    split_indices = [i + 1 for i, x in enumerate(face_list) if x == -1]
+                    strips = [face_list[i:j] for i, j in zip([0] + split_indices, split_indices + [None])]
+                    if strips[-1]:
+                        strips[-1] = list(strips[-1]) + [-1]
+                    strips = [s[:-1] for s in strips if s]
+                    for face_strip in strips:
+                        face_count = len(face_strip)
+                        face_count -= 2
+                        for loop in range(face_count // 2):
+                            loop *= 2
+                            face_list_mesh.append((face_strip[loop], face_strip[loop + 1], face_strip[loop + 2]))
+                            face_list_mesh.append((face_strip[loop + 2], face_strip[loop + 1], face_strip[loop + 3]))
+                        if face_count % 2 != 0:
+                            face_list_mesh.append((face_strip[- 3], face_strip[- 2], face_strip[- 1]))
+                else:
+                    face_count -= 2
+                    for loop in range(face_count // 2):
+                        loop *= 2
+                        face_list_mesh.append((face_list[loop], face_list[loop + 1], face_list[loop + 2]))
+                        face_list_mesh.append((face_list[loop + 2], face_list[loop + 1], face_list[loop + 3]))
+                    if face_count % 2 != 0:
+                        face_list_mesh.append((face_list[- 3], face_list[- 2], face_list[- 1]))
             self.face_list.append(face_list_mesh)
 
     def _ino_indices(self):
