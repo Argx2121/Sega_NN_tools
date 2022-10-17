@@ -32,12 +32,15 @@ A Python library for Blender for games using Sega's NN libraries.
 
 ### Cno
 #### The House of the Dead 4
+#### Sonic 4 Episode 1
+#### Sonic 4 Episode 2
 
 ### Eno
 #### Sonic Free Riders
 #### Sonic the Hedgehog 4: Episode I (Prototype)
 
 ### Gno
+#### Ghost Squad
 #### Super Monkey Ball: Step & Roll
 #### Sonic and the Black Knight
 #### Sonic Unleashed
