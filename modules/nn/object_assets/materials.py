@@ -786,14 +786,14 @@ class Read:
     def _return_data_1(self):
         material_list = []
         for i in range(self.material_count):
-            material_list.append(self.Material(self.texture_count[i], self.colour_list[i], self.texture_list[i], ""))
+            material_list.append(self.Material(self.texture_count[i], self.colour_list[i], self.texture_list[i], "OPAQUE"))
         return material_list
 
     def _return_data_2(self):
         material_list = []
         for i in range(self.material_count):
             material_list.append(self.Material(
-                self.texture_count[i], self.Colour((0.75, 0.75, 0.75), 1), self.texture_list[i], ""))
+                self.texture_count[i], self.Colour((0.75, 0.75, 0.75), 1), self.texture_list[i], "OPAQUE"))
         return material_list
 
     def cno(self):
