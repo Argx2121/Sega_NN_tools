@@ -106,13 +106,14 @@ class Read:
     def _gno_info(self, info_offset, info_flag):
         f = self.f
         for t, offset in zip(info_flag, info_offset):
-            f.seek(offset + self.start + 4)
+            f.seek(offset + self.start)
+            flags = read_int(f, ">")
             if t == 4:
                 face_off, face_len, face_off_2 = read_int_tuple(f, 3, ">")
-                self.face_info.append(self.FaceInfo(face_len, 0, face_off_2, face_off))
+                self.face_info.append(self.FaceInfo(face_len, flags, face_off_2, face_off))
             elif t == 0:
                 face_off, face_len, face_off_2 = read_int_tuple(f, 3, ">")
-                self.face_info.append(self.FaceInfo(face_len, 0, face_off_2, face_off))
+                self.face_info.append(self.FaceInfo(face_len, flags, face_off_2, face_off))
             elif t == 65536:
                 # not enough samples to verify what this 0x00 00 00 03 means
                 # probably face index types (3 = three face sets, pos norm uv)
@@ -332,40 +333,69 @@ class Read:
             counts = read_short_tuple(f, info.face_offset, ">")
             f.seek(info.face_lens_offset + self.start)
 
+            # yes I know the variable name is not face flags
+            face_flags = info.face_lens_count
+            has_colours = False
+            has_uvs = False
+            has_wxs = False
+            has_normals = False
+            if face_flags & 2097152 == 2097152:
+                has_colours = True
+            if face_flags & 4194304 == 4194304:
+                has_uvs = True
+            if face_flags & 134217728 == 134217728:
+                has_wxs = True
+            if face_flags & 268435456 == 268435456:  # complex mesh
+                if face_flags & 262144 == 262144:  # has normals
+                    has_normals = True
+            else:
+                if face_flags & 589824 == 589824:  # has normals
+                    has_normals = True
+
+            multi = 1
+
+            if has_normals:
+                multi += 1
+            if has_uvs:
+                multi += 1
+            if has_wxs:
+                multi += 2
+            if has_colours:
+                multi += 1
+
             for face_count in counts:
-                face_list = read_short_tuple(f, face_count * 3, ">")
-                face_l = face_list[0::3]
-                for face in range(face_count - 2):
-                    f1, f2, f3 = \
-                        face_l[(face + 0)], \
-                        face_l[(face + 1)], \
-                        face_l[(face + 2)]
-                    if face & 1:
-                        face_list_mesh.append((f1, f2, f3))
-                    else:
-                        face_list_mesh.append((f2, f1, f3))
+                count = face_count * multi
+                face_list = read_short_tuple(f, count, ">")
 
-                face_l = face_list[1::3]
-                for face in range(face_count - 2):
-                    f1, f2, f3 = \
-                        face_l[(face + 0)], \
-                        face_l[(face + 1)], \
-                        face_l[(face + 2)]
-                    if face & 1:
-                        col_list_mesh.append((f1, f2, f3))
-                    else:
-                        col_list_mesh.append((f2, f1, f3))
+                extract_faces = ExtractFaces(face_list, face_count, multi)
+                nonlocal face_list_mesh, norm_list_mesh, col_list_mesh, uv_list_mesh, uv2_list_mesh, uv3_list_mesh
+                a, off = extract_faces.extract(0)
+                face_list_mesh += a
 
-                face_l = face_list[2::3]
-                for face in range(face_count - 2):
-                    f1, f2, f3 = \
-                        face_l[(face + 0)], \
-                        face_l[(face + 1)], \
-                        face_l[(face + 2)]
-                    if face & 1:
-                        uv_list_mesh.append((f1, f2, f3))
-                    else:
-                        uv_list_mesh.append((f2, f1, f3))
+                if has_normals:
+                    a, off = extract_faces.extract(off)
+                    norm_list_mesh += a
+
+                if has_colours:
+                    a, off = extract_faces.extract(off)
+                    col_list_mesh += a
+
+                if has_uvs:
+                    a, off = extract_faces.extract(off)
+                    uv_list_mesh += a
+
+                    if has_wxs:
+                        a, off = extract_faces.extract(off)
+                        uv2_list_mesh += a
+
+                        a, off = extract_faces.extract(off)
+                        uv3_list_mesh += a
+                elif has_wxs:
+                    a, off = extract_faces.extract(off)
+                    uv_list_mesh += a
+
+                    a, off = extract_faces.extract(off)
+                    uv2_list_mesh += a
 
         # probably one of the oldest versions of gno face storage
         def faces_type_65536():
