@@ -345,6 +345,8 @@ class Read:
                 has_uvs = True
             if face_flags & 134217728 == 134217728:
                 has_wxs = True
+            if face_flags & 17825792 == 17825792:
+                has_uvs = True
             if face_flags & 268435456 == 268435456:  # complex mesh
                 if face_flags & 262144 == 262144:  # has normals
                     has_normals = True
