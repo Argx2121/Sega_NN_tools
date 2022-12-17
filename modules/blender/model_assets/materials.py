@@ -290,9 +290,7 @@ def material_complex(self):
                             break
                     tree.links.new(mix_node.inputs["Colour 2"], image_node.outputs[0])
                 else:
-                    mix_node = tree.nodes.new('ShaderNodeGroup')
-                    mix_node.node_tree = bpy.data.node_groups['NN Image Mixer']
-
+                    mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
                     mix_type = "0"
                     if m_mix.multiply:
                         mix_type = "0"
@@ -306,7 +304,7 @@ def material_complex(self):
                         mix_type = "3"
                     elif m_mix.unknown1 and not m_mix.reflection_2:
                         mix_type = "1"
-                    mix_node.inputs['Blend'].blend_type = mix_type
+                    mix_node.blend_type = mix_type
 
                     mix_node.inputs["Colour 2 Multiplier"].default_value = m_tex.alpha
 
