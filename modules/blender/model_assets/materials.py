@@ -22,7 +22,6 @@ def _make_image(tree, image, settings):
     node.interpolation = settings.interpolation
     node.projection = settings.projection
     node.extension = settings.extension
-    node.texture_mapping.scale = [settings.scale[0], settings.scale[1], 1]
     return node
 
 
@@ -209,22 +208,8 @@ def material_complex(self):
 
         if model_format[-1] == "G":
             bpy.context.scene.eevee.use_bloom = True
-            gno_shader = tree.nodes.new('ShaderNodeGroup')
-            gno_shader.node_tree = bpy.data.node_groups['NN Shader']
-
-            if m.unshaded:
-                gno_shader.inputs["Unshaded"].default_value = 1
-            if m.black_alpha:
-                gno_shader.inputs["Black is alpha"].default_value = 1
-
-            gno_shader.inputs["Ambient"].default_value = m_col.ambient
-            gno_shader.inputs["Specular"].default_value = m_col.specular
-            gno_shader.inputs["Emission"].default_value = m_col.emission
-            gno_shader.inputs["Specular Gloss"].default_value = m_col.shininess
-            gno_shader.inputs["Specular Level"].default_value = m_col.specular_value
-
-            colour_init = tree.nodes.new('ShaderNodeGroup')
-            colour_init.node_tree = bpy.data.node_groups['NN Colour Init']
+            gno_shader = tree.nodes.new('ShaderNodeNNShader')
+            colour_init = tree.nodes.new('ShaderNodeNNShaderInit')
 
             colour_init.inputs["Material Colour"].default_value = m_col.diffuse
             colour_init.inputs["Material Alpha"].default_value = m_col.diffuse[-1]
@@ -234,6 +219,19 @@ def material_complex(self):
                 tree.links.new(colour_init.inputs["Vertex Colour"], node.outputs[0])
                 tree.links.new(colour_init.inputs["Vertex Alpha"], node.outputs[1])
 
+            if m.unshaded:
+                colour_init.inputs["Unshaded"].default_value = 1
+            if m.black_alpha:
+                gno_shader.inputs["Black is alpha"].default_value = 1
+
+            colour_init.inputs["Ambient"].default_value = m_col.ambient
+            gno_shader.inputs["Specular"].default_value = m_col.specular
+            colour_init.inputs["Emission"].default_value = m_col.emission
+            colour_init.inputs["Emission"].hide = True
+            gno_shader.inputs["Specular Gloss"].default_value = m_col.shininess
+            gno_shader.inputs["Specular Level"].default_value = m_col.specular_value
+
+            tree.links.new(gno_shader.inputs["Unshaded"], colour_init.outputs["Unshaded"])
             tree.links.new(tree.nodes["Material Output"].inputs[0], gno_shader.outputs[0])
 
             diff_col = colour_init.outputs["Diffuse Colour"]
@@ -255,12 +253,10 @@ def material_complex(self):
                     image_node = _make_image(tree, texture_name[m_tex_index], m_tex)
 
                 if m_mix.reflection:
-                    node = tree.nodes.new('ShaderNodeGroup')
-                    node.node_tree = bpy.data.node_groups['NN Reflection']
+                    node = tree.nodes.new('ShaderNodeNNReflection')
                     tree.links.new(image_node.inputs[0], node.outputs[0])
                 elif m_mix.reflection_2 and not m_mix.mix:
-                    node = tree.nodes.new('ShaderNodeGroup')
-                    node.node_tree = bpy.data.node_groups['NN Reflection']
+                    node = tree.nodes.new('ShaderNodeNNReflection')
                     tree.links.new(image_node.inputs[0], node.outputs[0])
                     # black knight gives me so much pain
                 elif m_mix.uv1:
@@ -279,31 +275,66 @@ def material_complex(self):
                     node = tree.nodes.new(type="ShaderNodeUVMap")
                     node.uv_map = model_name_strip + "_UV4_Map"
                     tree.links.new(image_node.inputs[0], node.outputs[0])
+                if not m_mix.ignore_uv_offset:
+                    image_node.texture_mapping.translation[0] = m_tex.scale[0]
+                    image_node.texture_mapping.translation[1] = (- m_tex.scale[1]) + 1
 
-                if m_mix.specular:  # specular doesnt mix with any
-                    spec_col = image_node.outputs[0]
+                if m_mix.specular:  # this mixing type is set
+                    mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+                    mix_type = "_NN_RGB_MULTI"
+                    mix_node.blend_type = mix_type
+                    spec_col = mix_node.outputs[0]
+
+                    spec_rgb = tree.nodes.new('ShaderNodeRGB')
+                    spec_rgb.outputs[0].default_value = m_col.specular
+                    spec_alpha = tree.nodes.new(type="ShaderNodeValue")
+                    spec_alpha.outputs[0].default_value = m_col.specular[-1]
+
+                    mix_node.inputs["Colour 1"].default_value = m_col.specular
+                    tree.links.new(mix_node.inputs["Colour 1"], spec_rgb.outputs[0])
+                    tree.links.new(mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
+                    tree.links.new(mix_node.inputs["Colour 2"], image_node.outputs[0])
+                    tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
                 elif m_mix.unknown1 and m_mix.reflection_2:
                     for link in tree.links:
                         if link.to_node.name == mix_node.name and link.to_socket.name == "Colour 2":
-                            spec_col = link.from_node.outputs[0]
+                            s_mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+                            s_mix_type = "_NN_RGB_MULTI"
+                            s_mix_node.blend_type = s_mix_type
+                            spec_col = s_mix_node.outputs[0]
+
+                            spec_rgb = tree.nodes.new('ShaderNodeRGB')
+                            spec_rgb.outputs[0].default_value = m_col.specular
+                            spec_alpha = tree.nodes.new(type="ShaderNodeValue")
+                            spec_alpha.outputs[0].default_value = m_col.specular[-1]
+
+                            s_mix_node.inputs["Colour 1"].default_value = m_col.specular
+                            tree.links.new(s_mix_node.inputs["Colour 1"], spec_rgb.outputs[0])
+                            tree.links.new(s_mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
+                            tree.links.new(s_mix_node.inputs["Colour 2"], link.from_node.outputs[0])
+                            tree.links.new(s_mix_node.inputs["Alpha 2"], link.from_node.outputs[1])
                             tree.links.remove(link)
                             break
                     tree.links.new(mix_node.inputs["Colour 2"], image_node.outputs[0])
                 else:
                     mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
-                    mix_type = "0"
+                    mix_type = "_NN_RGB_MULTI"
                     if m_mix.multiply:
-                        mix_type = "0"
+                        mix_type = "_NN_RGB_MULTI"
                     elif m_mix.mix:
-                        mix_type = "1"
+                        mix_type = "_NN_RGB_MIX"
                     elif m_mix.add:
-                        mix_type = "2"
+                        mix_type = "_NN_RGB_ADD"
                     elif m_mix.add_branch:
-                        mix_type = "2"
+                        mix_type = "_NN_RGB_ADD"
                     elif m_mix.subtract:
-                        mix_type = "3"
+                        mix_type = "_NN_RGB_SUB"
                     elif m_mix.unknown1 and not m_mix.reflection_2:
-                        mix_type = "1"
+                        mix_type = "_NN_RGB_MIX"
+                    elif m_mix.specular:
+                        mix_type = "_NN_RGB_MULTI"
+                    if m_mix.multiply_shading:
+                        mix_node.multi_shading = True
                     mix_node.blend_type = mix_type
 
                     mix_node.inputs["Colour 2 Multiplier"].default_value = m_tex.alpha
@@ -327,6 +358,9 @@ def material_complex(self):
                         diff_end_connected = True
                         tree.links.new(gno_shader.inputs["Colour"], diff_col)
                         tree.links.new(gno_shader.inputs["Alpha"], diff_alpha)
+                        # in case this is the last node
+                        tree.links.new(mix_node.inputs["Colour 2"], diff_end_image.outputs[0])
+                        tree.links.new(mix_node.inputs["Alpha 2"], diff_end_image.outputs[1])
                     else:
                         tree.links.new(mix_node.inputs["Colour 2"], image_node.outputs[0])
                         tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
@@ -511,6 +545,7 @@ def make_bpy_textures(file_path: str, texture_names: list, recursive: bool):  # 
 
 @dataclass
 class MaterialList:
+    simple: bool
     material_list: list
     texture_list: list
 
@@ -518,16 +553,17 @@ class MaterialList:
 @dataclass
 class Mat:
     name: str
-    rgb: list
-    alpha: float
-    texture_list: list
-    # the 01 not set in 01 00 00 00 =
-    # yes colour, yes the one after, no the one after, no to the int, yes to the float (ordered)
-    #  so no highlights
     v_col: bool  # 00 00 00 01
     unlit: bool  # 00 00 01 00
     boolean: bool  # 00 02 00 00
-    # if alpha and texture: 01 00 00 02 ?
+    diffuse: list
+    alpha: float
+    emission: list
+    ambient: list
+    specular: list
+    specular_gloss: float
+    specular_level: float
+    texture_list: list
 
 
 def get_materials(self):
@@ -541,6 +577,14 @@ def get_materials(self):
         __slots__ = ["type", "name"]
         type: str
         name: str
+
+    @dataclass
+    class TextureComplex:
+        type: int
+        name: str
+        x: float
+        y: float
+        multiplier: float
 
     if self.settings.riders_default:
         class ImageFake:
@@ -565,38 +609,142 @@ def get_materials(self):
         m_texture_list = []
         rgb = (0.7529413, 0.7529413, 0.7529413, 1.0)
         alpha = 1.0
-        # todo maybe theres a way to see all the links? like its just a list of links
-        # todo oh maybe I can see what fbx exporter does for materials
-        # todo but i forgot to actually store and use data type settings
-        # 😔
-        # need to make the material import useless data to rewrite it and need to make materials parse correctly somehow
-        # todo bpy.data.materials['sha06_Material_0001'].node_tree.nodes["Specular BSDF"].inputs[4].links[0].from_socket
-        #  matLinks = mat.node_tree.links might help too?
+        node_types = [node.bl_idname for node in material.node_tree.nodes]
+        mat_type = True
+        if "ShaderNodeNNShader" in node_types:
+            mat_type = False
+            for node in material.node_tree.nodes[::]:
+                if node.bl_idname == "ShaderNodeNNShaderInit":
+                    start_node = node
+                    break
+            diffuse = start_node.inputs["Material Colour"].default_value
+            alpha = start_node.inputs["Material Alpha"].default_value
+            emission = start_node.inputs["Emission"].default_value
+            ambient = start_node.inputs["Ambient"].default_value
+            unlit = start_node.inputs["Unshaded"].default_value
 
-        #     for ob_obj in objects:
-        #         # If obj is not a valid object for materials, wrapper will just return an empty tuple...
-        #         for ma_s in ob_obj.material_slots:
-        #             ma = ma_s.material
-        #             if ma is None:
-        #                 continue  # Empty slots!
+            from_socket_to_socket = dict([[link.from_socket, link.to_socket] for link in material.node_tree.links])
+            to_socket_from_socket = dict([[link.to_socket, link.from_socket] for link in material.node_tree.links])
+            mix_node = from_socket_to_socket[start_node.outputs[1]].node
+            # we are going to use the alpha value connection to determine the next connected node
+            #  this is because the colour output is used for adding shading to textures
+            #  and the unshaded output is just for user convenience so they dont have to assign it twice
 
-        for mat in material.node_tree.nodes[::]:
-            # check if we read this type, if this image node actually has a texture
-            if mat.name == "DiffuseTexture" and mat.image:
-                m_texture_list.append(Texture("DiffuseTexture", mat))
-                if mat.image and mat.image.filepath not in texture_list:
-                    texture_list.append(mat.image.filepath)
-            elif mat.name == "ReflectionTexture" and mat.image:
-                m_texture_list.append(Texture("ReflectionTexture", mat))
-                if mat.image.filepath not in texture_list:
-                    texture_list.append(mat.image.filepath)
-            elif mat.name == "EmissionTexture" and mat.image:
-                m_texture_list.append(Texture("EmissionTexture", mat))
-                if mat.image.filepath not in texture_list:
-                    texture_list.append(mat.image.filepath)
-            elif mat.name == "RGB":
-                rgb = mat.outputs[0].default_value[::]
-            elif mat.name == "Value":
-                alpha = mat.outputs[0].default_value
-        material_list.append(Mat(name, rgb, alpha, m_texture_list, False, False, False))
-    return MaterialList(material_list, texture_list)
+            # textures aren't required, so we will check if it connects to the based node first
+            if mix_node.bl_idname == "ShaderNodeNNShader":
+                end_node = mix_node
+                specular = end_node.inputs["Specular"].default_value
+                specular_gloss = end_node.inputs["Specular Gloss"].default_value
+                specular_level = end_node.inputs["Specular Level"].default_value
+                # you can't have a specular texture without a diffuse texture with NN, so we don't need to check
+                # todo boolean, unlit, v col, etc
+                material_list.append(Mat(
+                    name, False, False, False,
+                    diffuse, alpha, emission, ambient, specular, specular_gloss, specular_level, m_texture_list))
+                continue
+            # parse texture nodes
+            while True:
+                mix_col = False
+                mix_alpha = False
+                mix_value = mix_node.inputs[4].default_value
+                mix_shading = mix_node.multi_shading
+                mix_blend = mix_node.blend_type
+
+                # the first two links will always be the same :)
+                mix_col = to_socket_from_socket[mix_node.inputs[2]].node
+                mix_alpha = to_socket_from_socket[mix_node.inputs[3]].node
+                if mix_col != mix_alpha:
+                    if mix_col.bl_idname == "ShaderNodeNNMixRGB":
+                        pass
+                    if mix_alpha.bl_idname == "ShaderNodeNNMixRGB":
+                        pass
+                else:
+                    if mix_col.bl_idname == "ShaderNodeNNMixRGB":
+                        pass
+                    elif mix_col.bl_idname == "ShaderNodeTexImage":
+                        image_trans_x = mix_col.texture_mapping.translation[0]
+                        image_trans_y = mix_col.texture_mapping.translation[1]
+                        image_vector = ""
+                        node_check = to_socket_from_socket[mix_col.inputs[0]].node
+                        if node_check.bl_idname == "ShaderNodeUVMap":
+                            image_vector = node_check.uv_map
+                        elif node_check.bl_idname == "ShaderNodeNNReflection":
+                            image_vector = "REF"
+                        image_flags = 786432  # unknown
+
+                        if image_trans_x == image_trans_y == 0:
+                            image_flags |= 1073741824
+
+                        if not image_vector:
+                            image_flags |= 256
+                        elif image_vector == "REF":
+                            image_flags |= 8192
+                        else:
+                            for child in self.mesh_list:
+                                if child.active_material.name == name:
+                                    uv_names = [uv.name for uv in child.data.uv_layers]
+                                    print(uv_names, image_vector, name)
+                                    if image_vector not in uv_names:
+                                        image_flags |= 256
+                                    else:
+                                        image_vector = uv_names.index(image_vector)
+                                        if image_vector > 8:
+                                            image_flags |= 256
+                                        else:
+                                            image_flags |= 256 * 2 ** image_vector
+
+                        if mix_shading:
+                            image_flags |= 64
+
+                        if mix_blend == "_NN_RGB_MULTI":
+                            image_flags |= 1
+                        elif mix_blend == "_NN_RGB_MIX":
+                            image_flags |= 2
+                        elif mix_blend == "_NN_RGB_ADD":
+                            image_flags |= 4
+                        elif mix_blend == "_NN_RGB_SUB":
+                            image_flags |= 8
+
+                        m_texture_list.append(
+                            TextureComplex(image_flags, mix_col, image_trans_x, image_trans_y, mix_value))
+
+                        if mix_col.image.filepath not in texture_list:
+                            texture_list.append(mix_col.image.filepath)
+
+                        for link in material.node_tree.links:
+                            if link.from_socket == mix_node.outputs[0]:
+                                mix_node = link.to_node
+                                break
+                        if mix_node.bl_idname == "ShaderNodeNNShader":
+                            break
+
+            end_node = mix_node
+            specular = end_node.inputs["Specular"].default_value
+            specular_gloss = end_node.inputs["Specular Gloss"].default_value
+            specular_level = end_node.inputs["Specular Level"].default_value
+            # todo boolean, unlit, v col, etc
+            material_list.append(Mat(
+                name, False, False, False,
+                diffuse, alpha, emission, ambient, specular, specular_gloss, specular_level,
+                m_texture_list))
+        else:
+            for mat in material.node_tree.nodes[::]:
+                # check if we read this type, if this image node actually has a texture
+                if mat.name == "DiffuseTexture" and mat.image:
+                    m_texture_list.append(Texture("DiffuseTexture", mat))
+                    if mat.image and mat.image.filepath not in texture_list:
+                        texture_list.append(mat.image.filepath)
+                elif mat.name == "ReflectionTexture" and mat.image:
+                    m_texture_list.append(Texture("ReflectionTexture", mat))
+                    if mat.image.filepath not in texture_list:
+                        texture_list.append(mat.image.filepath)
+                elif mat.name == "EmissionTexture" and mat.image:
+                    m_texture_list.append(Texture("EmissionTexture", mat))
+                    if mat.image.filepath not in texture_list:
+                        texture_list.append(mat.image.filepath)
+                elif mat.name == "RGB":
+                    rgb = mat.outputs[0].default_value[::]
+                elif mat.name == "Value":
+                    alpha = mat.outputs[0].default_value
+            material_list.append(Mat(name, False, False, False, rgb, alpha, [], [], [], 0, 0, m_texture_list))
+    return MaterialList(mat_type, material_list, texture_list)

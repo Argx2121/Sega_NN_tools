@@ -281,6 +281,8 @@ def get_bones(self):
         translation, rotation, sca = Matrix(child).decompose()
         rotation, lock = to_euler_angles_zyx(rotation)
 
+        print(bone.name, rotation, lock)
+
         if bone.parent:
             if bone_list[par].lock:
                 translation, q, sca = Matrix(child).decompose()
@@ -309,12 +311,16 @@ def get_bones(self):
 
         if radius:
             flags[1] = flags[1] | 32
+        # seems like inherit some kinda scale
+        # not sure what would use this but might need custom props if it wants to be preserved
+        # or a custom tab that has a list of all of them
         for a in sca:
             if a != 1.0:
                 flags[1] = flags[1] | 64
         if pose_b:  # Never seen them both set at once
             flags[1] = 28
-        flags[2] = 1
+        if self.format in {"SonicRiders_G", "SonicRiders_X"}:
+            flags[2] = 1
         # guesses
         flags[3] = flags[3] | 4
         flags[3] = flags[3] | 128

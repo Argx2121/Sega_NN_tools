@@ -318,7 +318,7 @@ class Read:
             elif mix_type in {9, 73, 66}:
                 t_type = "specular"
             if not texture_flags >> 30 & 1:
-                print("FUCK")
+                pass
 
             return t_type, t_interp, t_proj, t_ext, t_space
 
@@ -407,7 +407,9 @@ class Read:
             # 0 = no specular 1 = all, 00 02 00 00 = boolean mesh
             mat_type = read_int(f, ">")
             v_col = mat_type & 1
-            unlit = mat_type >> 8 & 1
+            unlit = mat_type >> 8 & 1  # (bloom) slash unlit
+            bool_on_top = mat_type >> 17 & 1  # 01 bool render over everything / render last
+            bool_maintain = mat_type >> 16 & 1  # 02 bool maintain render order
 
             diffuse = read_float_tuple(f, 4, ">")
             ambient = list(read_float_tuple(f, 3, ">"))
@@ -496,7 +498,7 @@ class Read:
                     # byte 4
                     # mixing
                     # the colour might be a bit different in blender because the colour space is different
-                    unknown_mix = texture_flags >> 6 & 1
+                    multiply_shading = texture_flags >> 6 & 1
                     subtract_bit = texture_flags >> 3 & 1
                     add_bit = texture_flags >> 2 & 1
                     mix_bit = texture_flags >> 1 & 1
@@ -522,9 +524,8 @@ class Read:
 
                 t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
                 t_index = read_int(f, ">")
-                f.seek(8, 1)
+                t_scale = read_float_tuple(f, 2, ">")
                 t_alpha = read_float(f, ">")
-                t_scale = (1, 1)
                 t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
                 texture_list.append(self.Texture(
@@ -1048,7 +1049,7 @@ class Write:
         f = self.f
         for mat in self.material_data.material_list:
             self.mat_offsets.append((f.tell(), 0, 0))
-            for a in mat.rgb:
+            for a in mat.diffuse:
                 write_float(f, "<", a)
             f.seek(-4, 1)
             write_float(f, "<", mat.alpha)
@@ -1059,7 +1060,7 @@ class Write:
         for mat in self.material_data.material_list:
             self.mat_offsets.append((f.tell(), 0, 0))
             write_integer(f, "<", 2)  # unsure
-            for a in mat.rgb:
+            for a in mat.diffuse:
                 write_float(f, "<", a)
             f.seek(-4, 1)
             write_float(f, "<", mat.alpha)
@@ -1077,7 +1078,7 @@ class Write:
         self.mat_offsets = [[a[0], offset, 0] for a in self.mat_offsets]
         write_integer(f, "<", 25, 393221, 393221, 0, 352649217, 262149, 0)
 
-    def _gno_texture(self):
+    def _gno_texture_simple(self):
         f = self.f
         textures = self.material_data.texture_list
         # todo possibly blender import all material data so i have to do less manually
@@ -1097,7 +1098,7 @@ class Write:
                 mat_flags = mat_flags | 16777216
 
             write_integer(f, ">", mat_flags)
-            for a in mat.rgb:
+            for a in mat.diffuse:
                 write_float(f, ">", a)
             f.seek(-4, 1)
             write_float(f, ">", mat.alpha)
@@ -1133,6 +1134,37 @@ class Write:
                     write_integer(f, ">", textures.index(image.name.image.filepath))
                     write_integer(f, ">", 2147483648, 0)
                     write_float(f, ">", 1)
+
+    def _gno_texture_complex(self):
+        f = self.f
+        textures = self.material_data.texture_list
+
+        for mat in self.material_data.material_list:
+            self.mat_offsets.append(f.tell())
+            mat_flags = 0
+            if mat.boolean:
+                mat_flags = mat_flags | 131072
+            if mat.unlit:
+                mat_flags = mat_flags | 256
+            if mat.v_col:
+                mat_flags = mat_flags | 1
+
+            if not mat.unlit and not mat.boolean:
+                mat_flags = mat_flags | 16777216
+
+            write_integer(f, ">", mat_flags)
+            write_float(f, ">", *mat.diffuse[0:3], mat.alpha)
+            write_float(f, ">", *mat.ambient[0:3])
+            write_float(f, ">", *mat.specular[0:3], mat.specular_level, mat.specular_gloss)
+
+            write_integer(f, ">", 1, 4, 5, 5, 2, 0, 6, 7, 0, 0)
+
+            for image in mat.texture_list:
+                write_integer(f, ">", image.type)
+                # write index
+                write_integer(f, ">", textures.index(image.name.image.filepath))
+                write_float(f, ">", image.x, image.y)
+                write_float(f, ">", image.multiplier)
 
     def _xno_texture(self):
         f = self.f
@@ -1282,7 +1314,10 @@ class Write:
             write_integer(f, "<", a)
 
     def gno(self):
-        self._gno_texture()
+        if self.material_data.simple:
+            self._gno_texture_simple()
+        else:
+            self._gno_texture_complex()
         material_offset = self.f.tell()
         self._gno_offsets()
         return material_offset, self.nof0_offsets

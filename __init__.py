@@ -30,6 +30,7 @@ if __package__ + ".io" in sys.modules:  # Sega_NN_tools is already loaded in to 
     [importlib.reload(sys.modules[name]) for name in files if name in sys.modules]  # refresh all loaded modules
 
 import bpy
+import nodeitems_utils
 from bpy.app.handlers import persistent
 
 from .io.nn import import_no, export_no, optimise_no
@@ -37,9 +38,11 @@ from .io.other import import_collision, import_splines, import_pathfinding, impo
 from .extract import srgc, srpc, amb, sfr, pkg, srzg, bnk, sms, gosgts
 from .ui import panels, preferences
 from .modules.blender.model_assets.node_groups import MakeGroups
+from .modules.blender.model_assets.nodes import classes as classes2
+from .modules.blender.model_assets.nodes import node_categories
 
 
-classes = (
+classes = [
     import_no.ImportSegaNO, preferences.ImportSegaNN, export_no.ExportSegaNO, optimise_no.OptimiseSegaNO,
     import_collision.ImportSegaNNCollision, import_splines.ImportSegaNNSplines,
     import_pathfinding.ImportSegaNNPathfinding, import_objects.ImportSegaNNObjects,
@@ -50,7 +53,9 @@ classes = (
     panels.NN_PT_ImportPanel, panels.NN_PT_ExportPanel,
     panels.EXTRACT_PT_Panel,
     panels.NN_PT_About,
-)
+]
+
+classes += classes2
 
 
 # register
@@ -59,9 +64,11 @@ def register():
         bpy.utils.register_class(cls)
     bpy.types.TOPBAR_MT_file_import.append(import_no.menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(export_no.menu_func_export)
+    nodeitems_utils.register_node_categories('NN_NODES', node_categories)
 
 
 def unregister():
+    nodeitems_utils.unregister_node_categories('NN_NODES')
     for cls in classes:
         bpy.utils.unregister_class(cls)
     bpy.types.TOPBAR_MT_file_import.remove(import_no.menu_func_import)
