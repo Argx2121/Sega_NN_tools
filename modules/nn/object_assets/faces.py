@@ -272,7 +272,7 @@ class Read:
                 col = face_flags >> 0 & 1
                 byte1bit2 = face_flags >> 1 & 1
                 norm = face_flags >> 2 & 1
-                byte1bit4 = face_flags >> 3 & 1
+                norm3 = face_flags >> 3 & 1
                 uvs = face_flags >> 4 & 1
                 wxs = face_flags >> 5 & 1
                 byte1bit7 = face_flags >> 6 & 1
@@ -285,6 +285,8 @@ class Read:
                 multi = 1
 
                 if FaceFlags.norm:
+                    multi += 1
+                if FaceFlags.norm3:
                     multi += 1
                 if FaceFlags.uvs:
                     multi += 1
@@ -303,6 +305,10 @@ class Read:
                 face_list_mesh += a
 
                 if FaceFlags.norm:
+                    a, off = extract_faces.extract(off)
+                    norm_list_mesh += a
+
+                if FaceFlags.norm3:
                     a, off = extract_faces.extract(off)
                     norm_list_mesh += a
 

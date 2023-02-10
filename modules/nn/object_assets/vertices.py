@@ -626,6 +626,10 @@ class Read:
                     v_normals.append(
                         Vector((data_byte[v * 3] / 64, data_byte[v * 3 + 1] / 64, data_byte[v * 3 + 2] / 64)
                                ).normalized())
+            elif d_type == 4:
+                data = read_float_tuple(f, 9 * count, ">")
+                for v in range(count):
+                    v_normals.append(data[v * 9: v * 9 + 3])
 
         def get_colours(d_type, count):
             if d_type == 1:
