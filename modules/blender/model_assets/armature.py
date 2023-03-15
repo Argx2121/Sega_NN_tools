@@ -193,11 +193,20 @@ def get_bones(self):
         used_bones = list(set(used_bones))
     used_bones = [b for b in bone_names if b in used_bones]
 
+    pose_data = []
+    bpy.ops.object.mode_set(mode="POSE")
+    for pose_b in armature.pose.bones:
+        pose_var = False
+        if "LIMIT_ROTATION" in [a.type for a in pose_b.constraints]:
+            pose_var = True
+        pose_data.append(pose_var)
+    bpy.ops.object.mode_set(mode="OBJECT")
+
     armature: Armature = armature.data
 
     bone_list = []
 
-    for bone, mesh_bone in zip(armature.bones, bone_used_2):
+    for bone, mesh_bone, pose_b in zip(armature.bones, bone_used_2, pose_data):
         flags = [0, 0, 0, 0]
 
         center = (0, 0, 0)
@@ -308,6 +317,8 @@ def get_bones(self):
         for a in sca:
             if a != 1.0:
                 flags[1] = flags[1] | 64
+        if pose_b:  # Never seen them both set at once
+            flags[1] = 28
         flags[2] = 1
         # guesses
         flags[3] = flags[3] | 4
