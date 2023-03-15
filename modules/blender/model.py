@@ -37,6 +37,7 @@ class Model:
 
         bpy.ops.object.mode_set(mode="POSE")  # pose bone stuff here
         console_out("Making Bone Groups...", armature.make_bone_groups, self)
+        console_out("Making Bone Constraints...", armature.make_bone_constraints, self)
         if self.settings.hide_null_bones:
             console_out("Hiding Null Bones...", armature.hide_null_bones)
 

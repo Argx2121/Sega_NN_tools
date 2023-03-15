@@ -84,6 +84,23 @@ def make_bone_groups(self):
             bone.bone_group = null_group
 
 
+def make_bone_constraints(self):
+    for pose_b, nn_b in zip(bpy.context.object.pose.bones, self.model.bones):
+        if nn_b.flags & 1835008:
+            constraint = pose_b.constraints.new(type='LIMIT_ROTATION')
+            if nn_b.flags & 256:
+                constraint.use_limit_x = True
+                constraint.use_limit_z = True
+            elif nn_b.flags & 512:
+                constraint.use_limit_y = True
+                constraint.use_limit_z = True
+            else:
+                constraint.use_limit_x = True
+                constraint.use_limit_y = True
+            constraint.euler_order = 'XZY'
+            constraint.owner_space = 'LOCAL'
+
+
 @dataclass
 class Bone:
     flags: list
