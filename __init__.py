@@ -80,4 +80,4 @@ def make_node_groups(scene):
     MakeGroups().execute()
 
 
-bpy.app.handlers.load_factory_preferences_post.append(make_node_groups)
+bpy.app.handlers.load_post.append(make_node_groups)
