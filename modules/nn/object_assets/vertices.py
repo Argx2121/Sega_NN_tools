@@ -485,10 +485,11 @@ class Read:
             vertex_buffer_len = vertex_count * block_len
 
             class BitFlags(Flag):
-                # 00000000 00PP000U 0WWW0X80 8000?N0P 00000000 00000000 000X000U 0?0NW0P0 sonic free riders
+                # 00000000 00PP002U 0WWW0X80 8000?N0P 00000000 00000000 000X002U 0?0NW0P0 sonic free riders
 
                 # order Pos Wei index (X) ? N(norms bit compressed)
                 # U(uv half float) 8 (skip 4 and skip 8, ? also skips 4)
+                # 2 is UV and WX
 
                 position = block_type >> 1 & 1
                 weights = block_type >> 3 & 1
