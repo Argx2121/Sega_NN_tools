@@ -625,6 +625,7 @@ def model_complex_split(context, old_obj):
 
     bone_groups = list(set(get_groups()))
     group_2 = [a for a in bone_groups if len(a) == 2]
+    # noinspection PyTypeChecker
     group_2.append([0, 1])
     group_4 = []
     for a, b, in zip(group_2[::2], group_2[1::2]):

@@ -4,6 +4,7 @@ import pathlib  # used by files that import util
 from struct import unpack, pack
 from sys import stdout
 from time import time
+# noinspection PyUnresolvedReferences
 from typing import BinaryIO, Tuple, Any, Union  # Union is used by files that import util
 
 
@@ -159,6 +160,7 @@ def toggle_console():
     """Toggles Blenders console if on windows"""
     from platform import system
     if system() == "Windows":
+        # noinspection PyUnresolvedReferences
         bpy.ops.wm.console_toggle()
 
 

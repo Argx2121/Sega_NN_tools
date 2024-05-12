@@ -54,6 +54,7 @@ class ImportSegaNNSplines(bpy.types.Operator, ImportHelper):
         box.row().prop(self, "batch", expand=True)
 
     def execute(self, context):
+        # noinspection PyUnresolvedReferences
         return splines_import(self.filepath, self.game, self.batch)
 
 

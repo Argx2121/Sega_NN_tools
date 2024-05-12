@@ -228,4 +228,5 @@ class SonicRPCTools(Operator, ImportHelper):
         box.row().prop(self, "set_batch", expand=True)
 
     def execute(self, context):
+        # noinspection PyUnresolvedReferences
         return ExtractSRPC(context, self.filepath, self.set_batch).execute()

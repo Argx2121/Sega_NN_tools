@@ -137,4 +137,5 @@ class Sonic4Tools(Operator, ImportHelper):
         box.row().prop(self, "set_batch", expand=True)
 
     def execute(self, context):
+        # noinspection PyUnresolvedReferences
         return ExtractAmb(context, self.filepath, self.set_batch).execute()

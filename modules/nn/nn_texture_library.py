@@ -48,6 +48,7 @@ class Read:
             texture_names = [read_int_tuple(f, 6)[1] for _ in range(texture_count)]
             for i in range(texture_count):
                 f.seek(texture_names[i] + self.post_info)
+                # noinspection PyTypeChecker
                 texture_names[i] = read_str_terminated(f)
             f.seek(end_of_block)
         elif self.format_type == "SonicTheHedgehog4EpisodeII_L":
@@ -57,6 +58,7 @@ class Read:
             texture_names = [read_int_tuple(f, 8)[2] for _ in range(texture_count)]
             for i in range(texture_count):
                 f.seek(texture_names[i])
+                # noinspection PyTypeChecker
                 texture_names[i] = read_str_terminated(f)
             f.seek(end_of_block)
         else:
@@ -65,6 +67,7 @@ class Read:
             texture_names = [read_int_tuple(f, 5)[1] for _ in range(texture_count)]
             for i in range(texture_count):
                 f.seek(texture_names[i] + self.post_info)
+                # noinspection PyTypeChecker
                 texture_names[i] = read_str_terminated(f)
             f.seek(end_of_block)
         return texture_names
@@ -81,6 +84,7 @@ class Read:
         texture_names = [read_int_tuple(f, 5, ">")[1] for _ in range(texture_count)]
         for i in range(texture_count):
             f.seek(texture_names[i] + self.post_info)
+            # noinspection PyTypeChecker
             texture_names[i] = read_str_terminated(f)
         f.seek(end_of_block)
         return texture_names

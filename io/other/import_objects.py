@@ -55,6 +55,7 @@ class ImportSegaNNObjects(bpy.types.Operator, ImportHelper):
         box.row().prop(self, "batch", expand=True)
 
     def execute(self, context):
+        # noinspection PyUnresolvedReferences
         return objects_import(self.filepath, self.game, self.batch)
 
 

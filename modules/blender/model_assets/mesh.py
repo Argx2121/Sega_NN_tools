@@ -298,6 +298,7 @@ def get_meshes(obj_mesh_list):
     mesh_list = []
     for child in obj_mesh_list:
         child: Object
+        # noinspection PyTypeChecker
         mesh: Mesh = child.data
         material_name = child.active_material.name
         bone_names = [a.name for a in child.vertex_groups]

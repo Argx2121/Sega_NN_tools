@@ -54,6 +54,7 @@ class ImportSegaNNPathfinding(bpy.types.Operator, ImportHelper):
         box.row().prop(self, "batch", expand=True)
 
     def execute(self, context):
+        # noinspection PyUnresolvedReferences
         return pathfinding_import(self.filepath, self.game, self.batch)
 
 

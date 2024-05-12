@@ -171,15 +171,18 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         settings.format_bone_scale = determine_bone[nn_format]
 
         # this gives us a game name
+        # noinspection PyUnresolvedReferences
         if nn_format != "Match__":
             pass  # user selected game name
         elif self.filepath.count(".") > 1 and self.filepath.split(".")[-2] in determine_bone:
             # dictionary has all game types
+            # noinspection PyUnresolvedReferences
             settings.format = self.filepath.split(".")[-2]
             # if extracted by these tools game name is in file name
         else:
             pass  # handled later
         settings.format_bone_scale = determine_bone[settings.format]
+        # noinspection PyUnresolvedReferences
         return model_import(self.filepath, settings)
 
 

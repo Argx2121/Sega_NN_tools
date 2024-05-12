@@ -74,7 +74,9 @@ class ExtractSRZG:
                         pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
 
                         fn = open(file_path, "wb")
+                        # noinspection PyUnboundLocalVariable
                         write_integer(fn, "<", texture_count)
+                        # noinspection PyUnboundLocalVariable
                         fn.write(texture_file_stream)
                         fn.close()
                 elif self.image_check():
@@ -178,4 +180,5 @@ class ExtractSrgzTools(Operator, ImportHelper):
         box.row().prop(self, "set_batch", expand=True)
 
     def execute(self, context):
+        # noinspection PyUnresolvedReferences
         return ExtractSRZG(context, self.filepath, self.set_batch).execute()

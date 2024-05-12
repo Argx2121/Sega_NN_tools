@@ -38,8 +38,10 @@ class Read:
         bone_names = [list(read_int_tuple(f, 2)) for _ in range(bone_count)]
         for i in range(bone_count):
             f.seek(bone_names[i][1] + self.post_info)
+            # noinspection PyTypeChecker
             bone_names[i][1] = read_str_terminated(f)
         f.seek(end_of_block)
+        # noinspection PyTypeChecker
         return dict(bone_names)
 
     def be(self):
@@ -53,8 +55,10 @@ class Read:
         bone_names = [list(read_int_tuple(f, 2, ">")) for _ in range(bone_count)]
         for i in range(bone_count):
             f.seek(bone_names[i][1] + self.post_info)
+            # noinspection PyTypeChecker
             bone_names[i][1] = read_str_terminated(f)
         f.seek(end_of_block)
+        # noinspection PyTypeChecker
         return dict(bone_names)
 
 

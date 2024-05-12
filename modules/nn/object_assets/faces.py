@@ -200,6 +200,7 @@ class Read:
                     split_indices = [i + 1 for i, x in enumerate(face_list) if x == -1]
                     strips = [face_list[i:j] for i, j in zip([0] + split_indices, split_indices + [None])]
                     if strips[-1]:
+                        # noinspection PyTypeChecker
                         strips[-1] = list(strips[-1]) + [-1]
                     strips = [s[:-1] for s in strips if s]
                     for face_strip in strips:

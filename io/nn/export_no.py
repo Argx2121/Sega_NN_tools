@@ -271,6 +271,7 @@ class ExportSegaNO(bpy.types.Operator, ExportHelper):
         # "Match__", "SonicFreeRiders_E" etc defaults to match
         settings.format = nn_format
 
+        # noinspection PyUnresolvedReferences
         return model_export(self.filepath, settings)
 
 

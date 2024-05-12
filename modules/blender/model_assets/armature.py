@@ -120,6 +120,7 @@ class Bone:
     lock: bool
 
 
+# noinspection PyArgumentList
 def to_euler_angles_zyx(q: Quaternion):
     """Converts the values from Quaternion into Euler angles.
 
@@ -202,6 +203,7 @@ def get_bones(self):
         pose_data.append(pose_var)
     bpy.ops.object.mode_set(mode="OBJECT")
 
+    # noinspection PyTypeChecker
     armature: Armature = armature.data
 
     bone_list = []
@@ -308,6 +310,7 @@ def get_bones(self):
         rotation.x = math.degrees(rotation.x)
         rotation.y = math.degrees(rotation.y)
         rotation.z = math.degrees(rotation.z)
+        # noinspection PyTypeChecker
         rot = tuple(rotation)
         pos = tuple(translation)
         sca = tuple(sca)
@@ -324,6 +327,7 @@ def get_bones(self):
         flags[3] = flags[3] | 4
         flags[3] = flags[3] | 128
 
+        # noinspection PyTypeChecker
         bone_list.append(Bone(
             flags, bone.name, b_mat, pos, rot, sca, par, used, chi, sib, center, radius, unknown, length, lock))
 
