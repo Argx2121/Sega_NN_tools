@@ -29,6 +29,8 @@ class ExtractAmb:
         if block_len == 6:
             f.seek(8, 1)
         data = read_int_tuple(f, count * block_len, endian)
+
+        offsets, offset_sizes = [], []
         if block_len == 4:
             offsets = data[0::4]
             offset_sizes = data[1::4]
