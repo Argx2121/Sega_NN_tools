@@ -260,7 +260,7 @@ def read_str(file: BinaryIO, count: int) -> str:
     return file.read(count).decode("utf-8", "ignore")
 
 
-def read_str_terminated(file: BinaryIO) -> str:
+def read_str_terminated(file: BinaryIO):
     """Reads and returns a null terminated string.
 
         Parameters
@@ -284,7 +284,7 @@ def read_str_terminated(file: BinaryIO) -> str:
         read_len = read_len - len(ret_str[0])
         file.seek(- read_len + 1, 1)
     else:
-        ret_str[0] = False
+        return False
     return ret_str[0]
 
 

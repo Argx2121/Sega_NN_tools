@@ -1028,17 +1028,17 @@ class Write:
                     write_integer(f, "<", 65537, 0, 0, 0, 0, 0, 0, 0)
                 elif image.type == "ReflectionTexture":
                     continue
-                    write_integer(f, "<", 1074536452)
-                    # write index
-                    write_integer(f, "<", textures.index(image.name.image.filepath))
-                    write_float(f, "<", 0, 0, 1, 0)
-                    write_integer(f, "<", 65540, 0, 0, 0, 0, 0)
-                    # yes riders does suck
-                    write_integer(f, "<", 1074536454)
-                    # write index
-                    write_integer(f, "<", textures.index(image.name.image.filepath))
-                    write_float(f, "<", 0, 0, 1, 0)
-                    write_integer(f, "<", 65540, 0, 0, 0, 0, 0)
+                    # write_integer(f, "<", 1074536452)
+                    # # write index
+                    # write_integer(f, "<", textures.index(image.name.image.filepath))
+                    # write_float(f, "<", 0, 0, 1, 0)
+                    # write_integer(f, "<", 65540, 0, 0, 0, 0, 0)
+                    # # yes riders does suck
+                    # write_integer(f, "<", 1074536454)
+                    # # write index
+                    # write_integer(f, "<", textures.index(image.name.image.filepath))
+                    # write_float(f, "<", 0, 0, 1, 0)
+                    # write_integer(f, "<", 65540, 0, 0, 0, 0, 0)
             if "ReflectionTexture" in tex_types:
                 mat.texture_list.append(mat.texture_list[tex_types.index("ReflectionTexture")])
 
