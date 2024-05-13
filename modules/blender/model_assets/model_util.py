@@ -14,7 +14,7 @@ def make_names(self):
         bone_set = set(range(self.model.info.bone_count)) - set(self.bone_names)
         for a in bone_set:
             self.bone_names[a] = model_strip + "_Bone_" + str(a).zfill(4)
-    self.group_names = [model_strip + "_Bone_Group_" + str(a.group).zfill(4) for a in self.model.bones]
+    self.group_names = [model_strip + "_Bone_Collection_" + str(a.group).zfill(4) for a in self.model.bones]
     self.mat_names = [model_strip + "_Material_" + str(a).zfill(4) for a in list(range(self.model.info.material_count))]
     self.mesh_names = [model_strip + "_Mesh_" + str(a).zfill(4) for a in list(range(len(self.model.build_mesh)))]
 

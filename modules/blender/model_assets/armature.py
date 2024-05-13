@@ -59,29 +59,24 @@ def make_armature(self):
 
 
 def hide_null_bones():  # a subset of (if not all) unweighted bones
-    bone_groups = bpy.context.object.pose.bone_groups
-    if "Null_Bone_Group" in bone_groups:
-        bone_groups.active = bone_groups["Null_Bone_Group"]
-        bpy.ops.pose.group_select()
-        bpy.ops.pose.hide(unselected=False)
+    arma: Armature = bpy.context.object.data
+    if "Null_Bones" in arma.collections:
+        arma.collections["Null_Bones"].is_visible = False
 
 
-def make_bone_groups(self):
+def make_bone_collections(self):
     bone_data = self.model.bones
     group_names = self.group_names
-    pose = bpy.context.object.pose
+    arma: Armature = bpy.context.object.data
 
-    if self.model_name_strip + "_Bone_Group_" + "65535" in group_names:  # null
-        null_group = pose.bone_groups.new(name="Null_Bone_Group")
-        null_group.color_set = "THEME08"  # makes it visibly different
+    if self.model_name_strip + "_Bone_Collection_" + "65535" in group_names:  # null
+        arma.collections.new("Null_Bones")
 
     for i in range(self.model.info.bone_count):
-        bone = pose.bones[i]
-        if bone_data[i].group != 65535:
-            bone.bone_group = pose.bone_groups.new(name=group_names[i])
-        else:
-            # noinspection PyUnboundLocalVariable
-            bone.bone_group = null_group
+        bone = arma.bones[i]
+        if bone_data[i].group == 65535:
+            arma.collections["Null_Bones"].assign(bone)
+            bone.color.palette = "THEME08"  # makes it visibly different
 
 
 def make_bone_constraints(self):

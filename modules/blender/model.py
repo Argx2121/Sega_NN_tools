@@ -36,12 +36,12 @@ class Model:
             console_out("Making Pretty Bones...", armature.make_bones_pretty, self)
 
         bpy.ops.object.mode_set(mode="POSE")  # pose bone stuff here
-        console_out("Making Bone Groups...", armature.make_bone_groups, self)
         console_out("Making Bone Constraints...", armature.make_bone_constraints, self)
+        bpy.ops.object.mode_set(mode="OBJECT")  # return to normal
+        console_out("Making Bone Collections...", armature.make_bone_collections, self)
         if self.settings.hide_null_bones:
             console_out("Hiding Null Bones...", armature.hide_null_bones)
 
-        bpy.ops.object.mode_set(mode="OBJECT")  # return to normal
         if self.settings.simple_materials:
             console_out("Making Simple Materials...", materials.material_simple, self)
         else:
