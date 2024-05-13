@@ -79,7 +79,6 @@ def make_mesh(self):
 
         def make_normals():
             mesh.normals_split_custom_set_from_vertices(norm_short_hand)
-            mesh.use_auto_smooth = True
 
         def make_normals_face():
             norm_new = []
@@ -88,7 +87,6 @@ def make_mesh(self):
                 norm_new.append(norm_short_hand[f_i[1]])
                 norm_new.append(norm_short_hand[f_i[2]])
             mesh.normals_split_custom_set(norm_new)
-            mesh.use_auto_smooth = True
 
         def make_weights_complex():
             weights_main = v_data.weights
@@ -548,7 +546,7 @@ class GenerateMeshesGno:
         for objm in mesh_list:
             obj = objm.bpy_obj
             mesh: Mesh = obj.data
-            mesh.calc_normals_split()
+            # i think they added support for a few things which is nice
 
             co_ords = [0, 0, 0] * len(mesh.vertices)
             mesh.vertices.foreach_get("co", co_ords)
@@ -749,7 +747,6 @@ class GenerateMeshesGno:
             obj = objm.bpy_obj
             mesh: Mesh = obj.data
             bone_names = [a.name for a in obj.vertex_groups]
-            mesh.calc_normals_split()
 
             pos = []
             norms = []
@@ -955,7 +952,6 @@ class GenerateMeshes:
             obj = objm.bpy_obj
             bone_names = [a.name for a in obj.vertex_groups]
             mesh: Mesh = obj.data
-            mesh.calc_normals_split()
 
             co_ords = []
             for face in mesh.polygons:
