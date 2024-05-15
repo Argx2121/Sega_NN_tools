@@ -26,34 +26,34 @@ def _make_image(tree, image, settings):
 
 def _mix_rgb(tree, input_1, input_2):
     node = tree.nodes.new(type="ShaderNodeMixRGB")
-    node.inputs[0].default_value = 1
+    node.inputs["Fac"].default_value = 1
     node.blend_type = 'MULTIPLY'
-    tree.links.new(node.inputs[1], input_1)
-    tree.links.new(node.inputs[2], input_2)
+    tree.links.new(node.inputs["Color1"], input_1)
+    tree.links.new(node.inputs["Color2"], input_2)
     return node.outputs[0]
 
 
 def _mix_colour_reflection(tree, input_1, input_2):
     node = tree.nodes.new(type="ShaderNodeMixRGB")
     # node.blend_type = 'MIX'
-    tree.links.new(node.inputs[1], input_1)
-    tree.links.new(node.inputs[2], input_2)
+    tree.links.new(node.inputs["Color1"], input_1)
+    tree.links.new(node.inputs["Color2"], input_2)
     return node.outputs[0]
 
 
 def _vertex_colours(tree, name):
     node = tree.nodes.new(type="ShaderNodeVertexColor")
     # todo add vertex alpha
-    return node.outputs[0]
+    return node.outputs["Color"]
 
 
 def _diffuse_rgba(tree, image, rgba, skip_textures):
     image.name = "DiffuseTexture"
     rbg = tree.nodes.new(type="ShaderNodeRGB")
-    rbg.outputs[0].default_value = (rgba.colour[0], rgba.colour[1], rgba.colour[2], 1)
+    rbg.outputs["Color"].default_value = (rgba.colour[0], rgba.colour[1], rgba.colour[2], 1)
 
     alpha = tree.nodes.new(type="ShaderNodeValue")
-    alpha.outputs[0].default_value = rgba.alpha
+    alpha.outputs["Value"].default_value = rgba.alpha
 
     # image alpha - (rgba alpha * -1 + 1), clamped
     multiply_add = tree.nodes.new(type="ShaderNodeMath")
@@ -63,40 +63,40 @@ def _diffuse_rgba(tree, image, rgba, skip_textures):
     subtract.operation = 'SUBTRACT'
     subtract.use_clamp = True
 
-    tree.links.new(multiply_add.inputs[0], alpha.outputs[0])
-    multiply_add.inputs[1].default_value = -1
-    multiply_add.inputs[2].default_value = 1
+    tree.links.new(multiply_add.inputs["Value"], alpha.outputs["Value"])
+    multiply_add.inputs["Value_001"].default_value = -1
+    multiply_add.inputs["Value_002"].default_value = 1
 
     if not skip_textures:
-        tree.links.new(subtract.inputs[0], image.outputs[1])
+        tree.links.new(subtract.inputs["Value"], image.outputs["Alpha"])
     else:
-        subtract.inputs[0].default_value = 1
+        subtract.inputs["Value"].default_value = 1
 
     alpha_invert = tree.nodes.new(type="ShaderNodeInvert")
-    tree.links.new(alpha_invert.inputs[1], subtract.outputs[0])
+    tree.links.new(alpha_invert.inputs["Color"], subtract.outputs["Value"])
 
-    tree.links.new(subtract.inputs[1], multiply_add.outputs[0])
+    tree.links.new(subtract.inputs["Value_001"], multiply_add.outputs["Value"])
 
-    return _mix_rgb(tree, image.outputs[0], rbg.outputs[0]), alpha_invert.outputs[0]
+    return _mix_rgb(tree, image.outputs["Color"], rbg.outputs["Color"]), alpha_invert.outputs["Color"]
 
 
 def _rgba(tree, rgba):
     rbg = tree.nodes.new(type="ShaderNodeRGB")
-    rbg.outputs[0].default_value = (rgba.colour[0], rgba.colour[1], rgba.colour[2], 1)
+    rbg.outputs["Color"].default_value = (rgba.colour[0], rgba.colour[1], rgba.colour[2], 1)
 
     alpha = tree.nodes.new(type="ShaderNodeValue")
-    alpha.outputs[0].default_value = rgba.alpha
+    alpha.outputs["Value"].default_value = rgba.alpha
     alpha_invert = tree.nodes.new(type="ShaderNodeInvert")
-    tree.links.new(alpha_invert.inputs[1], alpha.outputs[0])
+    tree.links.new(alpha_invert.inputs["Color"], alpha.outputs["Value"])
 
-    return rbg.outputs[0], alpha_invert.outputs[0]
+    return rbg.outputs["Color"], alpha_invert.outputs["Color"]
 
 
 def _reflection(tree, image):
     image.name = "ReflectionTexture"
     node = tree.nodes.new(type="ShaderNodeTexCoord")
-    tree.links.new(image.inputs[0], node.outputs[6])
-    return image.outputs[0]
+    tree.links.new(image.inputs["Vector"], node.outputs["Reflection"])
+    return image.outputs["Color"]
 
 
 def _reflection_wx(tree, image, model_name_strip):
@@ -109,10 +109,10 @@ def _reflection_wx(tree, image, model_name_strip):
     math_node = tree.nodes.new(type="ShaderNodeVectorMath")
     math_node.operation = 'ADD'
 
-    tree.links.new(math_node.inputs[0], ref_node.outputs[6])
-    tree.links.new(math_node.inputs[1], wx_node.outputs[0])
-    tree.links.new(image.inputs[0], math_node.outputs[0])
-    return image.outputs[0]
+    tree.links.new(math_node.inputs["Value"], ref_node.outputs["Reflection"])
+    tree.links.new(math_node.inputs["Value_001"], wx_node.outputs["UV"])
+    tree.links.new(image.inputs["Vector"], math_node.outputs["Vector"])
+    return image.outputs["Color"]
 
 
 def _normal(tree, image, settings, skip_textures):
@@ -120,49 +120,49 @@ def _normal(tree, image, settings, skip_textures):
     if not skip_textures:
         image.image.colorspace_settings.name = 'Non-Color'
     node = tree.nodes.new(type="ShaderNodeNormalMap")
-    tree.links.new(node.inputs[1], image.outputs[0])
+    tree.links.new(node.inputs["Color"], image.outputs["Color"])
     if "world" in settings:
         node.space = 'WORLD'
     elif "object" in settings:
         node.space = 'OBJECT'
-    return node.outputs[0]
+    return node.outputs["Normal"]
 
 
 def _bump(tree, image):
     image.name = "BumpTexture"
     image.image.colorspace_settings.name = 'Non-Color'
     node = tree.nodes.new(type="ShaderNodeBump")
-    tree.links.new(node.inputs[2], image.outputs[0])
-    return node.outputs[0]
+    tree.links.new(node.inputs["Height"], image.outputs["Color"])
+    return node.outputs["Normal"]
 
 
 def _wx_alpha(tree, colour, image, model_name_strip):
     node = tree.nodes.new(type="ShaderNodeUVMap")
     node.uv_map = model_name_strip + "_UV2_Map"
-    tree.links.new(image.inputs[0], node.outputs[0])
+    tree.links.new(image.inputs["Vector"], node.outputs["UV"])
 
     multi = tree.nodes.new(type="ShaderNodeMixRGB")
     multi.blend_type = 'MULTIPLY'
 
-    tree.links.new(multi.inputs[0], image.outputs[1])
-    tree.links.new(multi.inputs[1], colour)
-    tree.links.new(multi.inputs[2], image.outputs[0])
+    tree.links.new(multi.inputs["Fac"], image.outputs["Alpha"])
+    tree.links.new(multi.inputs["Color1"], colour)
+    tree.links.new(multi.inputs["Color2"], image.outputs["Color"])
 
-    return multi.outputs[0]
+    return multi.outputs["Color"]
 
 
 def _wx(tree, colour, image, model_name_strip):
     node = tree.nodes.new(type="ShaderNodeUVMap")
     node.uv_map = model_name_strip + "_UV2_Map"
-    tree.links.new(image.inputs[0], node.outputs[0])
+    tree.links.new(image.inputs["Vector"], node.outputs["UV"])
 
     multi = tree.nodes.new(type="ShaderNodeMixRGB")
     multi.blend_type = 'MULTIPLY'
 
-    tree.links.new(multi.inputs[1], image.outputs[0])
-    tree.links.new(multi.inputs[2], colour)
+    tree.links.new(multi.inputs["Color1"], image.outputs["Color"])
+    tree.links.new(multi.inputs["Color2"], colour)
 
-    return multi.outputs[0]
+    return multi.outputs["Color"]
 
 
 def material_complex(self):
@@ -203,9 +203,9 @@ def material_complex(self):
 
         # noinspection SpellCheckingInspection
         n_end = tree.nodes.new(type="ShaderNodeEeveeSpecular")
-        n_end.inputs[2].default_value = 0.5
+        n_end.inputs["Roughness"].default_value = 0.5
 
-        tree.links.new(tree.nodes["Material Output"].inputs[0], n_end.outputs[0])
+        tree.links.new(tree.nodes["Material Output"].inputs["Surface"], n_end.outputs["BSDF"])
 
         colour = False
         alpha = 1
@@ -231,19 +231,19 @@ def material_complex(self):
                 colour = _mix_rgb(tree, colour, vertex_colours)
             elif m_tex_type == "normal":
                 displacement = _normal(tree, image_node, m_tex_set, skip_textures)
-                tree.links.new(n_end.inputs[5], displacement)
+                tree.links.new(n_end.inputs["Normal"], displacement)
             elif m_tex_type == "emission":
                 image_node.name = "EmissionTexture"
-                tree.links.new(n_end.inputs[3], image_node.outputs[0])
+                tree.links.new(n_end.inputs["Emissive Color"], image_node.outputs["Color"])
             elif m_tex_type == "reflection":
                 reflection = _reflection(tree, image_node)
             elif m_tex_type == "reflection_wx":
                 reflection = _reflection_wx(tree, image_node, model_name_strip)
             elif m_tex_type == "bump":
                 displacement = _bump(tree, image_node)
-                tree.links.new(n_end.inputs[5], displacement)
-            elif m_tex_type == "spectacular":
-                tree.links.new(n_end.inputs[1], image_node.outputs[0])
+                tree.links.new(n_end.inputs["Normal"], displacement)
+            elif m_tex_type == "spectacular":  # guys what lmao
+                tree.links.new(n_end.inputs["Specular"], image_node.outputs["Color"])
             elif m_tex_type == "wx_alpha":
                 colour = _wx_alpha(tree, colour, image_node, model_name_strip)
             elif m_tex_type == "wx":
@@ -260,8 +260,8 @@ def material_complex(self):
             #  like eye reflection colour output for fac in transparency shader
             #  there isn't a way to determine if this needs to be set up though
 
-        tree.links.new(n_end.inputs[0], colour)
-        tree.links.new(n_end.inputs[4], alpha)
+        tree.links.new(n_end.inputs["Base Color"], colour)
+        tree.links.new(n_end.inputs["Transparency"], alpha)
 
 
 def material_simple(self):  # for exporting to fbx etc, so keep it simple.
@@ -320,18 +320,22 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
 
                 colour = True
 
-                tree.links.new(diffuse.inputs[0], image_node.outputs[0])
+                tree.links.new(diffuse.inputs["Base Color"], image_node.outputs["Color"])
             elif m_tex_type == "normal":
                 displacement = _normal(tree, image_node, m_tex_set, skip_textures)
 
-                tree.links.new(diffuse.inputs[-3], displacement)
+                tree.links.new(diffuse.inputs["Normal"], displacement)
             elif m_tex_type == "emission":
+                # these might need to be mixed with vcol and base colour idk
                 image_node.name = "EmissionTexture"
-                tree.links.new(diffuse.inputs[-5], image_node.outputs[0])
+                tree.links.new(diffuse.inputs["Emission Color"], image_node.outputs["Color"])
+                diffuse.inputs["Emission Strength"].default_value = 1
+                diffuse.inputs["Base Color"].default_value = (0, 0, 0, 1)
+
             elif m_tex_type == "bump":
                 displacement = _bump(tree, image_node)
 
-                tree.links.new(diffuse.inputs[-3], displacement)
+                tree.links.new(diffuse.inputs["Normal"], displacement)
 
         if not colour:  # if a diffuse texture hasn't been found
             _rgba(tree, m_col)
