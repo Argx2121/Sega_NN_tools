@@ -21,7 +21,7 @@ class MakeGroups:
         tree.use_fake_user = True
         # thanks to firegodjr for the node set up
         group_outputs = tree.nodes.new('NodeGroupOutput')
-        tree.outputs.new('NodeSocketVector', 'Reflection Vector')
+        tree.interface.new_socket(name="Reflection Vector", in_out='OUTPUT', socket_type='NodeSocketVector')
 
         geometry = tree.nodes.new(type="ShaderNodeNewGeometry")
         camera = tree.nodes.new(type="ShaderNodeCameraData")
@@ -62,6 +62,8 @@ class MakeGroups:
         vector_add.operation = 'ADD'
         vector_add.inputs[1].default_value = [0.5, 0.5, 0]
 
+        # todo .. yeah
+
         tree.links.new(geometry.outputs[1], transform.inputs[0])
         tree.links.new(transform.outputs[0], cross_product.inputs[0])
         tree.links.new(camera.outputs[0], normalize1.inputs[0])
@@ -85,10 +87,10 @@ class MakeGroups:
         tree.use_fake_user = True
 
         group_inputs = tree.nodes.new('NodeGroupInput')
-        tree.inputs.new('NodeSocketVector', 'Normal Map Vector')
+        tree.interface.new_socket(name="Normal Map Vector", in_out='INPUT', socket_type='NodeSocketVector')
 
         group_outputs = tree.nodes.new('NodeGroupOutput')
-        tree.outputs.new('NodeSocketVector', 'Reflection Vector')
+        tree.interface.new_socket(name="Reflection Vector", in_out='OUTPUT', socket_type='NodeSocketVector')
 
         camera = tree.nodes.new(type="ShaderNodeCameraData")
         separate = tree.nodes.new(type="ShaderNodeSeparateXYZ")
@@ -146,62 +148,62 @@ class MakeGroups:
         tree.use_fake_user = True
 
         # Group inputs
-        var = tree.inputs.new('NodeSocketColor', 'Colour')
+        var = tree.interface.new_socket(name="Color", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = False
         var.default_value = (0.7529413104057312, 0.7529413104057312, 0.7529413104057312, 1.0)
 
-        var = tree.inputs.new('NodeSocketFloatFactor', 'Alpha')
+        var = tree.interface.new_socket(name="Alpha", in_out='INPUT', socket_type='NodeSocketFloat')
         var.max_value = 1.0
         var.min_value = 0.0
         var.hide_value = False
         var.default_value = 1.0
 
-        var = tree.inputs.new('NodeSocketInt', 'Unshaded')
+        var = tree.interface.new_socket(name="Unshaded", in_out='INPUT', socket_type='NodeSocketInt')
         var.max_value = 1
         var.min_value = 0
         var.hide_value = False
         var.default_value = 0
 
-        var = tree.inputs.new('NodeSocketInt', 'Black is alpha')
+        var = tree.interface.new_socket(name="Black is alpha", in_out='INPUT', socket_type='NodeSocketInt')
         var.max_value = 1
         var.min_value = 0
         var.hide_value = False
         var.default_value = 0
 
-        var = tree.inputs.new('NodeSocketInt', 'Boolean (Render on top)')
+        var = tree.interface.new_socket(name="Boolean (Render on top)", in_out='INPUT', socket_type='NodeSocketInt')
         var.max_value = 1
         var.min_value = 0
         var.hide_value = False
         var.default_value = 0
 
-        var = tree.inputs.new('NodeSocketInt', 'Boolean (Keep render order)')
+        var = tree.interface.new_socket(name="Boolean (Keep render order)", in_out='INPUT', socket_type='NodeSocketInt')
         var.max_value = 1
         var.min_value = 0
         var.hide_value = False
         var.default_value = 0
 
-        var = tree.inputs.new('NodeSocketColor', 'Specular')
+        var = tree.interface.new_socket(name="Specular", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = False
         var.default_value = (0.8999999761581421, 0.8999999761581421, 0.8999999761581421, 1.0)
 
-        var = tree.inputs.new('NodeSocketFloatFactor', 'Specular Gloss')
+        var = tree.interface.new_socket(name="Specular Gloss", in_out='INPUT', socket_type='NodeSocketFloat')
         var.max_value = 1.0
         var.min_value = 0.0
         var.hide_value = False
         var.default_value = 0.30000001192092896
 
-        var = tree.inputs.new('NodeSocketFloatFactor', 'Specular Level')
+        var = tree.interface.new_socket(name="Specular Level", in_out='INPUT', socket_type='NodeSocketFloat')
         var.max_value = 2.0
         var.min_value = 0.0
         var.hide_value = False
         var.default_value = 2.0
 
-        var = tree.inputs.new('NodeSocketVector', 'Normal')
+        var = tree.interface.new_socket(name="Specular Level", in_out='INPUT', socket_type='NodeSocketVector')
         var.hide_value = True
         var.default_value = (0.0, 0.0, 0.0)
 
         # Group outputs
-        var = tree.outputs.new('NodeSocketShader', 'BSDF')
+        var = tree.interface.new_socket(name="BSDF", in_out='OUTPUT', socket_type='NodeSocketShader')
         var.hide_value = False
 
         # Group Nodes
@@ -445,46 +447,46 @@ class MakeGroups:
         tree.use_fake_user = True
 
         # Group inputs
-        var = tree.inputs.new('NodeSocketColor', 'Material Colour')
+        var = tree.interface.new_socket(name="Material Color", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = False
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
-        var = tree.inputs.new('NodeSocketFloat', 'Material Alpha')
+        var = tree.interface.new_socket(name="Material Alpha", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = False
 
-        var = tree.inputs.new('NodeSocketColor', 'Vertex Colour')
+        var = tree.interface.new_socket(name="Vertex Color", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
-        var = tree.inputs.new('NodeSocketFloat', 'Vertex Alpha')
+        var = tree.interface.new_socket(name="Vertex Alpha", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.inputs.new('NodeSocketInt', 'Unshaded')
+        var = tree.interface.new_socket(name="Unshaded", in_out='INPUT', socket_type='NodeSocketInt')
         var.default_value = 0
         var.hide_value = False
         var.max_value = 1
         var.min_value = 0
 
-        var = tree.inputs.new('NodeSocketColor', 'Emission')
+        var = tree.interface.new_socket(name="Emission", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = False
         var.default_value = (0.0, 0.0, 0.0, 1.0)
 
-        var = tree.inputs.new('NodeSocketColor', 'Ambient')
+        var = tree.interface.new_socket(name="Ambient", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = False
         var.default_value = (0.5, 0.5, 0.5, 1.0)
 
         # Group outputs
-        var = tree.outputs.new('NodeSocketColor', 'Diffuse Colour')
+        var = tree.interface.new_socket(name="Diffuse Color", in_out='OUTPUT', socket_type='NodeSocketColor')
         var.hide_value = False
         var.default_value = (0.0, 0.0, 0.0, 1.0)
 
-        var = tree.outputs.new('NodeSocketFloat', 'Diffuse Alpha')
+        var = tree.interface.new_socket(name="Diffuse Alpha", in_out='OUTPUT', socket_type='NodeSocketFloat')
         var.default_value = 0.0
         var.hide_value = False
 
-        var = tree.outputs.new('NodeSocketInt', 'Unshaded')
+        var = tree.interface.new_socket(name="Unshaded", in_out='OUTPUT', socket_type='NodeSocketInt')
         var.default_value = 0
         var.hide_value = False
 
@@ -607,38 +609,38 @@ class MakeGroups:
         tree.use_fake_user = True
 
         # Group inputs
-        var = tree.inputs.new('NodeSocketColor', 'Colour 1')
+        var = tree.interface.new_socket(name="Color 1", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
-        var = tree.inputs.new('NodeSocketFloat', 'Alpha 1')
+        var = tree.interface.new_socket(name="Alpha 1", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.inputs.new('NodeSocketColor', 'Colour 2')
+        var = tree.interface.new_socket(name="Color 2", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
-        var = tree.inputs.new('NodeSocketFloat', 'Alpha 2')
+        var = tree.interface.new_socket(name="Alpha 2", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.inputs.new('NodeSocketFloat', 'Colour 2 Multiplier')
+        var = tree.interface.new_socket(name="Color 2 Multiplier", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = False
         var.max_value = 1.0
         var.min_value = 0.0
 
-        var = tree.inputs.new('NodeSocketColor', 'Shader Init')
+        var = tree.interface.new_socket(name="Shader Init", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
         # Group outputs
-        var = tree.outputs.new('NodeSocketColor', 'Colour')
+        var = tree.interface.new_socket(name="Color", in_out='OUTPUT', socket_type='NodeSocketColor')
         var.hide_value = False
         var.default_value = (0.0, 0.0, 0.0, 1.0)
 
-        var = tree.outputs.new('NodeSocketFloat', 'Alpha')
+        var = tree.interface.new_socket(name="Alpha", in_out='OUTPUT', socket_type='NodeSocketFloat')
         var.default_value = 0.0
         var.hide_value = False
 
@@ -723,38 +725,38 @@ class MakeGroups:
         tree.use_fake_user = True
 
         # Group inputs
-        var = tree.inputs.new('NodeSocketColor', 'Colour 1')
+        var = tree.interface.new_socket(name="Color 1", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
-        var = tree.inputs.new('NodeSocketFloat', 'Alpha 1')
+        var = tree.interface.new_socket(name="Alpha 1", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.inputs.new('NodeSocketColor', 'Colour 2')
+        var = tree.interface.new_socket(name="Color 2", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
-        var = tree.inputs.new('NodeSocketFloat', 'Alpha 2')
+        var = tree.interface.new_socket(name="Alpha 2", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.inputs.new('NodeSocketFloat', 'Colour 2 Multiplier')
+        var = tree.interface.new_socket(name="Color 2 Multiplier", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = False
         var.max_value = 1.0
         var.min_value = 0.0
 
-        var = tree.inputs.new('NodeSocketColor', 'Shader Init')
+        var = tree.interface.new_socket(name="Shader Init", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
         # Group outputs
-        var = tree.outputs.new('NodeSocketColor', 'Colour')
+        var = tree.interface.new_socket(name="Color", in_out='OUTPUT', socket_type='NodeSocketColor')
         var.hide_value = False
         var.default_value = (0.0, 0.0, 0.0, 1.0)
 
-        var = tree.outputs.new('NodeSocketFloat', 'Alpha')
+        var = tree.interface.new_socket(name="Alpha", in_out='OUTPUT', socket_type='NodeSocketFloat')
         var.default_value = 0.0
         var.hide_value = False
 
@@ -840,38 +842,38 @@ class MakeGroups:
         tree.use_fake_user = True
 
         # Group inputs
-        var = tree.inputs.new('NodeSocketColor', 'Colour 1')
+        var = tree.interface.new_socket(name="Color 1", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
-        var = tree.inputs.new('NodeSocketFloat', 'Alpha 1')
+        var = tree.interface.new_socket(name="Alpha 1", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.inputs.new('NodeSocketColor', 'Colour 2')
+        var = tree.interface.new_socket(name="Color 2", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
-        var = tree.inputs.new('NodeSocketFloat', 'Alpha 2')
+        var = tree.interface.new_socket(name="Alpha 2", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.inputs.new('NodeSocketFloat', 'Colour 2 Multiplier')
+        var = tree.interface.new_socket(name="Color 2 Multiplier", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = False
         var.max_value = 1.0
         var.min_value = 0.0
 
-        var = tree.inputs.new('NodeSocketColor', 'Shader Init')
+        var = tree.interface.new_socket(name="Shader Init", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
         # Group outputs
-        var = tree.outputs.new('NodeSocketColor', 'Colour')
+        var = tree.interface.new_socket(name="Color", in_out='OUTPUT', socket_type='NodeSocketColor')
         var.hide_value = False
         var.default_value = (0.0, 0.0, 0.0, 1.0)
 
-        var = tree.outputs.new('NodeSocketFloat', 'Alpha')
+        var = tree.interface.new_socket(name="Alpha", in_out='OUTPUT', socket_type='NodeSocketFloat')
         var.default_value = 0.0
         var.hide_value = False
 
@@ -956,38 +958,38 @@ class MakeGroups:
         tree.use_fake_user = True
 
         # Group inputs
-        var = tree.inputs.new('NodeSocketColor', 'Colour 1')
+        var = tree.interface.new_socket(name="Color 1", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
-        var = tree.inputs.new('NodeSocketFloat', 'Alpha 1')
+        var = tree.interface.new_socket(name="Alpha 1", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.inputs.new('NodeSocketColor', 'Colour 2')
+        var = tree.interface.new_socket(name="Color 2", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
-        var = tree.inputs.new('NodeSocketFloat', 'Alpha 2')
+        var = tree.interface.new_socket(name="Alpha 2", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.inputs.new('NodeSocketFloat', 'Colour 2 Multiplier')
+        var = tree.interface.new_socket(name="Color 2 Multiplier", in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
         var.hide_value = False
         var.max_value = 1.0
         var.min_value = 0.0
 
-        var = tree.inputs.new('NodeSocketColor', 'Shader Init')
+        var = tree.interface.new_socket(name="Shader Init", in_out='INPUT', socket_type='NodeSocketColor')
         var.hide_value = True
         var.default_value = (1.0, 1.0, 1.0, 1.0)
 
         # Group outputs
-        var = tree.outputs.new('NodeSocketColor', 'Colour')
+        var = tree.interface.new_socket(name="Color", in_out='OUTPUT', socket_type='NodeSocketColor')
         var.hide_value = False
         var.default_value = (0.0, 0.0, 0.0, 1.0)
 
-        var = tree.outputs.new('NodeSocketFloat', 'Alpha')
+        var = tree.interface.new_socket(name="Alpha", in_out='OUTPUT', socket_type='NodeSocketFloat')
         var.default_value = 0.0
         var.hide_value = False
 

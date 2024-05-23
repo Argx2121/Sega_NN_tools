@@ -55,14 +55,13 @@ class Read:
 
     @dataclass
     class Material:
-        __slots__ = ["texture_count", "colour", "texture", "transparency", "black_alpha", "v_colour", "unshaded"]
+        __slots__ = ["texture_count", "colour", "texture", "transparency", "mat_flags", "special"]
         texture_count: int
         colour: Any
         texture: Any
         transparency: str
-        black_alpha: bool
-        v_colour: bool
-        unshaded: bool
+        mat_flags: int
+        special: tuple  # gave up
 
     def _le_offsets(self):
         self.info_offset = read_int_tuple(self.f, self.material_count * 2)[1::2]
@@ -224,7 +223,7 @@ class Read:
                     t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
                     texture_list.append(self.Texture(
-                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv, TextureFlags))
                     f.seek(32, 1)
             self.texture_list.append(texture_list)
 
@@ -286,7 +285,7 @@ class Read:
                     t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
                     texture_list.append(self.Texture(
-                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv, TextureFlags))
                     f.seek(32, 1)
             self.texture_list.append(texture_list)
 
@@ -406,10 +405,6 @@ class Read:
             f.seek(offset + self.start)
             # 0 = no specular 1 = all, 00 02 00 00 = boolean mesh
             mat_type = read_int(f, ">")
-            v_col = mat_type & 1
-            unlit = mat_type >> 8 & 1  # (bloom) slash unlit
-            bool_on_top = mat_type >> 17 & 1  # 01 bool render over everything / render last
-            bool_maintain = mat_type >> 16 & 1  # 02 bool maintain render order
 
             diffuse = read_float_tuple(f, 4, ">")
             ambient = list(read_float_tuple(f, 3, ">"))
@@ -425,13 +420,15 @@ class Read:
                 diffuse, tuple(ambient), tuple(specular), emission, specular_value, shininess
             ))
             mat_data = read_int_tuple(f, 10, ">")
-            black_alpha = False
+            mat_special = ()
             # todo game specific
             if mat_data[-1] == 134217728:
-                black_alpha = True
-                unlit = True
+                mat_special = ("black_alpha", "unshaded")
 
-            self.mat_set_list.append((black_alpha, v_col, unlit))
+            if mat_data[-1] == 18:
+                mat_special = ("exsonic")
+
+            self.mat_set_list.append((mat_type, mat_special))
 
             for index in range(count):
                 texture_flags = read_int(f, ">")
@@ -582,7 +579,7 @@ class Read:
                     t_scale = read_float_tuple(f, 2)
                     t_uv = len(format(texture_flags >> 8 & 255, "b"))
                     texture_list.append(self.Texture(
-                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv, TextureFlags))
                     f.seek(20, 1)
             self.texture_list.append(texture_list)
 
@@ -653,7 +650,7 @@ class Read:
                     t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
                     texture_list.append(self.Texture(
-                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv, TextureFlags))
                     f.seek(32, 1)
             self.texture_list.append(texture_list)
 
@@ -721,7 +718,7 @@ class Read:
                     t_scale = (1, 1)
                     t_uv = len(format(texture_flags >> 8 & 255, "b"))
                     texture_list.append(self.Texture(
-                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv, TextureFlags))
                     f.seek(104, 1)
             self.texture_list.append(texture_list)
 
@@ -767,7 +764,7 @@ class Read:
                     t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
                     texture_list.append(self.Texture(
-                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv, TextureFlags))
                     f.seek(12, 1)
             self.texture_list.append(texture_list)
 
@@ -848,7 +845,7 @@ class Read:
                     t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
                     texture_list.append(self.Texture(
-                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv, TextureFlags))
                     f.seek(28, 1)
 
                 if self.format_type == "Sonic2006_X":
@@ -940,7 +937,7 @@ class Read:
                     t_uv = len(format(texture_flags >> 8 & 255, "b"))
 
                     texture_list.append(self.Texture(
-                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv))
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv, TextureFlags))
                     f.seek(32, 1)
             self.texture_list.append(texture_list)
 
@@ -948,7 +945,7 @@ class Read:
         material_list = []
         for i in range(self.material_count):
             material_list.append(self.Material(
-                self.texture_count[i], self.colour_list[i], self.texture_list[i], "OPAQUE", False, True, False))
+                self.texture_count[i], self.colour_list[i], self.texture_list[i], "OPAQUE", 1, ()))
         return material_list
 
     def _return_data_2(self):
@@ -958,7 +955,7 @@ class Read:
                 self.texture_count[i],
                 self.Colour(
                     (0.75, 0.75, 0.75, 1), (0.75, 0.75, 0.75, 1), (0.9, 0.9, 0.9, 1), (0, 0, 0, 1), 0.2, 2),
-                self.texture_list[i], "OPAQUE", False, True, False))
+                self.texture_list[i], "OPAQUE", False, ()))
         return material_list
 
     def _return_data_3(self):

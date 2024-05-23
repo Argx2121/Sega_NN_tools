@@ -79,7 +79,7 @@ class ShaderNodeNNMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         if self.multi_shading:
             for node in self.id_data.nodes:
                 if node.bl_idname == "ShaderNodeNNShaderInit":
-                    self.id_data.links.new(node.outputs["Diffuse Colour"], self.inputs["Shader Init"])
+                    self.id_data.links.new(node.outputs["Diffuse Color"], self.inputs["Shader Init"])
                     break
         else:
             for link in self.id_data.links:
@@ -107,7 +107,7 @@ class ShaderNodeNNShader(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomGro
                 self.id_data.links.new(node.outputs["Unshaded"], self.inputs["Unshaded"])
                 node_inputs = [node.to_socket for node in self.id_data.links]
                 if self.inputs["Colour"] not in node_inputs:
-                    self.id_data.links.new(node.outputs["Diffuse Colour"], self.inputs["Colour"])
+                    self.id_data.links.new(node.outputs["Diffuse Color"], self.inputs["Colour"])
                 if self.inputs["Alpha"] not in node_inputs:
                     self.id_data.links.new(node.outputs["Diffuse Alpha"], self.inputs["Alpha"])
                 break
