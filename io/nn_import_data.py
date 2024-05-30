@@ -186,6 +186,9 @@ in_list = (
 )
 
 ln_list = (
+    ("SonicTheHedgehog4EpisodeIIOuya_L", "Sonic the Hedgehog 4: Episode II (Ouya)",
+     "Sonic the Hedgehog 4: Episode II for Ouya Model | July 3, 2013"),
+    # UNKNOWN
     ("SonicTheHedgehog4EpisodeII_L", "Sonic the Hedgehog 4: Episode II",
      "Sonic the Hedgehog 4: Episode II Model | 7 Oct 2010"),
     # UNKNOWN
@@ -291,6 +294,7 @@ determine_bone = {
     "SonicTheHedgehog4EpisodeIPre2016_I": 1,
 
     "SonicTheHedgehog4EpisodeII_L": 2,
+    "SonicTheHedgehog4EpisodeIIOuya_L": 2,
     "LovingDeadsHouseOfTheDeadEX_L": 5,
     "HouseOfTheDead4_L": 5,
 

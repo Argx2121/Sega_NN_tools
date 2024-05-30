@@ -99,7 +99,8 @@ def make_mesh(self):
             # vertices bone indices = [0, 1]
             # verts 0 = meshes 2 = models 2
 
-            if v_data.bone_list_indices:  # bone indices are stored in the vertex block
+            if v_data.bone_list_indices and len(obj.vertex_groups) > 1:  # bone indices are stored in the vertex block
+                # 2nd if check is for ouya
                 for vertex_index in range(vertex_count):  # for each vert
                     w_ind = weights_main[vertex_index]
                     for var in range(len(w_ind)):  # for all the bones

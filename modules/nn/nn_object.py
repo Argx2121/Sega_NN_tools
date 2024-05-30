@@ -187,6 +187,22 @@ class ReadModel:
 
             self._debug_2(m.build_mesh)
             f.seek(4, 1)
+        elif self.format_type == "SonicTheHedgehog4EpisodeIIOuya_L":
+            d, self.start = self._run(read_int(f), 0, model_data.Read(self._info_gen(), start_block).le_lno_s4e2ouya)
+
+            m.info = d
+            self._debug_1(d)
+            info = self._info_gen()
+
+            m.bones = self._run(d.bone_offset, 1, bones.Read(info, d.bone_count).le_full)
+            m.materials = self._run(d.material_offset, 2, materials.Read(info, d.material_count).lno_s4e2ouya)
+            m.faces = self._run(d.face_offset, 3, faces.Read(info, d.face_count).lno)
+            m.vertices, m.mesh_info = self._run(d.vertex_offset, 4, vertices.Read(info, d.vertex_count).lno)
+            m.build_mesh = self._run(- self.start, 5, meshes.Read(info, d.mesh_sets, d.mesh_offset, d.mesh_count).le_12)
+            self._get_transparency_groups(d, m)
+
+            self._debug_2(m.build_mesh)
+            f.seek(4, 1)
         else:
             d, self.start = self._run(read_int(f), 0, model_data.Read(self._info_gen(), start_block).le_lno)
 

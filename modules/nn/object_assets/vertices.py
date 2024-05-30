@@ -962,6 +962,38 @@ class Read:
             self.mesh_info.append(MeshData(
                 v_format, v_format_size, vertex_count, v_offset, v_bone_count, v_bone_list))
 
+    def _lno_info_ouya(self):
+        f = self.f
+        start = self.start
+        for offset in self.vert_info_offset:
+            f.seek(offset + start + 4)
+            vertex_count, info_count, info_offset = read_int_tuple(f, 3)
+            f.seek(8, 1)
+            v_bone_count, v_bone_off = read_int_tuple(f, 2)
+            f.seek(v_bone_off + start)
+            v_bone_list = read_short_tuple(f, v_bone_count)
+
+            f.seek(info_offset + start)
+            v_offset = []
+            v_format = []
+            v_format_size = []
+            det_format = {
+                1: "pos", 8: "norm", 64: "unknown", 128: "unknown", 256: "uv", 2: "weight", 4: "bone",
+                512: "wx",
+            }
+
+            for _ in range(info_count):
+                data = read_int_tuple(f, 5)
+                v_offset.append(data[-1])
+                if data[0] in det_format:
+                    v_format.append(det_format[data[0]])
+                else:
+                    v_format.append("unknown")
+                v_format_size.append(data[1])
+
+            self.mesh_info.append(MeshData(
+                v_format, v_format_size, vertex_count, v_offset, v_bone_count, v_bone_list))
+
     def _lno_info_2(self):
         f = self.f
         start = self.start
@@ -1051,6 +1083,76 @@ class Read:
                     "wx": wx,
                 }
                 block_type_func[block_type]()
+
+            if v_bones and not v_weights:
+                v_weights = [[1, ] for _ in list(range(vertex_count))]
+
+            vertex_data.append(
+                VertexData(
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours,
+                ))
+        return vertex_data, self.mesh_info
+
+    def _lno_vertices_ouya(self):
+        def pos():
+            b_len = sum_block_len // 4
+            for v in range(vertex_count):
+                v_positions.append(data_float[v * b_len + block_off: v * b_len + 3 + block_off])
+
+        def norm():
+            b_len = sum_block_len // 4
+            for v in range(vertex_count):
+                v_normals.append(data_float[v * b_len + block_off: v * b_len + 3 + block_off])
+
+        def uv():
+            b_len = sum_block_len // 4
+            for v in range(vertex_count):
+                v_uvs.append(data_float[v * b_len + block_off: v * b_len + 2 + block_off])
+
+        def wx():
+            b_len = sum_block_len // 4
+            for v in range(vertex_count):
+                v_wxs.append(data_float[v * b_len + block_off: v * b_len + 2 + block_off])
+
+        def wei():
+            b_len = sum_block_len // 4
+            for v in range(vertex_count):
+                w = data_float[v * b_len + block_off: v * b_len + 3 + block_off]
+                v_weights.append((w[0], w[1], w[2], 1 - w[0] - w[1] - w[2]))
+
+        def bone():
+            b_len = sum_block_len
+            for v in range(vertex_count):
+                v_bones.append(data_byte[v * b_len + block_off*4: v * b_len + 4 + block_off*4])
+
+        def unknown():
+            pass
+
+        f = self.f
+        vertex_data = []
+
+        for info in self.mesh_info:  # for all sub meshes
+            vertex_count = info.vertex_count
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], [[], []]
+            v_bones, v_norms2_list, v_norms3_list = [], [], []
+
+            block_len = {"pos": 12, "norm": 12, "unknown": 12, "uv": 8, "weight": 12, "bone": 4, "wx": 8,}
+            sum_block_len = sum([block_len[a] for a in info.vertex_block_type])
+            f.seek(info.vertex_offset[0] + self.start)
+            vertex_buffer = f.read(sum_block_len * vertex_count)
+            data_float = unpack(str(len(vertex_buffer) // 4) + "f", vertex_buffer)
+            data_byte = unpack(str(len(vertex_buffer)) + "B", vertex_buffer)
+            block_off = 0
+
+            for i in range(len(info.vertex_offset)):
+                block_type = info.vertex_block_type[i]
+                block_size = info.vertex_block_size[i]
+                block_type_func = {
+                    "pos": pos, "norm": norm, "unknown": unknown, "uv": uv, "weight": wei, "bone": bone,
+                    "wx": wx,
+                }
+                block_type_func[block_type]()
+                block_off += block_len[block_type] // 4
 
             if v_bones and not v_weights:
                 v_weights = [[1, ] for _ in list(range(vertex_count))]
@@ -1921,8 +2023,12 @@ class Read:
 
     def lno(self):
         self._le_offsets()
-        self._lno_info()
-        return self._lno_vertices()
+        if self.format_type == "SonicTheHedgehog4EpisodeIIOuya_L":
+            self._lno_info_ouya()
+            return self._lno_vertices_ouya()
+        else:
+            self._lno_info()
+            return self._lno_vertices()
 
     def lno_s4e2(self):
         self._le_offsets_4()

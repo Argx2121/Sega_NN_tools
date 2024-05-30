@@ -126,6 +126,15 @@ class Read:
             self.texture_count.append(var2)
             self.texture_offset.append(var3)
 
+    def _ino_lno_info_2_ouya(self):
+        f = self.f
+        for offset in self.info_offset:
+            f.seek(offset + self.start)
+            _, _, var1, _, _, _, var2, var3 = read_int_tuple(f, 8)
+            self.colour_offset.append(var1)
+            self.texture_offset.append(var2)
+            self.texture_count.append(var3)
+
     def _cno_eno_info(self):
         f = self.f
         for offset in self.info_offset:
@@ -474,6 +483,7 @@ class Read:
 
         format_dict = {
             "SonicTheHedgehog4EpisodeII_L": sonic_the_hedgehog4_episode_ii_l,
+            "SonicTheHedgehog4EpisodeIIOuya_L": sonic_the_hedgehog4_episode_ii_l,
             "HouseOfTheDead4_L": house_of_the_dead_4_l,
             "LovingDeadsHouseOfTheDeadEX_L": loving_deads_house_of_the_dead_ex_l,
         }
@@ -834,6 +844,12 @@ class Read:
     def lno_s4e2(self):
         self._le_offsets_4()
         self._ino_lno_info_2()
+        self._lno_texture()
+        return self._return_data_2()
+
+    def lno_s4e2ouya(self):
+        self._le_offsets()
+        self._ino_lno_info_2_ouya()
         self._lno_texture()
         return self._return_data_2()
 
