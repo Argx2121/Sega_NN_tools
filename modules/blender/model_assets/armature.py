@@ -190,8 +190,11 @@ def get_bones(self):
     used_bones = [b for b in bone_names if b in used_bones]
 
     pose_data = []
+    self.armature.hide_set(False)
+    self.armature.select_set(True)
+    bpy.context.view_layer.objects.active = self.armature
     bpy.ops.object.mode_set(mode="POSE")
-    for pose_b in arma.bones:
+    for pose_b in self.armature.pose.bones:
         pose_var = False
         if "LIMIT_ROTATION" in [a.type for a in pose_b.constraints]:
             pose_var = True
