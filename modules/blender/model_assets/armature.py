@@ -89,7 +89,7 @@ def make_bone_constraints(self):
             elif nn_b.flags & 512:
                 constraint.use_limit_y = True
                 constraint.use_limit_z = True
-            else:
+            elif nn_b.flags & 2048:
                 constraint.use_limit_x = True
                 constraint.use_limit_y = True
             constraint.euler_order = 'XZY'
@@ -196,8 +196,14 @@ def get_bones(self):
     bpy.ops.object.mode_set(mode="POSE")
     for pose_b in self.armature.pose.bones:
         pose_var = False
-        if "LIMIT_ROTATION" in [a.type for a in pose_b.constraints]:
-            pose_var = True
+        for a in pose_b.constraints:
+            if "LIMIT_ROTATION" in a.type:
+                if a.use_limit_x is True and a.use_limit_z is True:
+                    pose_var = 1
+                elif a.use_limit_y is True and a.use_limit_z is True:
+                    pose_var = 2
+                elif a.use_limit_x is True and a.use_limit_z is True:
+                    pose_var = 8
         pose_data.append(pose_var)
     bpy.ops.object.mode_set(mode="OBJECT")
 
@@ -315,8 +321,8 @@ def get_bones(self):
         for a in sca:
             if a != 1.0:
                 flags[1] = flags[1] | 64
-        if pose_b:  # Never seen them both set at once
-            flags[1] = 28
+        if pose_b:
+            flags[1] = flags[1] | pose_b
         flags[2] = 1
         # guesses
         flags[3] = flags[3] | 4
