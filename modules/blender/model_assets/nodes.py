@@ -18,8 +18,7 @@ class CustomNodetreeNodeBaseNN:
         self.node_tree = node.node_tree.copy()
 
     def free(self):
-        if not self.node_tree.users > 1:
-            bpy.data.node_groups.remove(self.node_tree)
+        pass
 
     def draw_buttons(self, context, layout):
         for prop in self.bl_rna.properties:
@@ -36,8 +35,7 @@ class CustomNodetreeNodeBaseNNExpandLink:
         self.node_tree = node.node_tree.copy()
 
     def free(self):
-        if not self.node_tree.users > 1:
-            bpy.data.node_groups.remove(self.node_tree)
+        pass
 
     def draw_buttons(self, context, layout):
         for prop in self.bl_rna.properties:

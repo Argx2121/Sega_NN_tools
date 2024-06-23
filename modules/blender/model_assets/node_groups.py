@@ -202,6 +202,35 @@ class MakeGroups:
         var.hide_value = True
         var.default_value = (0.0, 0.0, 0.0)
 
+        # hell
+        var = tree.interface.new_socket(name="Override Flags", in_out='INPUT', socket_type='NodeSocketBool')
+        var.default_value = False
+        var = tree.interface.new_socket(name="Mat Flags", in_out='INPUT', socket_type='NodeSocketInt')
+        var.default_value = 0
+
+        var = tree.interface.new_socket(name="Override Data", in_out='INPUT', socket_type='NodeSocketBool')
+        var.default_value = False
+        var = tree.interface.new_socket(name="Mat Data 1", in_out='INPUT', socket_type='NodeSocketInt')
+        var.default_value = 1
+        var = tree.interface.new_socket(name="Mat Data 2", in_out='INPUT', socket_type='NodeSocketInt')
+        var.default_value = 4
+        var = tree.interface.new_socket(name="Mat Data 3", in_out='INPUT', socket_type='NodeSocketInt')
+        var.default_value = 5
+        var = tree.interface.new_socket(name="Mat Data 4", in_out='INPUT', socket_type='NodeSocketInt')
+        var.default_value = 5
+        var = tree.interface.new_socket(name="Mat Data 5", in_out='INPUT', socket_type='NodeSocketInt')
+        var.default_value = 2
+        var = tree.interface.new_socket(name="Mat Data 6", in_out='INPUT', socket_type='NodeSocketInt')
+        var.default_value = 0
+        var = tree.interface.new_socket(name="Mat Data 7", in_out='INPUT', socket_type='NodeSocketInt')
+        var.default_value = 6
+        var = tree.interface.new_socket(name="Mat Data 8", in_out='INPUT', socket_type='NodeSocketInt')
+        var.default_value = 7
+        var = tree.interface.new_socket(name="Mat Data 9", in_out='INPUT', socket_type='NodeSocketInt')
+        var.default_value = 0
+        var = tree.interface.new_socket(name="Mat Data 10", in_out='INPUT', socket_type='NodeSocketInt')
+        var.default_value = 0
+
         # Group outputs
         var = tree.interface.new_socket(name="BSDF", in_out='OUTPUT', socket_type='NodeSocketShader')
         var.hide_value = False
