@@ -36,10 +36,9 @@ from bpy.app.handlers import persistent
 from .io.nn import import_no, export_no, optimise_no
 from .io.other import import_collision, import_splines, import_pathfinding, import_objects
 from .extract import srgc, srpc, amb, sfr, pkg, srzg, bnk, sms, gosgts
-from .ui import panels, preferences
+from .ui import panels, preferences, menus
 from .modules.blender.model_assets.node_groups import MakeGroups
 from .modules.blender.model_assets.nodes import classes as classes2
-from .modules.blender.model_assets.nodes import node_categories
 
 
 classes = [
@@ -52,7 +51,7 @@ classes = [
     srzg.ExtractSrgzTools,
     panels.NN_PT_ImportPanel, panels.NN_PT_ExportPanel,
     panels.EXTRACT_PT_Panel,
-    panels.NN_PT_About,
+    panels.NN_PT_About, menus.NN_MT_Node_Add,
 ]
 
 classes += classes2
@@ -62,15 +61,15 @@ classes += classes2
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
+    bpy.types.NODE_MT_add.append(menus.nn_node_menu)
     bpy.types.TOPBAR_MT_file_import.append(import_no.menu_func_import)
     bpy.types.TOPBAR_MT_file_export.append(export_no.menu_func_export)
-    nodeitems_utils.register_node_categories('NN_NODES', node_categories)
 
 
 def unregister():
-    nodeitems_utils.unregister_node_categories('NN_NODES')
     for cls in classes:
         bpy.utils.unregister_class(cls)
+    bpy.types.NODE_MT_add.remove(menus.nn_node_menu)
     bpy.types.TOPBAR_MT_file_import.remove(import_no.menu_func_import)
     bpy.types.TOPBAR_MT_file_export.remove(export_no.menu_func_export)
 

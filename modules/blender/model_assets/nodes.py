@@ -2,15 +2,8 @@ import bpy
 import nodeitems_utils
 from bpy.props import EnumProperty, BoolProperty
 from bpy.types import ShaderNodeCustomGroup
-from nodeitems_utils import NodeItem
 # blender crashing after reloading script is an issue with custom nodes
 #  https://projects.blender.org/blender/blender/issues/72833
-
-
-class MyNodeCategory(nodeitems_utils.NodeCategory):
-    @classmethod
-    def poll(cls, context):
-        return context.space_data.tree_type == 'ShaderNodeTree'
 
 
 class CustomNodetreeNodeBaseNN:
@@ -49,6 +42,7 @@ class CustomNodetreeNodeBaseNNExpandLink:
 
 class ShaderNodeNNMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_label = "NN MixRGB"
+    bl_idname = "ShaderNodeNNMixRGB"
     bl_width_default = 180
 
     def blend_types(self, context):
@@ -97,6 +91,7 @@ class ShaderNodeNNMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
 class ShaderNodeNNShader(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomGroup):
     bl_label = "NN Shader"
+    bl_idname = "ShaderNodeNNShader"
     bl_width_default = 180
 
     def update_props(self, context):
@@ -128,6 +123,7 @@ class ShaderNodeNNShader(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomGro
 
 class ShaderNodeNNShaderInit(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_label = "NN Shader Init"
+    bl_idname = "ShaderNodeNNShaderInit"
     bl_width_default = 180
 
     def copy(self, node):
@@ -142,6 +138,7 @@ class ShaderNodeNNShaderInit(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
 class ShaderNodeNNReflection(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_label = "NN Reflection"
+    bl_idname = "ShaderNodeNNReflection"
     bl_width_default = 180
 
     def copy(self, node):
@@ -152,16 +149,6 @@ class ShaderNodeNNReflection(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     def init(self, context):
         self.node_tree = bpy.data.node_groups['_NN_REFLECTION']
-
-
-node_categories = [
-    MyNodeCategory('SH_NEW_NN', "Sega NN", items=[
-        NodeItem("ShaderNodeNNMixRGB"),
-        NodeItem("ShaderNodeNNShader"),
-        NodeItem("ShaderNodeNNShaderInit"),
-        NodeItem("ShaderNodeNNReflection"),
-    ]),
-]
 
 
 classes = (
