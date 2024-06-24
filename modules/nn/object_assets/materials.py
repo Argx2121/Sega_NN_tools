@@ -55,12 +55,13 @@ class Read:
 
     @dataclass
     class Material:
-        __slots__ = ["texture_count", "colour", "texture", "transparency", "mat_flags", "special"]
+        __slots__ = ["texture_count", "colour", "texture", "transparency", "mat_flags", "mat_data", "special"]
         texture_count: int
         colour: Any
         texture: Any
         transparency: str
         mat_flags: int
+        mat_data: list
         special: tuple  # gave up
 
     def _le_offsets(self):
@@ -404,7 +405,7 @@ class Read:
             texture_list = []
             f.seek(offset + self.start)
             # 0 = no specular 1 = all, 00 02 00 00 = boolean mesh
-            mat_type = read_int(f, ">")
+            mat_type = unpack(">i", f.read(4))[0]  # blender needs int.. not unit..
 
             diffuse = read_float_tuple(f, 4, ">")
             ambient = list(read_float_tuple(f, 3, ">"))
@@ -419,7 +420,7 @@ class Read:
             self.colour_list.append(self.Colour(
                 diffuse, tuple(ambient), tuple(specular), emission, specular_value, shininess
             ))
-            mat_data = read_int_tuple(f, 10, ">")
+            mat_data = unpack(">10i", f.read(40))
             mat_special = ()
             # todo game specific
             if mat_data[-1] == 134217728:
@@ -428,7 +429,7 @@ class Read:
             if mat_data[-1] == 18:
                 mat_special = ("exsonic")
 
-            self.mat_set_list.append((mat_type, mat_special))
+            self.mat_set_list.append((mat_type, mat_data, mat_special))
 
             for index in range(count):
                 texture_flags = read_int(f, ">")

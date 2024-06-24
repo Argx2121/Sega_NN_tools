@@ -243,6 +243,11 @@ def material_complex(self):
             gno_shader.inputs["Specular Gloss"].default_value = m_col.shininess
             gno_shader.inputs["Specular Level"].default_value = m_col.specular_value
 
+            gno_shader.inputs["Mat Flags"].default_value = mat_flags
+
+            for i in range(10):
+                gno_shader.inputs["Mat Data " + str(i+1)].default_value = m.mat_data[i]
+
             tree.links.new(gno_shader.inputs["Unshaded"], colour_init.outputs["Unshaded"])
             tree.links.new(tree.nodes["Material Output"].inputs[0], gno_shader.outputs[0])
 
