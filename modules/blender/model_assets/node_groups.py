@@ -170,13 +170,13 @@ class MakeGroups:
         var.hide_value = False
         var.default_value = 0
 
-        var = tree.interface.new_socket(name="Boolean (Render on top)", in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name="Don't Write Depth", in_out='INPUT', socket_type='NodeSocketInt')
         var.max_value = 1
         var.min_value = 0
         var.hide_value = False
         var.default_value = 0
 
-        var = tree.interface.new_socket(name="Boolean (Keep render order)", in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name="Ignore Depth", in_out='INPUT', socket_type='NodeSocketInt')
         var.max_value = 1
         var.min_value = 0
         var.hide_value = False

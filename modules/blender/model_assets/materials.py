@@ -217,10 +217,15 @@ def material_complex(self):
             colour_init.inputs["Material Alpha"].default_value = m_col.diffuse[-1]
 
             v_col = mat_flags & 1
+            backface_off = mat_flags >> 5 & 1
             unlit = mat_flags >> 8 & 1  # (bloom) slash unlit
-            bool_on_top = mat_flags >> 17 & 1  # 01 bool render over everything / render last
-            bool_maintain = mat_flags >> 16 & 1  # 02 bool maintain render order
-            has_spec = mat_flags & 16777216
+            ignore_depth = mat_flags >> 16 & 1  # ignores depth
+            dont_write_depth = mat_flags >> 17 & 1  # doesn't write depth
+            # cutout = mat_flags >> 18 & 1  # data is specified in meshes, we don't need to use this flag
+            has_spec = mat_flags >> 24 & 1
+
+            if backface_off:
+                material.use_backface_culling = False
 
             if v_col:
                 node = tree.nodes.new(type="ShaderNodeVertexColor")
@@ -231,10 +236,10 @@ def material_complex(self):
                 colour_init.inputs["Unshaded"].default_value = 1
             if "black_alpha" in m.special:
                 gno_shader.inputs["Black is alpha"].default_value = 1
-            if bool_on_top:
-                gno_shader.inputs["Boolean (Render on top)"].default_value = 1
-            if bool_maintain:
-                gno_shader.inputs["Boolean (Keep render order)"].default_value = 1
+            if ignore_depth:
+                gno_shader.inputs["Ignore Depth"].default_value = 1
+            if dont_write_depth:
+                gno_shader.inputs["Don't Write Depth"].default_value = 1
 
             colour_init.inputs["Ambient"].default_value = m_col.ambient
             gno_shader.inputs["Specular"].default_value = m_col.specular
