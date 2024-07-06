@@ -198,10 +198,6 @@ class MakeGroups:
         var.hide_value = False
         var.default_value = 2.0
 
-        var = tree.interface.new_socket(name="Specular Level", in_out='INPUT', socket_type='NodeSocketVector')
-        var.hide_value = True
-        var.default_value = (0.0, 0.0, 0.0)
-
         # hell
         var = tree.interface.new_socket(name="Override Flags", in_out='INPUT', socket_type='NodeSocketBool')
         var.default_value = False
@@ -279,37 +275,6 @@ class MakeGroups:
         var.inputs[9].default_value = 0.0
         var.inputs[10].default_value = 0.0
 
-        var = tree.nodes.new(type='ShaderNodeNewGeometry')
-        var.name = 'Geometry'
-        var.location = (-2260.0, 0.0)
-
-        var = tree.nodes.new(type='ShaderNodeMath')
-        var.name = 'Math.007'
-        var.location = (-2260.0, -246.0)
-        var.inputs[0].default_value = 0.5
-        var.inputs[1].default_value = -1.0
-        var.inputs[2].default_value = 0.5
-        var.operation = 'MULTIPLY'
-        var.use_clamp = False
-
-        var = tree.nodes.new(type='ShaderNodeMath')
-        var.name = 'Math.008'
-        var.location = (-2020.0, -211.0)
-        var.inputs[0].default_value = 0.5
-        var.inputs[1].default_value = -1.0
-        var.inputs[2].default_value = 0.5
-        var.operation = 'ADD'
-        var.use_clamp = False
-
-        var = tree.nodes.new(type='ShaderNodeMath')
-        var.name = 'Math.005'
-        var.location = (-2500.0, 0.0)
-        var.inputs[0].default_value = 0.5
-        var.inputs[1].default_value = 0.5
-        var.inputs[2].default_value = 0.5
-        var.operation = 'LESS_THAN'
-        var.use_clamp = False
-
         var = tree.nodes.new(type='ShaderNodeInvert')
         var.name = 'Invert.001'
         var.location = (-1780.0, 0.0)
@@ -378,33 +343,6 @@ class MakeGroups:
         var.operation = 'MULTIPLY_ADD'
         var.use_clamp = True
 
-        var = tree.nodes.new(type='ShaderNodeVectorMath')
-        var.name = 'Vector Math.001'
-        var.location = (-2020.0, 0.0)
-        var.inputs[0].default_value = (0.0, 0.0, 0.0)
-        var.inputs[1].default_value = (-1.0, -1.0, -1.0)
-        var.inputs[2].default_value = (0.0, 0.0, 0.0)
-        var.inputs[3].default_value = 1.0
-        var.operation = 'MULTIPLY'
-
-        var = tree.nodes.new(type='ShaderNodeVectorMath')
-        var.name = 'Vector Math.003'
-        var.location = (-1540.0, -385.0)
-        var.inputs[0].default_value = (0.0, 0.0, 0.0)
-        var.inputs[1].default_value = (-1.0, -1.0, -1.0)
-        var.inputs[2].default_value = (0.0, 0.0, 0.0)
-        var.inputs[3].default_value = 1.0
-        var.operation = 'ADD'
-
-        var = tree.nodes.new(type='ShaderNodeVectorMath')
-        var.name = 'Vector Math.002'
-        var.location = (-1780.0, -117.0)
-        var.inputs[0].default_value = (0.0, 0.0, 0.0)
-        var.inputs[1].default_value = (-1.0, -1.0, -1.0)
-        var.inputs[2].default_value = (0.0, 0.0, 0.0)
-        var.inputs[3].default_value = 1.0
-        var.operation = 'MULTIPLY'
-
         var = tree.nodes.new(type='ShaderNodeRGBCurve')
         var.name = 'RGB Curves'
         var.width = 240.0
@@ -433,7 +371,7 @@ class MakeGroups:
         var = tree.nodes.new(type='NodeGroupInput')
         var.name = 'Group Input'
         var.width = 177.6005859375
-        var.location = (-2777.6005859375, 0.0)
+        var.location = (-2000.6005859375, 0.0)
 
         # Group Node links
         tree.links.new(tree.nodes["Specular BSDF"].outputs[0], tree.nodes["Shader to RGB"].inputs[0])
@@ -450,16 +388,8 @@ class MakeGroups:
         tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Mix.006"].inputs[1])
         tree.links.new(tree.nodes["Math.002"].outputs[0], tree.nodes["Mix.006"].inputs[2])
         tree.links.new(tree.nodes["Math.003"].outputs[0], tree.nodes["Specular BSDF"].inputs[2])
-        tree.links.new(tree.nodes["Geometry"].outputs[1], tree.nodes["Vector Math.001"].inputs[0])
-        tree.links.new(tree.nodes["Vector Math.003"].outputs[0], tree.nodes["Specular BSDF"].inputs[5])
-        tree.links.new(tree.nodes["Vector Math.001"].outputs[0], tree.nodes["Vector Math.002"].inputs[0])
-        tree.links.new(tree.nodes["Math.005"].outputs[0], tree.nodes["Math.007"].inputs[0])
-        tree.links.new(tree.nodes["Math.007"].outputs[0], tree.nodes["Math.008"].inputs[1])
-        tree.links.new(tree.nodes["Math.008"].outputs[0], tree.nodes["Vector Math.002"].inputs[1])
         tree.links.new(tree.nodes["Group Input"].outputs[3], tree.nodes["Mix.006"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[3], tree.nodes["Math.001"].inputs[0])
-        tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Math.005"].inputs[0])
-        tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Math.008"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Invert.001"].inputs[1])
         tree.links.new(tree.nodes["Invert.001"].outputs[0], tree.nodes["Mix.002"].inputs[1])
         tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Mix.001"].inputs[1])
@@ -467,8 +397,6 @@ class MakeGroups:
         tree.links.new(tree.nodes["Mix.006"].outputs[0], tree.nodes["Mix Shader"].inputs[0])
         tree.links.new(tree.nodes["Mix Shader"].outputs[0], tree.nodes["Group Output"].inputs[0])
         tree.links.new(tree.nodes["Emission"].outputs[0], tree.nodes["Mix Shader"].inputs[2])
-        tree.links.new(tree.nodes["Group Input"].outputs[9], tree.nodes["Vector Math.003"].inputs[1])
-        tree.links.new(tree.nodes["Vector Math.002"].outputs[0], tree.nodes["Vector Math.003"].inputs[0])
 
     @staticmethod
     def _nn_shader_init():
