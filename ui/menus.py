@@ -1,11 +1,13 @@
 import bpy
-from bpy.props import BoolProperty
+from bpy.props import BoolProperty, StringProperty
 from ..modules.blender.model_assets.nodes import classes
+from ..modules.blender.model_assets.node_groups import MakeGroups
 from dataclasses import dataclass
 
 
 def main(operator, context, settings):
     tree = context.space_data.node_tree
+    MakeGroups().execute()
 
     gno_shader = tree.nodes.new('ShaderNodeNNShader')
     gno_shader.location = (30, 300)
@@ -163,13 +165,34 @@ class SetGno:
     hide_override: bool
 
 
+class NNNodeAdd(bpy.types.Operator):
+    """Spawn in an NN node"""
+    bl_idname = "node.add_node_nn"
+    bl_label = "Node Add NN Operator"
+
+    use_transform: BoolProperty(
+    )
+
+    type: StringProperty(
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return context.area.ui_type == 'ShaderNodeTree'
+
+    def execute(self, context):
+        MakeGroups().execute()
+        bpy.ops.node.add_node(use_transform=self.use_transform, type=self.type)
+        return {'FINISHED'}
+
+
 class NN_MT_Node_Add(bpy.types.Menu):
     bl_label = "NN"
 
     def draw(self, context):
         layout = self.layout
         for cla in classes:
-            var = layout.operator("node.add_node", text=cla.bl_label)
+            var = layout.operator("node.add_node_nn", text=cla.bl_label)
             var.type = cla.bl_idname
             var.use_transform = True
         # imagine if the world was made of pudding

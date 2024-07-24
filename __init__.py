@@ -51,7 +51,7 @@ classes = [
     srzg.ExtractSrgzTools,
     panels.NN_PT_ImportPanel, panels.NN_PT_ExportPanel,
     panels.EXTRACT_PT_Panel,
-    panels.NN_PT_About, menus.NN_MT_Node_Add, menus.NN_MT_Node_Setup, menus.NodeGnoSetup,
+    panels.NN_PT_About, menus.NN_MT_Node_Add, menus.NN_MT_Node_Setup, menus.NodeGnoSetup, menus.NNNodeAdd,
 ]
 
 classes += classes2

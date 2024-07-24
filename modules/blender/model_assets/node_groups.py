@@ -6,6 +6,8 @@ class MakeGroups:
         pass
 
     def execute(self):
+        if '_NN_REFLECTION' in bpy.data.node_groups:
+            return
         self._reflection()
         # self._reflection_normal()
         self._nn_shader_init()
