@@ -502,21 +502,20 @@ class Read:
                     mix_bit = texture_flags >> 1 & 1
                     multiply_bit = texture_flags >> 0 & 1
                     # please note that specifying a specular texture starts a new node chain
-                    # also you need to have a diffuse texture if you want a specular texture
                     unknown0 = multiply_bit and mix_bit and add_bit and subtract_bit
-                    unknown1 = multiply_bit and mix_bit and add_bit and not subtract_bit
+                    unknown1 = multiply_bit and mix_bit and add_bit and not subtract_bit  # decal 2
                     add_branch = multiply_bit and mix_bit and not add_bit and subtract_bit
-                    unknown3 = multiply_bit and mix_bit and not add_bit and not subtract_bit
-                    unknown4 = multiply_bit and not mix_bit and add_bit and subtract_bit
-                    unknown5 = multiply_bit and not mix_bit and add_bit and not subtract_bit
-                    specular = multiply_bit and not mix_bit and not add_bit and subtract_bit
-                    multiply = multiply_bit and not mix_bit and not add_bit and not subtract_bit
+                    unknown3 = multiply_bit and mix_bit and not add_bit and not subtract_bit  # replace
+                    unknown4 = multiply_bit and not mix_bit and add_bit and subtract_bit   # add
+                    unknown5 = multiply_bit and not mix_bit and add_bit and not subtract_bit  # pass clear
+                    specular = multiply_bit and not mix_bit and not add_bit and subtract_bit  # spec
+                    multiply = multiply_bit and not mix_bit and not add_bit and not subtract_bit  # modulate
                     unknown8 = not multiply_bit and mix_bit and add_bit and subtract_bit
-                    unknown9 = not multiply_bit and mix_bit and add_bit and not subtract_bit
-                    unknown10 = not multiply_bit and mix_bit and not add_bit and subtract_bit
-                    mix = not multiply_bit and mix_bit and not add_bit and not subtract_bit
-                    unknown12 = not multiply_bit and not mix_bit and add_bit and subtract_bit
-                    add = not multiply_bit and not mix_bit and add_bit and not subtract_bit
+                    unknown9 = not multiply_bit and mix_bit and add_bit and not subtract_bit  # alpha tex / next texture uses this ones alpha
+                    specular2 = not multiply_bit and mix_bit and not add_bit and subtract_bit  # spec 2
+                    mix = not multiply_bit and mix_bit and not add_bit and not subtract_bit  # decal
+                    unknown12 = not multiply_bit and not mix_bit and add_bit and subtract_bit  # sub
+                    add = not multiply_bit and not mix_bit and add_bit and not subtract_bit  # blend
                     subtract = not multiply_bit and not mix_bit and not add_bit and subtract_bit
                     unknown15 = not multiply_bit and not mix_bit and not add_bit and not subtract_bit
 

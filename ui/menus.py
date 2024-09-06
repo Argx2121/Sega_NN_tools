@@ -59,24 +59,24 @@ def main(operator, context, settings):
         tree.links.new(mix_node.inputs["Alpha 2"], image.outputs[1])
 
         last_node = mix_node
-        if settings.specular:
-            spec_rgb = tree.nodes.new('ShaderNodeRGB')
-            spec_rgb.location = (-500, 60)
-            spec_rgb.outputs[0].default_value = (0.882353, 0.882353, 0.882353, 1)
-            spec_alpha = tree.nodes.new(type="ShaderNodeValue")
-            spec_alpha.location = (-500, -130)
-            spec_alpha.outputs[0].default_value = 1
-            image = tree.nodes.new(type="ShaderNodeTexImage")
-            image.location = (-660, -260)
-            mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
-            mix_node.location = (-260, 0)
-            mix_node.blend_type = "_NN_RGB_MULTI"
 
-            tree.links.new(mix_node.inputs["Color 1"], spec_rgb.outputs[0])
-            tree.links.new(mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
-            tree.links.new(mix_node.inputs["Color 2"], image.outputs[0])
-            tree.links.new(mix_node.inputs["Alpha 2"], image.outputs[1])
-            tree.links.new(gno_shader.inputs["Specular"], mix_node.outputs[0])
+        spec_rgb = tree.nodes.new('ShaderNodeRGB')
+        spec_rgb.location = (-500, 60)
+        spec_rgb.outputs[0].default_value = (0.882353, 0.882353, 0.882353, 1)
+        spec_alpha = tree.nodes.new(type="ShaderNodeValue")
+        spec_alpha.location = (-500, -130)
+        spec_alpha.outputs[0].default_value = 1
+        image = tree.nodes.new(type="ShaderNodeTexImage")
+        image.location = (-660, -260)
+        mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+        mix_node.location = (-260, 0)
+        mix_node.blend_type = "_NN_RGB_MULTI"
+
+        tree.links.new(mix_node.inputs["Color 1"], spec_rgb.outputs[0])
+        tree.links.new(mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
+        tree.links.new(mix_node.inputs["Color 2"], image.outputs[0])
+        tree.links.new(mix_node.inputs["Alpha 2"], image.outputs[1])
+        tree.links.new(gno_shader.inputs["Specular"], mix_node.outputs[0])
 
     if settings.reflection:
         image = tree.nodes.new(type="ShaderNodeTexImage")
@@ -139,8 +139,7 @@ class NodeGnoSetup(bpy.types.Operator):
         box = layout.box()
         box.label(text="Texture settings:", icon="KEYFRAME_HLT")
         box.prop(self, "diffuse")
-        if self.diffuse:
-            box.prop(self, "specular")
+        box.prop(self, "specular")
         box.prop(self, "reflection")
         box.prop(self, "vertex_color")
         box.label(text="Advanced settings:", icon="KEYFRAME_HLT")
