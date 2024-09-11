@@ -179,9 +179,7 @@ def material_complex(self):
     if not texture_name:
         skip_textures = True
     elif texture_name:
-        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures)
-        if type(texture_name[0]) == str:
-            skip_textures = True
+        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures, self.settings.load_incomplete)
 
     for mat_index in range(material_count):
         material = bpy.data.materials.new(mat_names[mat_index])
@@ -561,9 +559,7 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
     if not texture_name:
         skip_textures = True
     elif texture_name:
-        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures)
-        if type(texture_name[0]) == str:
-            skip_textures = True
+        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures, self.settings.load_incomplete)
 
     for mat_index in range(material_count):
         material = bpy.data.materials.new(mat_names[mat_index])
@@ -627,8 +623,8 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
             tree.links.new(diffuse.inputs[-5], alpha.outputs[0])
 
 
-def make_bpy_textures(file_path: str, texture_names: list, recursive: bool):  # get textures if they exist
-    # Imports textures to Blender, returns the loaded texture names.
+def make_bpy_textures(file_path: str, texture_names: list, recursive: bool, load_incomplete: bool):
+    # Finds textures and imports them to Blender (if applicable)
     path_base = pathlib.Path(pathlib.Path(file_path).parent)
     tex_names = [tex.rsplit(".", 1)[0] for tex in texture_names]
 
@@ -645,7 +641,17 @@ def make_bpy_textures(file_path: str, texture_names: list, recursive: bool):  # 
     png_check = [bool(a) for a in path_list_png]
     if False not in png_check:
         return [bpy.data.images.load(tex[0]) for tex in path_list_png]
-    return texture_names
+
+    if load_incomplete:
+        png_incomp = []
+        for (t_check, tex) in zip(png_check, path_list_png):
+            if t_check:
+                png_incomp.append(bpy.data.images.load(tex[0]))
+            else:
+                png_incomp.append(None)
+        return png_incomp
+
+    return [None for _ in texture_names]
 
 
 @dataclass

@@ -84,6 +84,10 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         name="Recursive texture search",
         description="Looks for textures in sub folders too",
         default=False)
+    load_incomplete: BoolProperty(
+        name="Load incomplete textures",
+        description="Load textures even if its missing some",
+        default=True)
     batch: EnumProperty(
         name="Batch usage",
         description="What files should be imported",
@@ -144,6 +148,7 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         box.label(text="Generic settings:", icon="KEYFRAME_HLT")
         box.row().prop(self, "batch", expand=True)
         box.row().prop(self, "recursive_textures")
+        box.row().prop(self, "load_incomplete")
         box.row().prop(self, "simple_mat")
         box.row().prop(self, "bone")
         box.row().prop(self, "length")
@@ -160,7 +165,7 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
             self.clean = True
             self.debug = False
         settings = Settings(
-            "", 0, self.debug, self.recursive_textures,
+            "", 0, self.debug, self.recursive_textures, self.load_incomplete,
             self.batch, self.clean, self.simple_mat,
             self.length, self.accurate, preferences.max_len, self.bone,
         )
@@ -196,6 +201,7 @@ class Settings:
     format_bone_scale: int
     debug: bool
     recursive_textures: bool
+    load_incomplete: bool
     batch_import: str
     clean_mesh: bool
     simple_materials: bool
