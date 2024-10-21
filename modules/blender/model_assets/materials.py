@@ -162,6 +162,318 @@ def _wx(tree, colour, image, model_name_strip):
     return multi.outputs["Color"]
 
 
+def material_gno(self):
+    texture_name = self.texture_names
+    material_count = self.model.info.material_count
+    mat_names = self.mat_names
+    material_list_blender = self.material_list_blender
+    material_list = self.model.materials
+    model_name_strip = self.model_name_strip
+    file_path = self.file_path
+    model_format = self.format
+
+    material_list = sort_list(material_list)
+
+    skip_textures = False
+
+    if not texture_name:
+        skip_textures = True
+    elif texture_name:
+        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures, self.settings.load_incomplete)
+
+    for mat_index in range(material_count):
+        material = bpy.data.materials.new(mat_names[mat_index])
+        material_list_blender.append(material)
+
+        m = material_list[mat_index]
+        m_texture_count = m.texture_count
+        m_col = m.colour
+        material.use_nodes = True
+        tree = material.node_tree
+
+        material.blend_method = m.transparency
+        material.show_transparent_back = False
+        material.use_backface_culling = True
+        # show_transparent_back is usually needed off however if used on shadows 06 model it messes up the normals
+        # if black means transparent and the image has gradients, separate hsv -> image input, v output
+        tree.nodes.remove(tree.nodes["Principled BSDF"])
+
+        colour = False
+        alpha = 1
+        reflection = False
+        spectacular = False
+        emission = False
+
+        mat_flags = m.mat_flags
+
+        bpy.context.scene.eevee.use_bloom = True
+        gno_shader = tree.nodes.new('ShaderNodeNNShader')
+        colour_init = tree.nodes.new('ShaderNodeNNShaderInit')
+
+        colour_init.inputs["Material Color"].default_value = m_col.diffuse
+        colour_init.inputs["Material Alpha"].default_value = m_col.diffuse[-1]
+
+        v_col = mat_flags & 1
+        backface_off = mat_flags >> 5 & 1
+        unlit = mat_flags >> 8 & 1  # (bloom) slash unlit
+        ignore_depth = mat_flags >> 16 & 1  # ignores depth
+        dont_write_depth = mat_flags >> 17 & 1  # doesn't write depth
+        # cutout = mat_flags >> 18 & 1  # data is specified in meshes, we don't need to use this flag
+        has_spec = mat_flags >> 24 & 1
+
+        if backface_off:
+            material.use_backface_culling = False
+
+        if v_col:
+            node = tree.nodes.new(type="ShaderNodeVertexColor")
+            tree.links.new(colour_init.inputs["Vertex Color"], node.outputs[0])
+            tree.links.new(colour_init.inputs["Vertex Alpha"], node.outputs[1])
+
+        if "unshaded" in m.special or unlit:
+            colour_init.inputs["Unshaded"].default_value = 1
+        if "black_alpha" in m.special:
+            gno_shader.inputs["Black is alpha"].default_value = 1
+        if ignore_depth:
+            gno_shader.inputs["Ignore Depth"].default_value = 1
+        if dont_write_depth:
+            gno_shader.inputs["Don't Write Depth"].default_value = 1
+
+        colour_init.inputs["Ambient"].default_value = m_col.ambient
+        gno_shader.inputs["Specular"].default_value = m_col.specular
+        colour_init.inputs["Emission"].default_value = m_col.emission
+        colour_init.inputs["Emission"].hide = True
+        gno_shader.inputs["Specular Gloss"].default_value = m_col.shininess
+        gno_shader.inputs["Specular Level"].default_value = m_col.specular_value
+
+        gno_shader.inputs["Mat Flags"].default_value = mat_flags
+
+        for i in range(10):
+            gno_shader.inputs["Mat Data " + str(i+1)].default_value = m.mat_data[i]
+
+        tree.links.new(gno_shader.inputs["Unshaded"], colour_init.outputs["Unshaded"])
+        tree.links.new(tree.nodes["Material Output"].inputs[0], gno_shader.outputs[0])
+
+        diff_col = colour_init.outputs["Diffuse Color"]
+        diff_alpha = colour_init.outputs["Diffuse Alpha"]
+        spec_col = False
+        diff_end_connected = False
+        diff_end_image = False
+        diff_end_mix = False
+
+        if "exsonic" in m.special:  # yacker checked its hardcoded lol
+            for t_index in range(m_texture_count):
+                m_tex = m.texture[t_index]
+                m_tex_type = m_tex.type
+                m_tex_index = m_tex.index
+                m_mix = m_tex.texture_flags
+
+                if skip_textures:
+                    image_node = _make_image(tree, None, m_tex)
+                else:
+                    image_node = _make_image(tree, texture_name[m_tex_index], m_tex)
+
+                if t_index == 0:
+                    node = tree.nodes.new(type="ShaderNodeUVMap")
+                    node.uv_map = model_name_strip + "_UV1_Map"
+                    tree.links.new(image_node.inputs[0], node.outputs[0])
+
+                    mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+                    mix_type = "_NN_RGB_MULTI"
+                    mix_node.blend_type = mix_type
+                    spec_col = mix_node.outputs[0]
+                    if m_mix.multiply_shading:
+                        mix_node.multi_shading = True
+                    tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
+                    tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
+                    last_node = mix_node
+                elif t_index == 1:
+                    node = tree.nodes.new(type="ShaderNodeUVMap")
+                    node.uv_map = model_name_strip + "_UV1_Map"
+                    tree.links.new(image_node.inputs[0], node.outputs[0])
+
+                    mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+                    mix_type = "_NN_RGB_MULTI"
+                    mix_node.blend_type = mix_type
+                    if m_mix.multiply_shading:
+                        mix_node.multi_shading = True
+
+                    spec_rgb = tree.nodes.new('ShaderNodeRGB')
+                    spec_rgb.outputs[0].default_value = m_col.specular
+                    spec_alpha = tree.nodes.new(type="ShaderNodeValue")
+                    spec_alpha.outputs[0].default_value = m_col.specular[-1]
+                    tree.links.new(gno_shader.inputs["Specular"], mix_node.outputs[0])
+
+                    mix_node.inputs["Color 1"].default_value = m_col.specular
+                    tree.links.new(mix_node.inputs["Color 1"], spec_rgb.outputs[0])
+                    tree.links.new(mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
+                    tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
+                    tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
+                elif t_index == 2:
+                    node = tree.nodes.new('ShaderNodeNNReflection')
+                    tree.links.new(image_node.inputs[0], node.outputs[0])
+
+                    mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+                    mix_type = "_NN_RGB_MULTI"
+                    mix_node.blend_type = mix_type
+                    if m_mix.multiply_shading:
+                        mix_node.multi_shading = True
+                    tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
+                    tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
+                    tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
+                    tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
+                    last_node = mix_node
+
+                elif t_index == 3:
+                    node = tree.nodes.new('ShaderNodeNNReflection')
+                    tree.links.new(image_node.inputs[0], node.outputs[0])
+
+                    mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+                    mix_type = "_NN_RGB_ADD"
+                    mix_node.blend_type = mix_type
+                    if m_mix.multiply_shading:
+                        mix_node.multi_shading = True
+                    tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
+                    tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
+                    tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
+                    tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
+                    last_node = mix_node
+            tree.links.new(gno_shader.inputs["Color"], last_node.outputs[0])
+            tree.links.new(gno_shader.inputs["Alpha"], last_node.outputs[1])
+            continue
+
+        for t_index in range(m_texture_count):
+            m_tex = m.texture[t_index]
+            m_tex_type = m_tex.type
+            m_tex_index = m_tex.index
+            m_mix = m_tex.texture_flags
+
+            if skip_textures:
+                image_node = _make_image(tree, None, m_tex)
+            else:
+                image_node = _make_image(tree, texture_name[m_tex_index], m_tex)
+
+            if m_mix.reflection:
+                node = tree.nodes.new('ShaderNodeNNReflection')
+                tree.links.new(image_node.inputs[0], node.outputs[0])
+            elif m_mix.reflection_2 and not m_mix.mix:
+                node = tree.nodes.new('ShaderNodeNNReflection')
+                tree.links.new(image_node.inputs[0], node.outputs[0])
+                # black knight gives me so much pain
+            elif m_mix.uv1:
+                node = tree.nodes.new(type="ShaderNodeUVMap")
+                node.uv_map = model_name_strip + "_UV1_Map"
+                tree.links.new(image_node.inputs[0], node.outputs[0])
+            elif m_mix.uv2:
+                node = tree.nodes.new(type="ShaderNodeUVMap")
+                node.uv_map = model_name_strip + "_UV2_Map"
+                tree.links.new(image_node.inputs[0], node.outputs[0])
+            elif m_mix.uv3:
+                node = tree.nodes.new(type="ShaderNodeUVMap")
+                node.uv_map = model_name_strip + "_UV3_Map"
+                tree.links.new(image_node.inputs[0], node.outputs[0])
+            elif m_mix.uv4:
+                node = tree.nodes.new(type="ShaderNodeUVMap")
+                node.uv_map = model_name_strip + "_UV4_Map"
+                tree.links.new(image_node.inputs[0], node.outputs[0])
+            if not m_mix.ignore_uv_offset:
+                image_node.texture_mapping.translation[0] = m_tex.scale[0]
+                image_node.texture_mapping.translation[1] = (- m_tex.scale[1]) + 1
+
+            if m_mix.specular or (m_mix.unknown1 and not m_mix.reflection_2 and has_spec):  # this mixing type is set
+                mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+                mix_type = "_NN_RGB_MULTI"
+                mix_node.blend_type = mix_type
+                spec_col = mix_node.outputs[0]
+
+                spec_rgb = tree.nodes.new('ShaderNodeRGB')
+                spec_rgb.outputs[0].default_value = m_col.specular
+                spec_alpha = tree.nodes.new(type="ShaderNodeValue")
+                spec_alpha.outputs[0].default_value = m_col.specular[-1]
+
+                mix_node.inputs["Color 1"].default_value = m_col.specular
+                tree.links.new(mix_node.inputs["Color 1"], spec_rgb.outputs[0])
+                tree.links.new(mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
+                tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
+                tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
+            elif m_mix.unknown1 and m_mix.reflection_2:
+                for link in tree.links:
+                    if link.to_node.name == mix_node.name and link.to_socket.name == "Color 2":
+                        s_mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+                        s_mix_type = "_NN_RGB_MULTI"
+                        s_mix_node.blend_type = s_mix_type
+                        spec_col = s_mix_node.outputs[0]
+
+                        spec_rgb = tree.nodes.new('ShaderNodeRGB')
+                        spec_rgb.outputs[0].default_value = m_col.specular
+                        spec_alpha = tree.nodes.new(type="ShaderNodeValue")
+                        spec_alpha.outputs[0].default_value = m_col.specular[-1]
+
+                        s_mix_node.inputs["Color 1"].default_value = m_col.specular
+                        tree.links.new(s_mix_node.inputs["Color 1"], spec_rgb.outputs[0])
+                        tree.links.new(s_mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
+                        tree.links.new(s_mix_node.inputs["Color 2"], link.from_node.outputs[0])
+                        tree.links.new(s_mix_node.inputs["Alpha 2"], link.from_node.outputs[1])
+                        tree.links.remove(link)
+                        break
+                tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
+            else:
+                mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+                mix_type = "_NN_RGB_MULTI"
+                if m_mix.multiply:
+                    mix_type = "_NN_RGB_MULTI"
+                elif m_mix.mix:
+                    mix_type = "_NN_RGB_MIX"
+                elif m_mix.add:
+                    mix_type = "_NN_RGB_ADD"
+                elif m_mix.add_branch:
+                    mix_type = "_NN_RGB_ADD"
+                elif m_mix.subtract:
+                    mix_type = "_NN_RGB_SUB"
+                elif m_mix.unknown1 and not m_mix.reflection_2 and not has_spec:
+                    mix_type = "_NN_RGB_MIX"
+                elif m_mix.unknown1:
+                    mix_type = "_NN_RGB_MULTI"
+                elif m_mix.specular:
+                    mix_type = "_NN_RGB_MULTI"
+                if m_mix.multiply_shading:
+                    mix_node.multi_shading = True
+                mix_node.blend_type = mix_type
+
+                mix_node.inputs["Color 2 Multiplier"].default_value = m_tex.alpha
+
+                tree.links.new(mix_node.inputs["Color 1"], diff_col)
+                tree.links.new(mix_node.inputs["Alpha 1"], diff_alpha)
+
+                diff_col = mix_node.outputs["Color"]
+                diff_alpha = mix_node.outputs["Alpha"]
+
+                if diff_end_image:
+                    tree.links.new(mix_node.inputs["Color 1"], diff_end_image.outputs[0])
+                    tree.links.new(mix_node.inputs["Alpha 1"], diff_end_image.outputs[1])
+                    tree.links.new(diff_end_mix.inputs["Color 2"], mix_node.outputs[0])
+                    tree.links.new(diff_end_mix.inputs["Alpha 2"], mix_node.outputs[1])
+                    diff_end_image = False
+
+                if m_mix.add_branch:
+                    diff_end_image = image_node
+                    diff_end_mix = mix_node
+                    diff_end_connected = True
+                    tree.links.new(gno_shader.inputs["Color"], diff_col)
+                    tree.links.new(gno_shader.inputs["Alpha"], diff_alpha)
+                    # in case this is the last node
+                    tree.links.new(mix_node.inputs["Color 2"], diff_end_image.outputs[0])
+                    tree.links.new(mix_node.inputs["Alpha 2"], diff_end_image.outputs[1])
+                else:
+                    tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
+                    tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
+
+        if not diff_end_connected:
+            tree.links.new(gno_shader.inputs["Color"], diff_col)
+            tree.links.new(gno_shader.inputs["Alpha"], diff_alpha)
+        if spec_col:
+            tree.links.new(gno_shader.inputs["Specular"], spec_col)
+
+
 def material_complex(self):
     texture_name = self.texture_names
     material_count = self.model.info.material_count
@@ -206,334 +518,64 @@ def material_complex(self):
 
         mat_flags = m.mat_flags
 
-        if model_format[-1] == "G":
-            bpy.context.scene.eevee.use_bloom = True
-            gno_shader = tree.nodes.new('ShaderNodeNNShader')
-            colour_init = tree.nodes.new('ShaderNodeNNShaderInit')
+        # noinspection SpellCheckingInspection
+        n_end = tree.nodes.new(type="ShaderNodeEeveeSpecular")
+        n_end.inputs["Roughness"].default_value = 0.5
 
-            colour_init.inputs["Material Color"].default_value = m_col.diffuse
-            colour_init.inputs["Material Alpha"].default_value = m_col.diffuse[-1]
+        tree.links.new(tree.nodes["Material Output"].inputs["Surface"], n_end.outputs["BSDF"])
 
-            v_col = mat_flags & 1
-            backface_off = mat_flags >> 5 & 1
-            unlit = mat_flags >> 8 & 1  # (bloom) slash unlit
-            ignore_depth = mat_flags >> 16 & 1  # ignores depth
-            dont_write_depth = mat_flags >> 17 & 1  # doesn't write depth
-            # cutout = mat_flags >> 18 & 1  # data is specified in meshes, we don't need to use this flag
-            has_spec = mat_flags >> 24 & 1
+        for t_index in range(m_texture_count):
+            m_tex = m.texture[t_index]
+            m_tex_type = m_tex.type
+            m_tex_index = m_tex.index
 
-            if backface_off:
-                material.use_backface_culling = False
-
-            if v_col:
-                node = tree.nodes.new(type="ShaderNodeVertexColor")
-                tree.links.new(colour_init.inputs["Vertex Color"], node.outputs[0])
-                tree.links.new(colour_init.inputs["Vertex Alpha"], node.outputs[1])
-
-            if "unshaded" in m.special or unlit:
-                colour_init.inputs["Unshaded"].default_value = 1
-            if "black_alpha" in m.special:
-                gno_shader.inputs["Black is alpha"].default_value = 1
-            if ignore_depth:
-                gno_shader.inputs["Ignore Depth"].default_value = 1
-            if dont_write_depth:
-                gno_shader.inputs["Don't Write Depth"].default_value = 1
-
-            colour_init.inputs["Ambient"].default_value = m_col.ambient
-            gno_shader.inputs["Specular"].default_value = m_col.specular
-            colour_init.inputs["Emission"].default_value = m_col.emission
-            colour_init.inputs["Emission"].hide = True
-            gno_shader.inputs["Specular Gloss"].default_value = m_col.shininess
-            gno_shader.inputs["Specular Level"].default_value = m_col.specular_value
-
-            gno_shader.inputs["Mat Flags"].default_value = mat_flags
-
-            for i in range(10):
-                gno_shader.inputs["Mat Data " + str(i+1)].default_value = m.mat_data[i]
-
-            tree.links.new(gno_shader.inputs["Unshaded"], colour_init.outputs["Unshaded"])
-            tree.links.new(tree.nodes["Material Output"].inputs[0], gno_shader.outputs[0])
-
-            diff_col = colour_init.outputs["Diffuse Color"]
-            diff_alpha = colour_init.outputs["Diffuse Alpha"]
-            spec_col = False
-            diff_end_connected = False
-            diff_end_image = False
-            diff_end_mix = False
-
-            if "exsonic" in m.special:  # yacker checked its hardcoded lol
-                for t_index in range(m_texture_count):
-                    m_tex = m.texture[t_index]
-                    m_tex_type = m_tex.type
-                    m_tex_index = m_tex.index
-                    m_mix = m_tex.texture_flags
-
-                    if skip_textures:
-                        image_node = _make_image(tree, None, m_tex)
-                    else:
-                        image_node = _make_image(tree, texture_name[m_tex_index], m_tex)
-
-                    if t_index == 0:
-                        node = tree.nodes.new(type="ShaderNodeUVMap")
-                        node.uv_map = model_name_strip + "_UV1_Map"
-                        tree.links.new(image_node.inputs[0], node.outputs[0])
-
-                        mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
-                        mix_type = "_NN_RGB_MULTI"
-                        mix_node.blend_type = mix_type
-                        spec_col = mix_node.outputs[0]
-                        if m_mix.multiply_shading:
-                            mix_node.multi_shading = True
-                        tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
-                        tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
-                        last_node = mix_node
-                    elif t_index == 1:
-                        node = tree.nodes.new(type="ShaderNodeUVMap")
-                        node.uv_map = model_name_strip + "_UV1_Map"
-                        tree.links.new(image_node.inputs[0], node.outputs[0])
-
-                        mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
-                        mix_type = "_NN_RGB_MULTI"
-                        mix_node.blend_type = mix_type
-                        if m_mix.multiply_shading:
-                            mix_node.multi_shading = True
-
-                        spec_rgb = tree.nodes.new('ShaderNodeRGB')
-                        spec_rgb.outputs[0].default_value = m_col.specular
-                        spec_alpha = tree.nodes.new(type="ShaderNodeValue")
-                        spec_alpha.outputs[0].default_value = m_col.specular[-1]
-                        tree.links.new(gno_shader.inputs["Specular"], mix_node.outputs[0])
-
-                        mix_node.inputs["Color 1"].default_value = m_col.specular
-                        tree.links.new(mix_node.inputs["Color 1"], spec_rgb.outputs[0])
-                        tree.links.new(mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
-                        tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
-                        tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
-                    elif t_index == 2:
-                        node = tree.nodes.new('ShaderNodeNNReflection')
-                        tree.links.new(image_node.inputs[0], node.outputs[0])
-
-                        mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
-                        mix_type = "_NN_RGB_MULTI"
-                        mix_node.blend_type = mix_type
-                        if m_mix.multiply_shading:
-                            mix_node.multi_shading = True
-                        tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
-                        tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
-                        tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
-                        tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
-                        last_node = mix_node
-
-                    elif t_index == 3:
-                        node = tree.nodes.new('ShaderNodeNNReflection')
-                        tree.links.new(image_node.inputs[0], node.outputs[0])
-
-                        mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
-                        mix_type = "_NN_RGB_ADD"
-                        mix_node.blend_type = mix_type
-                        if m_mix.multiply_shading:
-                            mix_node.multi_shading = True
-                        tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
-                        tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
-                        tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
-                        tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
-                        last_node = mix_node
-                tree.links.new(gno_shader.inputs["Color"], last_node.outputs[0])
-                tree.links.new(gno_shader.inputs["Alpha"], last_node.outputs[1])
+            if m_tex_type == "none":
                 continue
 
-            for t_index in range(m_texture_count):
-                m_tex = m.texture[t_index]
-                m_tex_type = m_tex.type
-                m_tex_index = m_tex.index
-                m_mix = m_tex.texture_flags
+            if skip_textures:
+                image_node = _make_image(tree, None, m_tex)
+            else:
+                image_node = _make_image(tree, texture_name[m_tex_index], m_tex)
 
-                if skip_textures:
-                    image_node = _make_image(tree, None, m_tex)
-                else:
-                    image_node = _make_image(tree, texture_name[m_tex_index], m_tex)
+        if m_tex_type == "diffuse":
+            colour, alpha = _diffuse_rgba(tree, image_node, m_col, skip_textures)
+            vertex_colours = _vertex_colours(tree, model_name_strip)
+            colour = _mix_rgb(tree, colour, vertex_colours)
+        elif m_tex_type == "normal":
+            displacement = _normal(tree, image_node, m_tex, skip_textures)
+            tree.links.new(n_end.inputs["Normal"], displacement)
+        elif m_tex_type == "emission":
+            image_node.name = "EmissionTexture"
+            emission = image_node.outputs[0]
+            tree.links.new(n_end.inputs["Emissive Color"], image_node.outputs["Color"])
+        elif m_tex_type == "reflection":
+            reflection = _reflection(tree, image_node)
+        elif m_tex_type == "reflection_wx":
+            reflection = _reflection_wx(tree, image_node, model_name_strip)
+        elif m_tex_type == "bump":
+            displacement = _bump(tree, image_node)
+            tree.links.new(n_end.inputs["Normal"], displacement)
+        elif m_tex_type == "spectacular":  # guys what lmao
+            spectacular = image_node.outputs[0]
+            tree.links.new(n_end.inputs["Specular"], image_node.outputs["Color"])
+        elif m_tex_type == "wx_alpha":
+            colour = _wx_alpha(tree, colour, image_node, model_name_strip)
+        elif m_tex_type == "wx":
+            colour = _wx(tree, colour, image_node, model_name_strip)
 
-                if m_mix.reflection:
-                    node = tree.nodes.new('ShaderNodeNNReflection')
-                    tree.links.new(image_node.inputs[0], node.outputs[0])
-                elif m_mix.reflection_2 and not m_mix.mix:
-                    node = tree.nodes.new('ShaderNodeNNReflection')
-                    tree.links.new(image_node.inputs[0], node.outputs[0])
-                    # black knight gives me so much pain
-                elif m_mix.uv1:
-                    node = tree.nodes.new(type="ShaderNodeUVMap")
-                    node.uv_map = model_name_strip + "_UV1_Map"
-                    tree.links.new(image_node.inputs[0], node.outputs[0])
-                elif m_mix.uv2:
-                    node = tree.nodes.new(type="ShaderNodeUVMap")
-                    node.uv_map = model_name_strip + "_UV2_Map"
-                    tree.links.new(image_node.inputs[0], node.outputs[0])
-                elif m_mix.uv3:
-                    node = tree.nodes.new(type="ShaderNodeUVMap")
-                    node.uv_map = model_name_strip + "_UV3_Map"
-                    tree.links.new(image_node.inputs[0], node.outputs[0])
-                elif m_mix.uv4:
-                    node = tree.nodes.new(type="ShaderNodeUVMap")
-                    node.uv_map = model_name_strip + "_UV4_Map"
-                    tree.links.new(image_node.inputs[0], node.outputs[0])
-                if not m_mix.ignore_uv_offset:
-                    image_node.texture_mapping.translation[0] = m_tex.scale[0]
-                    image_node.texture_mapping.translation[1] = (- m_tex.scale[1]) + 1
+        if not colour:  # if a diffuse texture hasn't been found
+            colour, alpha = _rgba(tree, m_col)
+            vertex_colours = _vertex_colours(tree, model_name_strip)
+            colour = _mix_rgb(tree, colour, vertex_colours)
 
-                if m_mix.specular or (m_mix.unknown1 and not m_mix.reflection_2 and has_spec):  # this mixing type is set
-                    mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
-                    mix_type = "_NN_RGB_MULTI"
-                    mix_node.blend_type = mix_type
-                    spec_col = mix_node.outputs[0]
+        if reflection:
+            colour = _mix_colour_reflection(tree, colour, reflection)
+            # for some reason shadow 06 and probably other character models
+            #  like eye reflection colour output for fac in transparency shader
+            #  there isn't a way to determine if this needs to be set up though
 
-                    spec_rgb = tree.nodes.new('ShaderNodeRGB')
-                    spec_rgb.outputs[0].default_value = m_col.specular
-                    spec_alpha = tree.nodes.new(type="ShaderNodeValue")
-                    spec_alpha.outputs[0].default_value = m_col.specular[-1]
-
-                    mix_node.inputs["Color 1"].default_value = m_col.specular
-                    tree.links.new(mix_node.inputs["Color 1"], spec_rgb.outputs[0])
-                    tree.links.new(mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
-                    tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
-                    tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
-                elif m_mix.unknown1 and m_mix.reflection_2:
-                    for link in tree.links:
-                        if link.to_node.name == mix_node.name and link.to_socket.name == "Color 2":
-                            s_mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
-                            s_mix_type = "_NN_RGB_MULTI"
-                            s_mix_node.blend_type = s_mix_type
-                            spec_col = s_mix_node.outputs[0]
-
-                            spec_rgb = tree.nodes.new('ShaderNodeRGB')
-                            spec_rgb.outputs[0].default_value = m_col.specular
-                            spec_alpha = tree.nodes.new(type="ShaderNodeValue")
-                            spec_alpha.outputs[0].default_value = m_col.specular[-1]
-
-                            s_mix_node.inputs["Color 1"].default_value = m_col.specular
-                            tree.links.new(s_mix_node.inputs["Color 1"], spec_rgb.outputs[0])
-                            tree.links.new(s_mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
-                            tree.links.new(s_mix_node.inputs["Color 2"], link.from_node.outputs[0])
-                            tree.links.new(s_mix_node.inputs["Alpha 2"], link.from_node.outputs[1])
-                            tree.links.remove(link)
-                            break
-                    tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
-                else:
-                    mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
-                    mix_type = "_NN_RGB_MULTI"
-                    if m_mix.multiply:
-                        mix_type = "_NN_RGB_MULTI"
-                    elif m_mix.mix:
-                        mix_type = "_NN_RGB_MIX"
-                    elif m_mix.add:
-                        mix_type = "_NN_RGB_ADD"
-                    elif m_mix.add_branch:
-                        mix_type = "_NN_RGB_ADD"
-                    elif m_mix.subtract:
-                        mix_type = "_NN_RGB_SUB"
-                    elif m_mix.unknown1 and not m_mix.reflection_2 and not has_spec:
-                        mix_type = "_NN_RGB_MIX"
-                    elif m_mix.unknown1:
-                        mix_type = "_NN_RGB_MULTI"
-                    elif m_mix.specular:
-                        mix_type = "_NN_RGB_MULTI"
-                    if m_mix.multiply_shading:
-                        mix_node.multi_shading = True
-                    mix_node.blend_type = mix_type
-
-                    mix_node.inputs["Color 2 Multiplier"].default_value = m_tex.alpha
-
-                    tree.links.new(mix_node.inputs["Color 1"], diff_col)
-                    tree.links.new(mix_node.inputs["Alpha 1"], diff_alpha)
-
-                    diff_col = mix_node.outputs["Color"]
-                    diff_alpha = mix_node.outputs["Alpha"]
-
-                    if diff_end_image:
-                        tree.links.new(mix_node.inputs["Color 1"], diff_end_image.outputs[0])
-                        tree.links.new(mix_node.inputs["Alpha 1"], diff_end_image.outputs[1])
-                        tree.links.new(diff_end_mix.inputs["Color 2"], mix_node.outputs[0])
-                        tree.links.new(diff_end_mix.inputs["Alpha 2"], mix_node.outputs[1])
-                        diff_end_image = False
-
-                    if m_mix.add_branch:
-                        diff_end_image = image_node
-                        diff_end_mix = mix_node
-                        diff_end_connected = True
-                        tree.links.new(gno_shader.inputs["Color"], diff_col)
-                        tree.links.new(gno_shader.inputs["Alpha"], diff_alpha)
-                        # in case this is the last node
-                        tree.links.new(mix_node.inputs["Color 2"], diff_end_image.outputs[0])
-                        tree.links.new(mix_node.inputs["Alpha 2"], diff_end_image.outputs[1])
-                    else:
-                        tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
-                        tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
-
-            if not diff_end_connected:
-                tree.links.new(gno_shader.inputs["Color"], diff_col)
-                tree.links.new(gno_shader.inputs["Alpha"], diff_alpha)
-            if spec_col:
-                tree.links.new(gno_shader.inputs["Specular"], spec_col)
-
-        else:
-
-            # noinspection SpellCheckingInspection
-            n_end = tree.nodes.new(type="ShaderNodeEeveeSpecular")
-            n_end.inputs["Roughness"].default_value = 0.5
-
-            tree.links.new(tree.nodes["Material Output"].inputs["Surface"], n_end.outputs["BSDF"])
-
-            for t_index in range(m_texture_count):
-                m_tex = m.texture[t_index]
-                m_tex_type = m_tex.type
-                m_tex_index = m_tex.index
-
-                if m_tex_type == "none":
-                    continue
-
-                if skip_textures:
-                    image_node = _make_image(tree, None, m_tex)
-                else:
-                    image_node = _make_image(tree, texture_name[m_tex_index], m_tex)
-
-            if m_tex_type == "diffuse":
-                colour, alpha = _diffuse_rgba(tree, image_node, m_col, skip_textures)
-                vertex_colours = _vertex_colours(tree, model_name_strip)
-                colour = _mix_rgb(tree, colour, vertex_colours)
-            elif m_tex_type == "normal":
-                displacement = _normal(tree, image_node, m_tex, skip_textures)
-                tree.links.new(n_end.inputs["Normal"], displacement)
-            elif m_tex_type == "emission":
-                image_node.name = "EmissionTexture"
-                emission = image_node.outputs[0]
-                tree.links.new(n_end.inputs["Emissive Color"], image_node.outputs["Color"])
-            elif m_tex_type == "reflection":
-                reflection = _reflection(tree, image_node)
-            elif m_tex_type == "reflection_wx":
-                reflection = _reflection_wx(tree, image_node, model_name_strip)
-            elif m_tex_type == "bump":
-                displacement = _bump(tree, image_node)
-                tree.links.new(n_end.inputs["Normal"], displacement)
-            elif m_tex_type == "spectacular":  # guys what lmao
-                spectacular = image_node.outputs[0]
-                tree.links.new(n_end.inputs["Specular"], image_node.outputs["Color"])
-            elif m_tex_type == "wx_alpha":
-                colour = _wx_alpha(tree, colour, image_node, model_name_strip)
-            elif m_tex_type == "wx":
-                colour = _wx(tree, colour, image_node, model_name_strip)
-
-            if not colour:  # if a diffuse texture hasn't been found
-                colour, alpha = _rgba(tree, m_col)
-                vertex_colours = _vertex_colours(tree, model_name_strip)
-                colour = _mix_rgb(tree, colour, vertex_colours)
-
-            if reflection:
-                colour = _mix_colour_reflection(tree, colour, reflection)
-                # for some reason shadow 06 and probably other character models
-                #  like eye reflection colour output for fac in transparency shader
-                #  there isn't a way to determine if this needs to be set up though
-
-            tree.links.new(n_end.inputs["Base Color"], colour)
-            tree.links.new(n_end.inputs["Transparency"], alpha)
+        tree.links.new(n_end.inputs["Base Color"], colour)
+        tree.links.new(n_end.inputs["Transparency"], alpha)
 
 
 def link_uv(m_tex, model_name_strip, tree, node):

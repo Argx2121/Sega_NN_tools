@@ -45,7 +45,10 @@ class Model:
         if self.settings.simple_materials:
             console_out("Making Simple Materials...", materials.material_simple, self)
         else:
-            console_out("Making Accurate Materials...", materials.material_complex, self)
+            if self.format[-1] == "G":
+                console_out("Making Accurate Materials...", materials.material_gno, self)
+            else:
+                console_out("Making Accurate Materials...", materials.material_complex, self)
 
         console_out("Making Meshes...", mesh.make_mesh, self)
 
