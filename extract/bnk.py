@@ -55,6 +55,7 @@ class ExtractBnk:
         data = f.read(block_len)
 
         file_path = bpy.path.native_pathsep(self.file[:-4] + "_Extracted" + "/" + name)
+
         pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
 
         fn = open(file_path, "wb")
@@ -93,6 +94,9 @@ class ExtractBnk:
             tex_name = img_names[i]
 
             file_path = bpy.path.native_pathsep(self.file[:-4] + "_Extracted" + "/" + tex_name)
+            # Check whether the file_path path is legal
+            if file_path.count(":") > 1:
+                file_path = file_path.split(":")[0]+":"+file_path.split(":")[1]+file_path.split(":")[2]
             pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
 
             fn = open(file_path, "wb")
