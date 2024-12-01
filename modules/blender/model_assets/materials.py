@@ -229,10 +229,10 @@ def material_gno(self):
             tree.links.new(colour_init.inputs["Vertex Color"], node.outputs[0])
             tree.links.new(colour_init.inputs["Vertex Alpha"], node.outputs[1])
 
-        if "unshaded" in m.special or unlit:
+        if unlit:  # "unshaded" in m.special or
             colour_init.inputs["Unshaded"].default_value = 1
-        if "black_alpha" in m.special:
-            gno_shader.inputs["Black is alpha"].default_value = 1
+        # if "black_alpha" in m.special:
+        #    gno_shader.inputs["Black is alpha"].default_value = 1
         if ignore_depth:
             gno_shader.inputs["Ignore Depth"].default_value = 1
         if dont_write_depth:
@@ -247,8 +247,17 @@ def material_gno(self):
 
         gno_shader.inputs["Mat Flags"].default_value = mat_flags
 
-        for i in range(10):
-            gno_shader.inputs["Mat Data " + str(i+1)].default_value = m.mat_data[i]
+        gno_shader.inputs["Blend Type"].default_value = m.render.blend
+        gno_shader.inputs["Source Fact"].default_value = m.render.source
+        gno_shader.inputs["Dest Fact"].default_value = m.render.destination
+        gno_shader.inputs["Blend Op"].default_value = m.render.operation
+        gno_shader.inputs["Z Mode"].default_value = m.render.z_mode
+        gno_shader.inputs["Alpha ref0"].default_value = m.render.ref0
+        gno_shader.inputs["Alpha ref1"].default_value = m.render.ref1
+        gno_shader.inputs["Alpha comp0"].default_value = m.render.comp0
+        gno_shader.inputs["Alpha comp1"].default_value = m.render.comp1
+        gno_shader.inputs["Alpha Op"].default_value = m.render.alpha
+        gno_shader.inputs["User"].default_value = m.user
 
         tree.links.new(gno_shader.inputs["Unshaded"], colour_init.outputs["Unshaded"])
         tree.links.new(tree.nodes["Material Output"].inputs[0], gno_shader.outputs[0])

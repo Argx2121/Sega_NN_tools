@@ -218,61 +218,67 @@ class MakeGroups:
         var.hide_value = False
         var.default_value = False
 
-        var = tree.interface.new_socket(name='Mat Data 1', in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name='Blend Type', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
-        var.min_value = -2147483648
-        var.default_value = 1
-        var.max_value = 2147483647
+        var.min_value = 0  # OFF
+        var.default_value = 1  # ON
+        var.max_value = 1
 
-        var = tree.interface.new_socket(name='Mat Data 2', in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name='Source Fact', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
-        var.min_value = -2147483648
+        var.min_value = 0
         var.default_value = 4
-        var.max_value = 2147483647
+        var.max_value = 7
 
-        var = tree.interface.new_socket(name='Mat Data 3', in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name='Dest Fact', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
-        var.min_value = -2147483648
+        var.min_value = 0
         var.default_value = 5
-        var.max_value = 2147483647
+        var.max_value = 7
 
-        var = tree.interface.new_socket(name='Mat Data 4', in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name='Blend Op', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
-        var.min_value = -2147483648
+        var.min_value = 0
         var.default_value = 5
-        var.max_value = 2147483647
+        var.max_value = 15
 
-        var = tree.interface.new_socket(name='Mat Data 5', in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name='Z Mode', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
-        var.min_value = -2147483648
+        var.min_value = 0
         var.default_value = 2
-        var.max_value = 2147483647
+        var.max_value = 7
 
-        var = tree.interface.new_socket(name='Mat Data 6', in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name='Alpha ref0', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
-        var.min_value = -2147483648
+        var.min_value = 0
         var.default_value = 0
-        var.max_value = 2147483647
+        var.max_value = 255
 
-        var = tree.interface.new_socket(name='Mat Data 7', in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name='Alpha ref1', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
-        var.min_value = -2147483648
+        var.min_value = 0
+        var.default_value = 0
+        var.max_value = 255
+
+        var = tree.interface.new_socket(name='Alpha comp0', in_out='INPUT', socket_type='NodeSocketInt')
+        var.hide_value = False
+        var.min_value = 0
         var.default_value = 6
-        var.max_value = 2147483647
+        var.max_value = 7
 
-        var = tree.interface.new_socket(name='Mat Data 8', in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name='Alpha comp1', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
-        var.min_value = -2147483648
+        var.min_value = 0
         var.default_value = 7
-        var.max_value = 2147483647
+        var.max_value = 7
 
-        var = tree.interface.new_socket(name='Mat Data 9', in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name='Alpha Op', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
-        var.min_value = -2147483648
+        var.min_value = 0
         var.default_value = 0
-        var.max_value = 2147483647
+        var.max_value = 3
 
-        var = tree.interface.new_socket(name='Mat Data 10', in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name='User', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
         var.min_value = -2147483648
         var.default_value = 0

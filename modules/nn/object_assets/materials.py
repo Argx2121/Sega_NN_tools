@@ -54,6 +54,19 @@ class Read:
         texture_flags: Flag
 
     @dataclass
+    class GnoRender:
+        blend: Flag
+        source: Flag
+        destination: Flag
+        operation: Flag
+        z_mode: Flag
+        ref0: Flag
+        ref1: Flag
+        comp0: Flag
+        comp1: Flag
+        alpha: Flag
+
+    @dataclass
     class Material:
         __slots__ = ["texture_count", "colour", "texture", "transparency", "mat_flags", "mat_data", "special"]
         texture_count: int
@@ -63,6 +76,17 @@ class Read:
         mat_flags: int
         mat_data: list
         special: tuple  # gave up
+
+    @dataclass
+    class GnoMaterial:
+        __slots__ = ["texture_count", "colour", "texture", "transparency", "mat_flags", "render", "user"]
+        texture_count: int
+        colour: Any
+        texture: Any
+        transparency: str
+        mat_flags: int
+        render: any
+        user: tuple  # die
 
     def _le_offsets(self):
         self.info_offset = read_int_tuple(self.f, self.material_count * 2)[1::2]
@@ -420,14 +444,11 @@ class Read:
             self.colour_list.append(self.Colour(
                 diffuse, tuple(ambient), tuple(specular), emission, specular_value, shininess
             ))
-            mat_data = unpack(">10i", f.read(40))
-            mat_special = ()
-            # todo game specific
-            if mat_data[-1] == 134217728:
-                mat_special = ("black_alpha", "unshaded")
 
-            if mat_data[-1] == 18:
-                mat_special = ("exsonic")
+            mat_data = self.GnoRender(
+                *unpack(">5i", f.read(20)), *unpack(">4B", f.read(4))[:2], *unpack(">3i", f.read(12)))
+
+            mat_special = unpack(">i", f.read(4))[0]
 
             self.mat_set_list.append((mat_type, mat_data, mat_special))
 
@@ -486,8 +507,8 @@ class Read:
 
                     # byte 3
                     # vector type (reflection or uv map - multiple cannot be set)
-                    reflection_2 = mat_data[-1] == 8 and (index == 2 or index == 1)
-                    reflection = texture_flags >> 13 & 1 and not reflection_2
+                    #reflection_2 = mat_data[-1] == 8 and (index == 2 or index == 1)
+                    reflection = texture_flags >> 13 & 1 #and not reflection_2
                     uv4 = texture_flags >> 11 & 1
                     uv3 = texture_flags >> 10 & 1
                     uv2 = texture_flags >> 9 & 1
@@ -961,7 +982,7 @@ class Read:
     def _return_data_3(self):
         material_list = []
         for i in range(self.material_count):
-            material_list.append(self.Material(
+            material_list.append(self.GnoMaterial(
                 self.texture_count[i], self.colour_list[i], self.texture_list[i], "OPAQUE", *self.mat_set_list[i]))
         return material_list
 

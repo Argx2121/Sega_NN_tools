@@ -29,16 +29,16 @@ def main(operator, context, settings):
         gno_shader.inputs["Override Flags"].hide = True
         gno_shader.inputs["Mat Flags"].hide = True
         gno_shader.inputs["Override Data"].hide = True
-        gno_shader.inputs["Mat Data 1"].hide = True
-        gno_shader.inputs["Mat Data 2"].hide = True
-        gno_shader.inputs["Mat Data 3"].hide = True
-        gno_shader.inputs["Mat Data 4"].hide = True
-        gno_shader.inputs["Mat Data 5"].hide = True
-        gno_shader.inputs["Mat Data 6"].hide = True
-        gno_shader.inputs["Mat Data 7"].hide = True
-        gno_shader.inputs["Mat Data 8"].hide = True
-        gno_shader.inputs["Mat Data 9"].hide = True
-        gno_shader.inputs["Mat Data 10"].hide = True
+        gno_shader.inputs["Blend Type"].hide = True
+        gno_shader.inputs["Source Fact"].hide = True
+        gno_shader.inputs["Dest Fact"].hide = True
+        gno_shader.inputs["Blend Op"].hide = True
+        gno_shader.inputs["Z Mode"].hide = True
+        gno_shader.inputs["Alpha ref0"].hide = True
+        gno_shader.inputs["Alpha ref1"].hide = True
+        gno_shader.inputs["Alpha comp0"].hide = True
+        gno_shader.inputs["Alpha comp1"].hide = True
+        gno_shader.inputs["Alpha Op"].hide = True
 
     if settings.vertex_color:
         vertex_color = tree.nodes.new(type="ShaderNodeVertexColor")
