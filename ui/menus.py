@@ -9,6 +9,10 @@ def main(operator, context, settings):
     tree = context.space_data.node_tree
     MakeGroups().execute()
 
+    if settings.remove_existing:
+        for node in tree.nodes:
+            tree.nodes.remove(node)
+
     gno_shader = tree.nodes.new('ShaderNodeNNShader')
     gno_shader.location = (30, 300)
     colour_init = tree.nodes.new('ShaderNodeNNShaderInit')
@@ -60,6 +64,7 @@ def main(operator, context, settings):
 
         last_node = mix_node
 
+    if settings.specular:
         spec_rgb = tree.nodes.new('ShaderNodeRGB')
         spec_rgb.location = (-500, 60)
         spec_rgb.outputs[0].default_value = (0.882353, 0.882353, 0.882353, 1)
@@ -124,6 +129,12 @@ class NodeGnoSetup(bpy.types.Operator):
         description="Use vertex colors",
     )
 
+    remove_existing: BoolProperty(
+        name="Remove existing",
+        description="Remove existing nodes from the tree",
+        default=True,
+    )
+
     hide_override: BoolProperty(
         name="Hide Overridable",
         description="Hide overridable flags",
@@ -143,6 +154,7 @@ class NodeGnoSetup(bpy.types.Operator):
         box.prop(self, "reflection")
         box.prop(self, "vertex_color")
         box.label(text="Advanced settings:", icon="KEYFRAME_HLT")
+        box.prop(self, "remove_existing")
         box.prop(self, "hide_override")
 
     @classmethod
@@ -150,7 +162,7 @@ class NodeGnoSetup(bpy.types.Operator):
         return context.area.ui_type == 'ShaderNodeTree'
 
     def execute(self, context):
-        settings = SetGno(self.diffuse, self.specular, self.reflection, self.vertex_color, self.hide_override)
+        settings = SetGno(self.diffuse, self.specular, self.reflection, self.vertex_color, self.remove_existing, self.hide_override)
         main(self, context, settings)
         return {'FINISHED'}
 
@@ -161,6 +173,7 @@ class SetGno:
     specular: bool
     reflection: bool
     vertex_color: bool
+    remove_existing: bool
     hide_override: bool
 
 
