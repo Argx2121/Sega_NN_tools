@@ -502,8 +502,13 @@ class Read:
                     ignore_uv_offset = texture_flags >> 30 & 1
 
                     # byte 2
-                    # don't know for this one
-                    # 0x0C
+                    # uv wrapping modes
+                    clampu = texture_flags >> 16 & 1
+                    clampv = texture_flags >> 17 & 1
+                    repeatu = texture_flags >> 18 & 1
+                    repeatv = texture_flags >> 19 & 1
+                    mirroru = texture_flags >> 20 & 1
+                    mirrorv = texture_flags >> 21 & 1
 
                     # byte 3
                     # vector type (reflection or uv map - multiple cannot be set)
