@@ -25,6 +25,16 @@ def _make_image(tree, image, settings):
     return node
 
 
+def _make_image_vect(tree, image, settings):
+    vect = tree.nodes.new(type="ShaderNodeNNVector")
+    node = tree.nodes.new(type="ShaderNodeTexImage")
+    node.image = image
+    node.interpolation = settings.interpolation
+    node.projection = settings.projection
+    tree.links.new(node.inputs["Vector"], vect.outputs["Image Vector"])
+    return vect, node
+
+
 def _mix_rgb(tree, input_1, input_2):
     node = tree.nodes.new(type="ShaderNodeMixRGB")
     node.inputs["Fac"].default_value = 1
@@ -357,36 +367,55 @@ def material_gno(self):
             m_mix = m_tex.texture_flags
 
             if skip_textures:
-                image_node = _make_image(tree, None, m_tex)
+                vector_node, image_node = _make_image_vect(tree, None, m_tex)
             else:
-                image_node = _make_image(tree, texture_name[m_tex_index], m_tex)
+                vector_node, image_node = _make_image_vect(tree, texture_name[m_tex_index], m_tex)
+
+            if not m_mix.ignore_uv_offset:
+                vector_node.inputs["UV Offset"].default_value = (m_tex.scale[0], (- m_tex.scale[1]) + 1, 0.0)
+
+            if m_mix.clampu:
+                vector_node.inputs["U"].default_value = 0
+                vector_node.u_type = "0"
+            elif m_mix.mirroru:
+                vector_node.inputs["U"].default_value = 2
+                vector_node.u_type = "2"
+            else:
+                vector_node.inputs["U"].default_value = 1
+                vector_node.u_type = "1"
+
+            if m_mix.clampv:
+                vector_node.inputs["V"].default_value = 0
+                vector_node.v_type = "0"
+            elif m_mix.mirrorv:
+                vector_node.inputs["V"].default_value = 2
+                vector_node.v_type = "2"
+            else:
+                vector_node.inputs["V"].default_value = 1
+                vector_node.v_type = "1"
 
             if m_mix.reflection:
-                node = tree.nodes.new('ShaderNodeNNReflection')
-                tree.links.new(image_node.inputs[0], node.outputs[0])
-            elif m_mix.reflection_2 and not m_mix.mix:
-                node = tree.nodes.new('ShaderNodeNNReflection')
-                tree.links.new(image_node.inputs[0], node.outputs[0])
+                vector_node.inputs["Reflection Vector"].default_value = True
+            # elif m_mix.reflection_2 and not m_mix.mix:
+                # node = tree.nodes.new('ShaderNodeNNReflection')
+                # tree.links.new(image_node.inputs[0], node.outputs[0])
                 # black knight gives me so much pain
             elif m_mix.uv1:
                 node = tree.nodes.new(type="ShaderNodeUVMap")
                 node.uv_map = model_name_strip + "_UV1_Map"
-                tree.links.new(image_node.inputs[0], node.outputs[0])
+                tree.links.new(vector_node.inputs["UV Map"], node.outputs[0])
             elif m_mix.uv2:
                 node = tree.nodes.new(type="ShaderNodeUVMap")
                 node.uv_map = model_name_strip + "_UV2_Map"
-                tree.links.new(image_node.inputs[0], node.outputs[0])
+                tree.links.new(vector_node.inputs["UV Map"], node.outputs[0])
             elif m_mix.uv3:
                 node = tree.nodes.new(type="ShaderNodeUVMap")
                 node.uv_map = model_name_strip + "_UV3_Map"
-                tree.links.new(image_node.inputs[0], node.outputs[0])
+                tree.links.new(vector_node.inputs["UV Map"], node.outputs[0])
             elif m_mix.uv4:
                 node = tree.nodes.new(type="ShaderNodeUVMap")
                 node.uv_map = model_name_strip + "_UV4_Map"
-                tree.links.new(image_node.inputs[0], node.outputs[0])
-            if not m_mix.ignore_uv_offset:
-                image_node.texture_mapping.translation[0] = m_tex.scale[0]
-                image_node.texture_mapping.translation[1] = (- m_tex.scale[1]) + 1
+                tree.links.new(vector_node.inputs["UV Map"], node.outputs[0])
 
             if m_mix.specular or (m_mix.unknown1 and not m_mix.reflection_2 and has_spec):  # this mixing type is set
                 mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
