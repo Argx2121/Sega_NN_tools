@@ -151,9 +151,60 @@ class ShaderNodeNNReflection(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         self.node_tree = bpy.data.node_groups['_NN_REFLECTION']
 
 
+class ShaderNodeNNVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
+    bl_label = "NN Vector"
+    bl_idname = "ShaderNodeNNVector"
+    bl_width_default = 180
+
+    def u_types(self, context):
+        wrap_types = (
+            ('0', "Clamp U", ""),
+            ('1', "Repeat U", ""),
+            ('2', "Mirror U", ""),
+        )
+        return wrap_types
+
+    def v_types(self, context):
+        wrap_types = (
+            ('0', "Clamp V", ""),
+            ('1', "Repeat V", ""),
+            ('2', "Mirror V", ""),
+        )
+        return wrap_types
+
+    def copy(self, node):
+        self.node_tree = node.node_tree
+
+    def free(self):
+        pass  # defining this so blender doesn't try to remove the group
+
+    def update_u(self, context):
+        if not self.u_type:
+            self.u_type = self.u_types(context)[1][0]
+
+        self.inputs["U"].default_value = int(self.u_type)
+
+    def update_v(self, context):
+        if not self.v_type:
+            self.v_type = self.v_types(context)[1][0]
+
+        self.inputs["V"].default_value = int(self.v_type)
+
+    u_type: EnumProperty(name="U Wrapping", update=update_u, items=u_types)
+    v_type: EnumProperty(name="V Wrapping", update=update_v, items=v_types)
+
+    def init(self, context):
+        self.node_tree = bpy.data.node_groups['_NN_VECTOR']
+        self.u_type = self.u_types(context)[1][0]
+        self.v_type = self.v_types(context)[1][0]
+        self.inputs["U"].hide = True
+        self.inputs["V"].hide = True
+
+
 classes = (
     ShaderNodeNNMixRGB,
     ShaderNodeNNShader,
     ShaderNodeNNShaderInit,
     ShaderNodeNNReflection,
+    ShaderNodeNNVector,
 )
