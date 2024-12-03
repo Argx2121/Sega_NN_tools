@@ -8,7 +8,7 @@ class MakeGroups:
     def execute(self):
         if '_NN_REFLECTION' in bpy.data.node_groups:
             return
-        self._reflection()
+        self._nn_reflection()
         # self._reflection_normal()
         self._nn_vector()
         self._nn_shader_init()
@@ -19,7 +19,7 @@ class MakeGroups:
         self._nn_rgb_sub()
 
     @staticmethod
-    def _reflection():
+    def _nn_reflection():
         tree = bpy.data.node_groups.new('_NN_REFLECTION', 'ShaderNodeTree')
         tree.use_fake_user = True
         # thanks to firegodjr for the node set up
