@@ -29,21 +29,6 @@ def main(operator, context, settings):
         tree.links.new(node.inputs[0], gno_shader.outputs[0])
     node.location = (300, 300)
 
-    if settings.hide_override:
-        gno_shader.inputs["Override Flags"].hide = True
-        gno_shader.inputs["Mat Flags"].hide = True
-        gno_shader.inputs["Override Data"].hide = True
-        gno_shader.inputs["Blend Type"].hide = True
-        gno_shader.inputs["Source Fact"].hide = True
-        gno_shader.inputs["Dest Fact"].hide = True
-        gno_shader.inputs["Blend Op"].hide = True
-        gno_shader.inputs["Z Mode"].hide = True
-        gno_shader.inputs["Alpha ref0"].hide = True
-        gno_shader.inputs["Alpha ref1"].hide = True
-        gno_shader.inputs["Alpha comp0"].hide = True
-        gno_shader.inputs["Alpha comp1"].hide = True
-        gno_shader.inputs["Alpha Op"].hide = True
-
     if settings.vertex_color:
         vertex_color = tree.nodes.new(type="ShaderNodeVertexColor")
         vertex_color.location = (-1260, 200)
@@ -148,12 +133,6 @@ class NodeGnoSetup(bpy.types.Operator):
         default=True,
     )
 
-    hide_override: BoolProperty(
-        name="Hide Overridable",
-        description="Hide overridable flags",
-        default=True,
-    )
-
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self, width=240)
 
@@ -168,14 +147,13 @@ class NodeGnoSetup(bpy.types.Operator):
         box.prop(self, "vertex_color")
         box.label(text="Advanced settings:", icon="KEYFRAME_HLT")
         box.prop(self, "remove_existing")
-        box.prop(self, "hide_override")
 
     @classmethod
     def poll(cls, context):
         return context.area.ui_type == 'ShaderNodeTree'
 
     def execute(self, context):
-        settings = SetGno(self.diffuse, self.specular, self.reflection, self.vertex_color, self.remove_existing, self.hide_override)
+        settings = SetGno(self.diffuse, self.specular, self.reflection, self.vertex_color, self.remove_existing)
         main(self, context, settings)
         return {'FINISHED'}
 
@@ -187,7 +165,6 @@ class SetGno:
     reflection: bool
     vertex_color: bool
     remove_existing: bool
-    hide_override: bool
 
 
 class NNNodeAdd(bpy.types.Operator):

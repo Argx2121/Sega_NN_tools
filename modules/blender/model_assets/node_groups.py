@@ -487,7 +487,7 @@ class MakeGroups:
         var.default_value = 0
         var.max_value = 1
 
-        var = tree.interface.new_socket(name='Dont Write Depth', in_out='INPUT', socket_type='NodeSocketInt')
+        var = tree.interface.new_socket(name="Don't Write Depth", in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
         var.min_value = 0
         var.default_value = 0
@@ -528,10 +528,6 @@ class MakeGroups:
         var.min_value = -2147483648
         var.default_value = 0
         var.max_value = 2147483647
-
-        var = tree.interface.new_socket(name='Override Data', in_out='INPUT', socket_type='NodeSocketBool')
-        var.hide_value = False
-        var.default_value = False
 
         var = tree.interface.new_socket(name='Blend Type', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
