@@ -31,13 +31,30 @@ class CustomNodetreeNodeBaseNNExpandLink:
         pass
 
     def draw_buttons(self, context, layout):
-        for prop in self.bl_rna.properties:
-            if prop.is_runtime and not prop.is_readonly:
-                text = prop.name
-                for link in self.id_data.links:
-                    if link.to_socket == self.inputs["Unshaded"]:
-                        return
-                layout.prop(self, prop.identifier, text=text, expand=True)
+        has_link = False
+        for link in self.id_data.links:
+            if link.to_socket == self.inputs["Unshaded"]:
+                has_link = True
+                break
+        if not has_link:
+            for prop in self.bl_rna.properties:
+                if prop.is_runtime and not prop.is_readonly:
+                    if prop.name == "Find Init":
+                        layout.prop(self, prop.identifier, text=prop.name, expand=True)
+                    elif prop.type == "ENUM":
+                        layout.prop(self, prop.identifier, text="")
+                    else:
+                        layout.prop(self, prop.identifier, text=prop.name)
+
+        else:
+            for prop in self.bl_rna.properties:
+                if prop.is_runtime and not prop.is_readonly:
+                    if prop.name == "Find Init":
+                        continue
+                    elif prop.type == "ENUM":
+                        layout.prop(self, prop.identifier, text="")
+                    else:
+                        layout.prop(self, prop.identifier, text=prop.name)
 
 
 class ShaderNodeNNMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
@@ -94,13 +111,13 @@ class ShaderNodeNNShader(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomGro
     bl_idname = "ShaderNodeNNShader"
     bl_width_default = 180
 
-    def update_props(self, context):
+    def update_init(self, context):
         for node in self.id_data.nodes:
             if node.bl_idname == "ShaderNodeNNShaderInit":
                 self.id_data.links.new(node.outputs["Unshaded"], self.inputs["Unshaded"])
                 node_inputs = [node.to_socket for node in self.id_data.links]
-                if self.inputs["Colour"] not in node_inputs:
-                    self.id_data.links.new(node.outputs["Diffuse Color"], self.inputs["Colour"])
+                if self.inputs["Color"] not in node_inputs:
+                    self.id_data.links.new(node.outputs["Diffuse Color"], self.inputs["Color"])
                 if self.inputs["Alpha"] not in node_inputs:
                     self.id_data.links.new(node.outputs["Diffuse Alpha"], self.inputs["Alpha"])
                 break
@@ -109,7 +126,167 @@ class ShaderNodeNNShader(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomGro
         ('find_init', "Find Init", ""),
     )
 
-    connect_init: EnumProperty(name="Find Init", update=update_props, items=find_init)
+    def blend_types(self, context):
+        blend_types = (
+            ('0', "None", ""),
+            ('1', "Blend", ""),
+            ('2', "Logic", ""),
+            ('3', "Subtract", ""),
+        )
+        return blend_types
+
+    def source_facts(self, context):
+        source_facts = (
+            ('0', "Zero", ""),
+            ('1', "One", ""),
+            ('2', "Destination Color", ""),
+            ('3', "1 - Destination Color", ""),
+            ('4', "Source Alpha", ""),
+            ('5', "1 - Source Alpha", ""),
+            ('6', "Destination Alpha", ""),
+            ('7', "1 - Destination Alpha", ""),
+        )
+        return source_facts
+
+    def dest_facts(self, context):
+        dest_facts = (
+            ('0', "Zero", ""),
+            ('1', "One", ""),
+            ('2', "Source Color", ""),
+            ('3', "1 - Source Color", ""),
+            ('4', "Source Alpha", ""),
+            ('5', "1 - Source Alpha", ""),
+            ('6', "Destination Alpha", ""),
+            ('7', "1 - Destination Alpha", ""),
+        )
+        return dest_facts
+
+    def blend_ops(self, context):
+        blend_ops = (
+            ('0', "Clear", ""),
+            ('1', "And", ""),
+            ('2', "Reverse And", ""),
+            ('3', "Copy", ""),
+            ('4', "Inverse And", ""),
+            ('5', "No Operation", ""),
+            ('6', "Xor", ""),
+            ('7', "Or", ""),
+            ('8', "Nor", ""),
+            ('9', "Equivalent", ""),
+            ('10', "Inverse", ""),
+            ('11', "Reverse Or", ""),
+            ('12', "Inverse Copy", ""),
+            ('13', "Inverse Or", ""),
+            ('14', "Not And", ""),
+            ('15', "Set", ""),
+        )
+        return blend_ops
+
+    def z_modes(self, context):
+        z_modes = (
+            ('0', "Never", ""),
+            ('1', "Less", ""),
+            ('2', "Less Equal", ""),
+            ('3', "Equal", ""),
+            ('4', "Not Equal", ""),
+            ('5', "Greater Equal", ""),
+            ('6', "Greater", ""),
+            ('7', "Always", ""),
+        )
+        return z_modes
+
+    def alpha_comp0s(self, context):
+        alpha_comp0s = (
+            ('0', "Never", ""),
+            ('1', "Less", ""),
+            ('2', "Less Equal", ""),
+            ('3', "Equal", ""),
+            ('4', "Not Equal", ""),
+            ('5', "Greater Equal", ""),
+            ('6', "Greater", ""),
+            ('7', "Always", ""),
+        )
+        return alpha_comp0s
+
+    def alpha_comp1s(self, context):
+        alpha_comp1s = (
+            ('0', "Never", ""),
+            ('1', "Less", ""),
+            ('2', "Less Equal", ""),
+            ('3', "Equal", ""),
+            ('4', "Not Equal", ""),
+            ('5', "Greater Equal", ""),
+            ('6', "Greater", ""),
+            ('7', "Always", ""),
+        )
+        return alpha_comp1s
+
+    def alpha_ops(self, context):
+        alpha_ops = (
+            ('0', "And", ""),
+            ('1', "Or", ""),
+            ('2', "Xor", ""),
+            ('3', "Xnor", ""),
+        )
+        return alpha_ops
+
+    def update_blend_type(self, context):
+        if not self.blend_type:
+            self.blend_type = self.blend_types(context)[1][0]
+
+        self.inputs["Blend Type"].default_value = int(self.blend_type)
+
+    def update_source_fact(self, context):
+        if not self.source_fact:
+            self.source_fact = self.source_facts(context)[4][0]
+
+        self.inputs["Source Fact"].default_value = int(self.source_fact)
+
+    def update_dest_fact(self, context):
+        if not self.dest_fact:
+            self.dest_fact = self.dest_facts(context)[5][0]
+
+        self.inputs["Dest Fact"].default_value = int(self.dest_fact)
+
+    def update_blend_op(self, context):
+        if not self.blend_op:
+            self.blend_op = self.blend_ops(context)[5][0]
+
+        self.inputs["Blend Op"].default_value = int(self.blend_op)
+
+    def update_z_mode(self, context):
+        if not self.z_mode:
+            self.z_mode = self.z_modes(context)[2][0]
+
+        self.inputs["Z Mode"].default_value = int(self.z_mode)
+
+    def update_alpha_comp0(self, context):
+        if not self.alpha_comp0:
+            self.alpha_comp0 = self.alpha_comp0s(context)[6][0]
+
+        self.inputs["Alpha comp0"].default_value = int(self.alpha_comp0)
+
+    def update_alpha_comp1(self, context):
+        if not self.alpha_comp1:
+            self.alpha_comp1 = self.alpha_comp1s(context)[7][0]
+
+        self.inputs["Alpha comp1"].default_value = int(self.alpha_comp1)
+
+    def update_alpha_op(self, context):
+        if not self.alpha_op:
+            self.alpha_op = self.alpha_ops(context)[0][0]
+
+        self.inputs["Alpha Op"].default_value = int(self.alpha_op)
+
+    connect_init: EnumProperty(name="Find Init", update=update_init, items=find_init)
+    blend_type: EnumProperty(name="Blend Type", update=update_blend_type, items=blend_types)
+    source_fact: EnumProperty(name="Source Factor", update=update_source_fact, items=source_facts)
+    dest_fact: EnumProperty(name="Destination Factor", update=update_dest_fact, items=dest_facts)
+    blend_op: EnumProperty(name="Blend Operation", update=update_blend_op, items=blend_ops)
+    z_mode: EnumProperty(name="Z Mode", update=update_z_mode, items=z_modes)
+    alpha_comp0: EnumProperty(name="Alpha Compare 0", update=update_alpha_comp0, items=alpha_comp0s)
+    alpha_comp1: EnumProperty(name="Alpha Compare 1", update=update_alpha_comp1, items=alpha_comp1s)
+    alpha_op: EnumProperty(name="Alpha Operation", update=update_alpha_op, items=alpha_ops)
 
     def copy(self, node):
         self.node_tree = node.node_tree
@@ -119,6 +296,22 @@ class ShaderNodeNNShader(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomGro
 
     def init(self, context):
         self.node_tree = bpy.data.node_groups['_NN_SHADER']
+        self.blend_type = self.blend_types(context)[1][0]
+        self.inputs["Blend Type"].hide = True
+        self.source_fact = self.source_facts(context)[4][0]
+        self.inputs["Source Fact"].hide = True
+        self.dest_fact = self.dest_facts(context)[5][0]
+        self.inputs["Dest Fact"].hide = True
+        self.blend_op = self.blend_ops(context)[5][0]
+        self.inputs["Blend Op"].hide = True
+        self.z_mode = self.z_modes(context)[2][0]
+        self.inputs["Z Mode"].hide = True
+        self.alpha_comp0 = self.alpha_comp0s(context)[6][0]
+        self.inputs["Alpha comp0"].hide = True
+        self.alpha_comp1 = self.alpha_comp1s(context)[7][0]
+        self.inputs["Alpha comp1"].hide = True
+        self.alpha_op = self.alpha_ops(context)[0][0]
+        self.inputs["Alpha Op"].hide = True
 
 
 class ShaderNodeNNShaderInit(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
