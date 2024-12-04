@@ -531,9 +531,9 @@ class MakeGroups:
 
         var = tree.interface.new_socket(name='Blend Type', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
-        var.min_value = 0  # OFF
-        var.default_value = 1  # ON
-        var.max_value = 1
+        var.min_value = 0
+        var.default_value = 1
+        var.max_value = 3
 
         var = tree.interface.new_socket(name='Source Fact', in_out='INPUT', socket_type='NodeSocketInt')
         var.hide_value = False
