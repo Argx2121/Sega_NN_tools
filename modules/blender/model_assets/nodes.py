@@ -66,9 +66,16 @@ class ShaderNodeNNMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         # Enum items list
         mix_types = (
             ('_NN_RGB_MULTI', "Multiply", ""),
-            ('_NN_RGB_MIX', "Mix", ""),
+            ('_NN_RGB_DECAL', "Decal", ""),
+            ('_NN_RGB_REPLACE', "Replace", ""),
+            ('_NN_RGB_BLEND', "Blend", ""),
+            ('_NN_RGB_PASS', "Pass Clear", ""),
+            ('_NN_RGB_ALPHA', "Alpha Texture", ""),
+            ('_NN_RGB_DECAL_2', "Decal 2", ""),
+            ('_NN_RGB_SUB', "Subtract", "If you use Subtract as the first mixing type, you can only have 3 textures"),
+            ('_NN_RGB_SPEC', "Specular", ""),
+            ('_NN_RGB_SPEC_2', "Specular 2", ""),
             ('_NN_RGB_ADD', "Add", ""),
-            ('_NN_RGB_SUB', "Subtract", ""),
         )
         return mix_types
 

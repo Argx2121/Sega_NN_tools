@@ -332,9 +332,11 @@ def material_gno(self):
                 node.uv_map = model_name_strip + "_UV4_Map"
                 tree.links.new(vector_node.inputs["UV Map"], node.outputs[0])
 
-            if m_mix.specular:
+            if m_mix.specular or m_mix.specular2:
+                mix_type = "_NN_RGB_SPEC"
+                if m_mix.specular2:
+                    mix_type = "_NN_RGB_SPEC_2"
                 mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
-                mix_type = "_NN_RGB_MULTI"
                 mix_node.blend_type = mix_type
                 spec_col = mix_node.outputs[0]
 
@@ -348,46 +350,29 @@ def material_gno(self):
                 tree.links.new(mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
                 tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
                 tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
-            elif m_mix.unknown1:
-                for link in tree.links:
-                    if link.to_node.name == mix_node.name and link.to_socket.name == "Color 2":
-                        s_mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
-                        s_mix_type = "_NN_RGB_MULTI"
-                        s_mix_node.blend_type = s_mix_type
-                        spec_col = s_mix_node.outputs[0]
-
-                        spec_rgb = tree.nodes.new('ShaderNodeRGB')
-                        spec_rgb.outputs[0].default_value = m_col.specular
-                        spec_alpha = tree.nodes.new(type="ShaderNodeValue")
-                        spec_alpha.outputs[0].default_value = m_col.specular[-1]
-
-                        s_mix_node.inputs["Color 1"].default_value = m_col.specular
-                        tree.links.new(s_mix_node.inputs["Color 1"], spec_rgb.outputs[0])
-                        tree.links.new(s_mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
-                        tree.links.new(s_mix_node.inputs["Color 2"], link.from_node.outputs[0])
-                        tree.links.new(s_mix_node.inputs["Alpha 2"], link.from_node.outputs[1])
-                        tree.links.remove(link)
-                        break
-                tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
             else:
                 mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
                 mix_type = "_NN_RGB_MULTI"
                 if m_mix.multiply:
                     mix_type = "_NN_RGB_MULTI"
-                elif m_mix.mix:
-                    mix_type = "_NN_RGB_MIX"
-                elif m_mix.add:
-                    mix_type = "_NN_RGB_ADD"
-                elif m_mix.add_branch:
-                    mix_type = "_NN_RGB_ADD"
+                elif m_mix.decal:
+                    mix_type = "_NN_RGB_DECAL"
+                elif m_mix.replace:
+                    mix_type = "_NN_RGB_REPLACE"
+                elif m_mix.blend:
+                    mix_type = "_NN_RGB_BLEND"
+                elif m_mix.pass_clear:
+                    mix_type = "_NN_RGB_PASS"
+                elif m_mix.alpha_tex:
+                    mix_type = "_NN_RGB_ALPHA"
+                elif m_mix.decal_2:
+                    mix_type = "_NN_RGB_DECAL_2"
                 elif m_mix.subtract:
                     mix_type = "_NN_RGB_SUB"
-                elif m_mix.unknown1:
-                    mix_type = "_NN_RGB_MIX"
-                elif m_mix.unknown1:
-                    mix_type = "_NN_RGB_MULTI"
-                elif m_mix.specular:
-                    mix_type = "_NN_RGB_MULTI"
+                elif m_mix.add:
+                    mix_type = "_NN_RGB_ADD"
+                elif m_mix.subtract_2:
+                    mix_type = "_NN_RGB_SUB"
                 if m_mix.multiply_shading:
                     mix_node.multi_shading = True
                 mix_node.blend_type = mix_type
@@ -407,18 +392,8 @@ def material_gno(self):
                     tree.links.new(diff_end_mix.inputs["Alpha 2"], mix_node.outputs[1])
                     diff_end_image = False
 
-                if m_mix.add_branch:
-                    diff_end_image = image_node
-                    diff_end_mix = mix_node
-                    diff_end_connected = True
-                    tree.links.new(gno_shader.inputs["Color"], diff_col)
-                    tree.links.new(gno_shader.inputs["Alpha"], diff_alpha)
-                    # in case this is the last node
-                    tree.links.new(mix_node.inputs["Color 2"], diff_end_image.outputs[0])
-                    tree.links.new(mix_node.inputs["Alpha 2"], diff_end_image.outputs[1])
-                else:
-                    tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
-                    tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
+                tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
+                tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
 
         if not diff_end_connected:
             tree.links.new(gno_shader.inputs["Color"], diff_col)
@@ -804,7 +779,7 @@ def get_materials(self):
 
                         if mix_blend == "_NN_RGB_MULTI":
                             image_flags |= 1
-                        elif mix_blend == "_NN_RGB_MIX":
+                        elif mix_blend == "_NN_RGB_DECAL":
                             image_flags |= 2
                         elif mix_blend == "_NN_RGB_ADD":
                             image_flags |= 4

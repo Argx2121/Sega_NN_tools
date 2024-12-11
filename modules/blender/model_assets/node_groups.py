@@ -14,9 +14,16 @@ class MakeGroups:
         self._nn_shader_init()
         self._nn_shader()
         self._nn_rgb_multi()
-        self._nn_rgb_mix()
+        self._nn_rgb_decal()
         self._nn_rgb_add()
         self._nn_rgb_sub()
+        self._nn_rgb_specular2()
+        self._nn_rgb_specular()
+        self._nn_rgb_decal_2()
+        self._nn_rgb_alpha_tex()
+        self._nn_rgb_pass_clear()
+        self._nn_rgb_blend()
+        self._nn_rgb_replace()
 
     @staticmethod
     def _nn_reflection():
@@ -957,39 +964,45 @@ class MakeGroups:
         tree.use_fake_user = True
 
         # Group inputs
-        var = tree.interface.new_socket(name="Color 1", in_out='INPUT', socket_type='NodeSocketColor')
-        var.hide_value = True
+        var = tree.interface.new_socket(name='Color 1', in_out='INPUT', socket_type='NodeSocketColor')
         var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
 
-        var = tree.interface.new_socket(name="Alpha 1", in_out='INPUT', socket_type='NodeSocketFloat')
+        var = tree.interface.new_socket(name='Alpha 1', in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
         var.hide_value = True
 
-        var = tree.interface.new_socket(name="Color 2", in_out='INPUT', socket_type='NodeSocketColor')
-        var.hide_value = True
+        var = tree.interface.new_socket(name='Color 2', in_out='INPUT', socket_type='NodeSocketColor')
         var.default_value = (1.0, 1.0, 1.0, 1.0)
-
-        var = tree.interface.new_socket(name="Alpha 2", in_out='INPUT', socket_type='NodeSocketFloat')
-        var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.interface.new_socket(name="Color 2 Multiplier", in_out='INPUT', socket_type='NodeSocketFloat')
+        var = tree.interface.new_socket(name='Alpha 2', in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
-        var.hide_value = False
-        var.max_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2 Multiplier', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
         var.min_value = 0.0
+        var.max_value = 1.0
+        var.hide_value = False
 
-        var = tree.interface.new_socket(name="Shader Init", in_out='INPUT', socket_type='NodeSocketColor')
-        var.hide_value = True
+        var = tree.interface.new_socket(name='Shader Init', in_out='INPUT', socket_type='NodeSocketColor')
         var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
 
         # Group outputs
-        var = tree.interface.new_socket(name="Color", in_out='OUTPUT', socket_type='NodeSocketColor')
-        var.hide_value = False
+        var = tree.interface.new_socket(name='Color', in_out='OUTPUT', socket_type='NodeSocketColor')
         var.default_value = (0.0, 0.0, 0.0, 1.0)
+        var.hide_value = False
 
-        var = tree.interface.new_socket(name="Alpha", in_out='OUTPUT', socket_type='NodeSocketFloat')
+        var = tree.interface.new_socket(name='Alpha', in_out='OUTPUT', socket_type='NodeSocketFloat')
         var.default_value = 0.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
         var.hide_value = False
 
         # Group Nodes
@@ -1002,17 +1015,17 @@ class MakeGroups:
 
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.008'
-        var.location = (-240.0, -191.0)
+        var.location = (-316.18792724609375, -262.09112548828125)
         var.inputs[0].default_value = 1.0
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MULTIPLY'
         var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
         var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math'
-        var.location = (-480.0, -191.0)
+        var.location = (-531.4783325195312, -302.2730407714844)
         var.inputs[0].default_value = 0.5
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
@@ -1021,22 +1034,12 @@ class MakeGroups:
 
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.004'
-        var.location = (-240.0, 0.0)
+        var.location = (-155.5754852294922, 330.7283630371094)
         var.inputs[0].default_value = 1.0
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MULTIPLY'
         var.use_alpha = False
-        var.use_clamp = False
-
-        var = tree.nodes.new(type='ShaderNodeMixRGB')
-        var.name = 'Mix.003'
-        var.location = (-480.0, 0.0)
-        var.inputs[0].default_value = 1.0
-        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
         var.blend_type = 'MULTIPLY'
-        var.use_alpha = False
         var.use_clamp = False
 
         var = tree.nodes.new(type='NodeGroupInput')
@@ -1045,12 +1048,12 @@ class MakeGroups:
 
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.005'
-        var.location = (-720.0, 0.0)
+        var.location = (-468.78564453125, 91.69722747802734)
         var.inputs[0].default_value = 1.0
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MULTIPLY'
         var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
         var.use_clamp = False
 
         # Group Node links
@@ -1058,84 +1061,78 @@ class MakeGroups:
         tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix.008"].inputs[2])
         tree.links.new(tree.nodes["Mix.008"].outputs[0], tree.nodes["Group Output"].inputs[1])
         tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Mix.004"].inputs[1])
-        tree.links.new(tree.nodes["Mix.003"].outputs[0], tree.nodes["Mix.004"].inputs[2])
         tree.links.new(tree.nodes["Group Input"].outputs[3], tree.nodes["Math"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Math"].inputs[1])
-        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Mix.003"].inputs[2])
         tree.links.new(tree.nodes["Mix.004"].outputs[0], tree.nodes["Group Output"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Mix.005"].inputs[2])
         tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Mix.005"].inputs[1])
-        tree.links.new(tree.nodes["Mix.005"].outputs[0], tree.nodes["Mix.003"].inputs[1])
+        tree.links.new(tree.nodes["Mix.005"].outputs[0], tree.nodes["Mix.004"].inputs[2])
 
     @staticmethod
-    def _nn_rgb_mix():
-        tree = bpy.data.node_groups.new('_NN_RGB_MIX', 'ShaderNodeTree')
+    def _nn_rgb_decal():
+        tree = bpy.data.node_groups.new('_NN_RGB_DECAL', 'ShaderNodeTree')
         tree.use_fake_user = True
 
         # Group inputs
-        var = tree.interface.new_socket(name="Color 1", in_out='INPUT', socket_type='NodeSocketColor')
-        var.hide_value = True
+        var = tree.interface.new_socket(name='Color 1', in_out='INPUT', socket_type='NodeSocketColor')
         var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
 
-        var = tree.interface.new_socket(name="Alpha 1", in_out='INPUT', socket_type='NodeSocketFloat')
+        var = tree.interface.new_socket(name='Alpha 1', in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
         var.hide_value = True
 
-        var = tree.interface.new_socket(name="Color 2", in_out='INPUT', socket_type='NodeSocketColor')
-        var.hide_value = True
+        var = tree.interface.new_socket(name='Color 2', in_out='INPUT', socket_type='NodeSocketColor')
         var.default_value = (1.0, 1.0, 1.0, 1.0)
-
-        var = tree.interface.new_socket(name="Alpha 2", in_out='INPUT', socket_type='NodeSocketFloat')
-        var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.interface.new_socket(name="Color 2 Multiplier", in_out='INPUT', socket_type='NodeSocketFloat')
+        var = tree.interface.new_socket(name='Alpha 2', in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
-        var.hide_value = False
-        var.max_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2 Multiplier', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
         var.min_value = 0.0
+        var.max_value = 1.0
+        var.hide_value = False
 
-        var = tree.interface.new_socket(name="Shader Init", in_out='INPUT', socket_type='NodeSocketColor')
-        var.hide_value = True
+        var = tree.interface.new_socket(name='Shader Init', in_out='INPUT', socket_type='NodeSocketColor')
         var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
 
         # Group outputs
-        var = tree.interface.new_socket(name="Color", in_out='OUTPUT', socket_type='NodeSocketColor')
-        var.hide_value = False
+        var = tree.interface.new_socket(name='Color', in_out='OUTPUT', socket_type='NodeSocketColor')
         var.default_value = (0.0, 0.0, 0.0, 1.0)
+        var.hide_value = False
 
-        var = tree.interface.new_socket(name="Alpha", in_out='OUTPUT', socket_type='NodeSocketFloat')
+        var = tree.interface.new_socket(name='Alpha', in_out='OUTPUT', socket_type='NodeSocketFloat')
         var.default_value = 0.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
         var.hide_value = False
 
         # Group Nodes
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.005'
-        var.location = (-240.0, 0.0)
+        var.location = (-322.3995666503906, 215.954833984375)
         var.inputs[0].default_value = 0.5
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MIX'
         var.use_alpha = False
+        var.blend_type = 'MIX'
         var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math'
-        var.location = (-480.0, 0.0)
+        var.location = (-691.9195556640625, 198.87911987304688)
         var.inputs[0].default_value = 0.5
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.operation = 'MULTIPLY'
-        var.use_clamp = False
-
-        var = tree.nodes.new(type='ShaderNodeMixRGB')
-        var.name = 'Mix.008'
-        var.location = (-240.0, -191.0)
-        var.inputs[0].default_value = 1.0
-        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MULTIPLY'
-        var.use_alpha = False
         var.use_clamp = False
 
         var = tree.nodes.new(type='NodeGroupOutput')
@@ -1145,44 +1142,30 @@ class MakeGroups:
         var.inputs[1].default_value = 0.0
         var.is_active_output = True
 
-        var = tree.nodes.new(type='ShaderNodeMixRGB')
-        var.name = 'Mix.003'
-        var.location = (-480.0, -174.0)
-        var.inputs[0].default_value = 1.0
-        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MULTIPLY'
-        var.use_alpha = False
-        var.use_clamp = False
-
         var = tree.nodes.new(type='NodeGroupInput')
         var.name = 'Group Input'
         var.location = (-960.0, 0.0)
 
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.004'
-        var.location = (-720.0, 0.0)
+        var.location = (-583.2155151367188, -15.829150199890137)
         var.inputs[0].default_value = 1.0
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MULTIPLY'
         var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
         var.use_clamp = False
 
         # Group Node links
-        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Mix.008"].inputs[1])
         tree.links.new(tree.nodes["Group Input"].outputs[3], tree.nodes["Math"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Math"].inputs[1])
         tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix.005"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Mix.005"].inputs[1])
-        tree.links.new(tree.nodes["Mix.003"].outputs[0], tree.nodes["Mix.005"].inputs[2])
-        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Mix.003"].inputs[2])
         tree.links.new(tree.nodes["Mix.005"].outputs[0], tree.nodes["Group Output"].inputs[0])
-        tree.links.new(tree.nodes["Mix.008"].outputs[0], tree.nodes["Group Output"].inputs[1])
-        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Mix.008"].inputs[2])
         tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Mix.004"].inputs[1])
         tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Mix.004"].inputs[2])
-        tree.links.new(tree.nodes["Mix.004"].outputs[0], tree.nodes["Mix.003"].inputs[1])
+        tree.links.new(tree.nodes["Mix.004"].outputs[0], tree.nodes["Mix.005"].inputs[2])
+        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Group Output"].inputs[1])
 
     @staticmethod
     def _nn_rgb_add():
@@ -1190,45 +1173,51 @@ class MakeGroups:
         tree.use_fake_user = True
 
         # Group inputs
-        var = tree.interface.new_socket(name="Color 1", in_out='INPUT', socket_type='NodeSocketColor')
-        var.hide_value = True
+        var = tree.interface.new_socket(name='Color 1', in_out='INPUT', socket_type='NodeSocketColor')
         var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
 
-        var = tree.interface.new_socket(name="Alpha 1", in_out='INPUT', socket_type='NodeSocketFloat')
+        var = tree.interface.new_socket(name='Alpha 1', in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
         var.hide_value = True
 
-        var = tree.interface.new_socket(name="Color 2", in_out='INPUT', socket_type='NodeSocketColor')
-        var.hide_value = True
+        var = tree.interface.new_socket(name='Color 2', in_out='INPUT', socket_type='NodeSocketColor')
         var.default_value = (1.0, 1.0, 1.0, 1.0)
-
-        var = tree.interface.new_socket(name="Alpha 2", in_out='INPUT', socket_type='NodeSocketFloat')
-        var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.interface.new_socket(name="Color 2 Multiplier", in_out='INPUT', socket_type='NodeSocketFloat')
+        var = tree.interface.new_socket(name='Alpha 2', in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
-        var.hide_value = False
-        var.max_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2 Multiplier', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
         var.min_value = 0.0
+        var.max_value = 1.0
+        var.hide_value = False
 
-        var = tree.interface.new_socket(name="Shader Init", in_out='INPUT', socket_type='NodeSocketColor')
-        var.hide_value = True
+        var = tree.interface.new_socket(name='Shader Init', in_out='INPUT', socket_type='NodeSocketColor')
         var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
 
         # Group outputs
-        var = tree.interface.new_socket(name="Color", in_out='OUTPUT', socket_type='NodeSocketColor')
-        var.hide_value = False
+        var = tree.interface.new_socket(name='Color', in_out='OUTPUT', socket_type='NodeSocketColor')
         var.default_value = (0.0, 0.0, 0.0, 1.0)
+        var.hide_value = False
 
-        var = tree.interface.new_socket(name="Alpha", in_out='OUTPUT', socket_type='NodeSocketFloat')
+        var = tree.interface.new_socket(name='Alpha', in_out='OUTPUT', socket_type='NodeSocketFloat')
         var.default_value = 0.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
         var.hide_value = False
 
         # Group Nodes
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math'
-        var.location = (-480.0, -191.0)
+        var.location = (-588.3457641601562, -240.6518096923828)
         var.inputs[0].default_value = 0.5
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
@@ -1237,53 +1226,53 @@ class MakeGroups:
 
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.008'
-        var.location = (-240.0, -191.0)
+        var.location = (-272.4024658203125, -90.68266296386719)
         var.inputs[0].default_value = 1.0
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MULTIPLY'
         var.use_alpha = False
+        var.blend_type = 'ADD'
         var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.006'
-        var.location = (-240.0, 0.0)
+        var.location = (-259.23895263671875, 113.49003601074219)
         var.inputs[0].default_value = 1.0
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'ADD'
         var.use_alpha = False
+        var.blend_type = 'ADD'
         var.use_clamp = False
 
         var = tree.nodes.new(type='NodeGroupInput')
         var.name = 'Group Input'
-        var.location = (-960.0, 0.0)
+        var.location = (-965.0628662109375, 13.172920227050781)
 
         var = tree.nodes.new(type='NodeGroupOutput')
         var.name = 'Group Output'
-        var.location = (0.0, 0.0)
+        var.location = (7.088038444519043, 118.55655670166016)
         var.inputs[0].default_value = (0.0, 0.0, 0.0, 1.0)
         var.inputs[1].default_value = 0.0
         var.is_active_output = True
 
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.003'
-        var.location = (-480.0, 0.0)
+        var.location = (-474.9371032714844, 193.54104614257812)
         var.inputs[0].default_value = 1.0
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MULTIPLY'
         var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
         var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.004'
-        var.location = (-720.0, 0.0)
+        var.location = (-709.8742065429688, 225.96676635742188)
         var.inputs[0].default_value = 1.0
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MULTIPLY'
         var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
         var.use_clamp = False
 
         # Group Node links
@@ -1306,45 +1295,51 @@ class MakeGroups:
         tree.use_fake_user = True
 
         # Group inputs
-        var = tree.interface.new_socket(name="Color 1", in_out='INPUT', socket_type='NodeSocketColor')
-        var.hide_value = True
+        var = tree.interface.new_socket(name='Color 1', in_out='INPUT', socket_type='NodeSocketColor')
         var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
 
-        var = tree.interface.new_socket(name="Alpha 1", in_out='INPUT', socket_type='NodeSocketFloat')
+        var = tree.interface.new_socket(name='Alpha 1', in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
         var.hide_value = True
 
-        var = tree.interface.new_socket(name="Color 2", in_out='INPUT', socket_type='NodeSocketColor')
-        var.hide_value = True
+        var = tree.interface.new_socket(name='Color 2', in_out='INPUT', socket_type='NodeSocketColor')
         var.default_value = (1.0, 1.0, 1.0, 1.0)
-
-        var = tree.interface.new_socket(name="Alpha 2", in_out='INPUT', socket_type='NodeSocketFloat')
-        var.default_value = 1.0
         var.hide_value = True
 
-        var = tree.interface.new_socket(name="Color 2 Multiplier", in_out='INPUT', socket_type='NodeSocketFloat')
+        var = tree.interface.new_socket(name='Alpha 2', in_out='INPUT', socket_type='NodeSocketFloat')
         var.default_value = 1.0
-        var.hide_value = False
-        var.max_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2 Multiplier', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
         var.min_value = 0.0
+        var.max_value = 1.0
+        var.hide_value = False
 
-        var = tree.interface.new_socket(name="Shader Init", in_out='INPUT', socket_type='NodeSocketColor')
-        var.hide_value = True
+        var = tree.interface.new_socket(name='Shader Init', in_out='INPUT', socket_type='NodeSocketColor')
         var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
 
         # Group outputs
-        var = tree.interface.new_socket(name="Color", in_out='OUTPUT', socket_type='NodeSocketColor')
-        var.hide_value = False
+        var = tree.interface.new_socket(name='Color', in_out='OUTPUT', socket_type='NodeSocketColor')
         var.default_value = (0.0, 0.0, 0.0, 1.0)
+        var.hide_value = False
 
-        var = tree.interface.new_socket(name="Alpha", in_out='OUTPUT', socket_type='NodeSocketFloat')
+        var = tree.interface.new_socket(name='Alpha', in_out='OUTPUT', socket_type='NodeSocketFloat')
         var.default_value = 0.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
         var.hide_value = False
 
         # Group Nodes
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math'
-        var.location = (-480.0, -191.0)
+        var.location = (-649.4619140625, -120.79322814941406)
         var.inputs[0].default_value = 0.5
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
@@ -1353,22 +1348,12 @@ class MakeGroups:
 
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.007'
-        var.location = (-240.0, 0.0)
+        var.location = (-426.35040283203125, 426.61883544921875)
         var.inputs[0].default_value = 1.0
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
         var.blend_type = 'SUBTRACT'
-        var.use_alpha = False
-        var.use_clamp = False
-
-        var = tree.nodes.new(type='ShaderNodeMixRGB')
-        var.name = 'Mix.008'
-        var.location = (-240.0, -191.0)
-        var.inputs[0].default_value = 1.0
-        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MULTIPLY'
-        var.use_alpha = False
         var.use_clamp = False
 
         var = tree.nodes.new(type='NodeGroupOutput')
@@ -1380,38 +1365,739 @@ class MakeGroups:
 
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.003'
-        var.location = (-480.0, 0.0)
+        var.location = (-335.60516357421875, 155.9690399169922)
         var.inputs[0].default_value = 1.0
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MULTIPLY'
         var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
         var.use_clamp = False
 
         var = tree.nodes.new(type='NodeGroupInput')
         var.name = 'Group Input'
-        var.location = (-960.0, 0.0)
+        var.location = (-999.7333984375, 20.390748977661133)
 
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.004'
-        var.location = (-720.0, 0.0)
+        var.location = (-652.1366577148438, 165.6847686767578)
         var.inputs[0].default_value = 1.0
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
-        var.blend_type = 'MULTIPLY'
         var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
         var.use_clamp = False
 
         # Group Node links
-        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Mix.008"].inputs[1])
-        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix.008"].inputs[2])
-        tree.links.new(tree.nodes["Mix.008"].outputs[0], tree.nodes["Group Output"].inputs[1])
         tree.links.new(tree.nodes["Group Input"].outputs[3], tree.nodes["Math"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Math"].inputs[1])
         tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Mix.007"].inputs[1])
         tree.links.new(tree.nodes["Mix.003"].outputs[0], tree.nodes["Mix.007"].inputs[2])
-        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Mix.003"].inputs[2])
         tree.links.new(tree.nodes["Mix.007"].outputs[0], tree.nodes["Group Output"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Mix.004"].inputs[1])
         tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Mix.004"].inputs[2])
         tree.links.new(tree.nodes["Mix.004"].outputs[0], tree.nodes["Mix.003"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Group Output"].inputs[1])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix.003"].inputs[2])
+
+    @staticmethod
+    def _nn_rgb_replace():
+        tree = bpy.data.node_groups.new('_NN_RGB_REPLACE', 'ShaderNodeTree')
+        tree.use_fake_user = True
+
+        # Group inputs
+        var = tree.interface.new_socket(name='Color 1', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 1', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 2', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2 Multiplier', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = 0.0
+        var.max_value = 1.0
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Shader Init', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        # Group outputs
+        var = tree.interface.new_socket(name='Color', in_out='OUTPUT', socket_type='NodeSocketColor')
+        var.default_value = (0.0, 0.0, 0.0, 1.0)
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Alpha', in_out='OUTPUT', socket_type='NodeSocketFloat')
+        var.default_value = 0.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = False
+
+        # Group Nodes
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math'
+        var.location = (-672.8994140625, -43.72883987426758)
+        var.inputs[0].default_value = 0.5
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.operation = 'MULTIPLY'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='NodeGroupOutput')
+        var.name = 'Group Output'
+        var.location = (0.0, 0.0)
+        var.inputs[0].default_value = (0.0, 0.0, 0.0, 1.0)
+        var.inputs[1].default_value = 0.0
+        var.is_active_output = True
+
+        var = tree.nodes.new(type='NodeGroupInput')
+        var.name = 'Group Input'
+        var.location = (-999.7333984375, 20.390748977661133)
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.004'
+        var.location = (-652.1366577148438, 165.6847686767578)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
+        var.use_clamp = False
+
+        # Group Node links
+        tree.links.new(tree.nodes["Group Input"].outputs[3], tree.nodes["Math"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Math"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Mix.004"].inputs[2])
+        tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Mix.004"].inputs[1])
+        tree.links.new(tree.nodes["Mix.004"].outputs[0], tree.nodes["Group Output"].inputs[0])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Group Output"].inputs[1])
+
+    @staticmethod
+    def _nn_rgb_blend():
+        tree = bpy.data.node_groups.new('_NN_RGB_BLEND', 'ShaderNodeTree')
+        tree.use_fake_user = True
+
+        # Group inputs
+        var = tree.interface.new_socket(name='Color 1', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 1', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 2', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2 Multiplier', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = 0.0
+        var.max_value = 1.0
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Shader Init', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        # Group outputs
+        var = tree.interface.new_socket(name='Color', in_out='OUTPUT', socket_type='NodeSocketColor')
+        var.default_value = (0.0, 0.0, 0.0, 1.0)
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Alpha', in_out='OUTPUT', socket_type='NodeSocketFloat')
+        var.default_value = 0.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = False
+
+        # Group Nodes
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math'
+        var.location = (-695.3115234375, -157.01626586914062)
+        var.inputs[0].default_value = 0.5
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.operation = 'MULTIPLY'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.007'
+        var.location = (-274.3228454589844, 129.5900115966797)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MIX'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='NodeGroupOutput')
+        var.name = 'Group Output'
+        var.location = (0.0, 0.0)
+        var.inputs[0].default_value = (0.0, 0.0, 0.0, 1.0)
+        var.inputs[1].default_value = 0.0
+        var.is_active_output = True
+
+        var = tree.nodes.new(type='NodeGroupInput')
+        var.name = 'Group Input'
+        var.location = (-999.7333984375, 20.390748977661133)
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.004'
+        var.location = (-566.4703369140625, 158.44015502929688)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.008'
+        var.location = (-354.65216064453125, -51.24089431762695)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MIX'
+        var.use_clamp = False
+
+        # Group Node links
+        tree.links.new(tree.nodes["Group Input"].outputs[3], tree.nodes["Math"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Math"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Mix.007"].inputs[1])
+        tree.links.new(tree.nodes["Mix.007"].outputs[0], tree.nodes["Group Output"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Mix.004"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Mix.004"].inputs[2])
+        tree.links.new(tree.nodes["Mix.004"].outputs[0], tree.nodes["Mix.007"].inputs[2])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix.007"].inputs[0])
+        tree.links.new(tree.nodes["Mix.008"].outputs[0], tree.nodes["Group Output"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Mix.008"].inputs[1])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix.008"].inputs[2])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix.008"].inputs[0])
+
+    @staticmethod
+    def _nn_rgb_pass_clear():
+        tree = bpy.data.node_groups.new('_NN_RGB_PASS', 'ShaderNodeTree')
+        tree.use_fake_user = True
+
+        # Group inputs
+        var = tree.interface.new_socket(name='Color 1', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 1', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 2', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2 Multiplier', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = 0.0
+        var.max_value = 1.0
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Shader Init', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        # Group outputs
+        var = tree.interface.new_socket(name='Color', in_out='OUTPUT', socket_type='NodeSocketColor')
+        var.default_value = (0.0, 0.0, 0.0, 1.0)
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Alpha', in_out='OUTPUT', socket_type='NodeSocketFloat')
+        var.default_value = 0.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = False
+
+        # Group Nodes
+        var = tree.nodes.new(type='NodeGroupOutput')
+        var.name = 'Group Output'
+        var.location = (0.0, 0.0)
+        var.inputs[0].default_value = (0.0, 0.0, 0.0, 1.0)
+        var.inputs[1].default_value = 0.0
+        var.is_active_output = True
+
+        var = tree.nodes.new(type='NodeGroupInput')
+        var.name = 'Group Input'
+        var.location = (-999.7333984375, 20.390748977661133)
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.004'
+        var.location = (-690.7468872070312, 157.2327117919922)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
+        var.use_clamp = False
+
+        # Group Node links
+        tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Mix.004"].inputs[2])
+        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Group Output"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Mix.004"].inputs[1])
+        tree.links.new(tree.nodes["Mix.004"].outputs[0], tree.nodes["Group Output"].inputs[0])
+
+    @staticmethod
+    def _nn_rgb_alpha_tex():
+        tree = bpy.data.node_groups.new('_NN_RGB_ALPHA', 'ShaderNodeTree')
+        tree.use_fake_user = True
+
+        # Group inputs
+        var = tree.interface.new_socket(name='Color 1', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 1', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 2', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2 Multiplier', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = 0.0
+        var.max_value = 1.0
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Shader Init', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        # Group outputs
+        var = tree.interface.new_socket(name='Color', in_out='OUTPUT', socket_type='NodeSocketColor')
+        var.default_value = (0.0, 0.0, 0.0, 1.0)
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Alpha', in_out='OUTPUT', socket_type='NodeSocketFloat')
+        var.default_value = 0.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = False
+
+        # Group Nodes
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math'
+        var.location = (-579.4807739257812, -51.96924591064453)
+        var.inputs[0].default_value = 0.5
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.operation = 'MULTIPLY'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='NodeGroupOutput')
+        var.name = 'Group Output'
+        var.location = (0.0, 0.0)
+        var.inputs[0].default_value = (0.0, 0.0, 0.0, 1.0)
+        var.inputs[1].default_value = 0.0
+        var.is_active_output = True
+
+        var = tree.nodes.new(type='NodeGroupInput')
+        var.name = 'Group Input'
+        var.location = (-999.7333984375, 20.390748977661133)
+
+        # Group Node links
+        tree.links.new(tree.nodes["Group Input"].outputs[3], tree.nodes["Math"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Math"].inputs[1])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Group Output"].inputs[1])
+
+
+    @staticmethod
+    def _nn_rgb_decal_2():
+        tree = bpy.data.node_groups.new('_NN_RGB_DECAL_2', 'ShaderNodeTree')
+        tree.use_fake_user = True
+
+        # Group inputs
+        var = tree.interface.new_socket(name='Color 1', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 1', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 2', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2 Multiplier', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = 0.0
+        var.max_value = 1.0
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Shader Init', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        # Group outputs
+        var = tree.interface.new_socket(name='Color', in_out='OUTPUT', socket_type='NodeSocketColor')
+        var.default_value = (0.0, 0.0, 0.0, 1.0)
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Alpha', in_out='OUTPUT', socket_type='NodeSocketFloat')
+        var.default_value = 0.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = False
+
+        # Group Nodes
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.005'
+        var.location = (-331.1751403808594, 268.79168701171875)
+        var.inputs[0].default_value = 0.5
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MIX'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math'
+        var.location = (-700.6951293945312, 251.71595764160156)
+        var.inputs[0].default_value = 0.5
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.operation = 'MULTIPLY'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='NodeGroupOutput')
+        var.name = 'Group Output'
+        var.location = (-8.775586128234863, 52.83684158325195)
+        var.inputs[0].default_value = (0.0, 0.0, 0.0, 1.0)
+        var.inputs[1].default_value = 0.0
+        var.is_active_output = True
+
+        var = tree.nodes.new(type='NodeGroupInput')
+        var.name = 'Group Input'
+        var.location = (-968.7755737304688, 52.83684158325195)
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.004'
+        var.location = (-591.9910888671875, 37.0076904296875)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.006'
+        var.location = (-313.9629211425781, 33.58995056152344)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'ADD'
+        var.use_clamp = False
+
+        # Group Node links
+        tree.links.new(tree.nodes["Group Input"].outputs[3], tree.nodes["Math"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Math"].inputs[1])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix.005"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Mix.005"].inputs[1])
+        tree.links.new(tree.nodes["Mix.005"].outputs[0], tree.nodes["Group Output"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Mix.004"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Mix.004"].inputs[2])
+        tree.links.new(tree.nodes["Mix.004"].outputs[0], tree.nodes["Mix.005"].inputs[2])
+        tree.links.new(tree.nodes["Mix.006"].outputs[0], tree.nodes["Group Output"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Mix.006"].inputs[1])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix.006"].inputs[2])
+
+    @staticmethod
+    def _nn_rgb_specular():
+        tree = bpy.data.node_groups.new('_NN_RGB_SPEC', 'ShaderNodeTree')
+        tree.use_fake_user = True
+
+        # Group inputs
+        var = tree.interface.new_socket(name='Color 1', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 1', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 2', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2 Multiplier', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = 0.0
+        var.max_value = 1.0
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Shader Init', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        # Group outputs
+        var = tree.interface.new_socket(name='Color', in_out='OUTPUT', socket_type='NodeSocketColor')
+        var.default_value = (0.0, 0.0, 0.0, 1.0)
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Alpha', in_out='OUTPUT', socket_type='NodeSocketFloat')
+        var.default_value = 0.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = False
+
+        # Group Nodes
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math'
+        var.location = (-407.4139099121094, -177.23831176757812)
+        var.inputs[0].default_value = 0.5
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.operation = 'MULTIPLY'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.008'
+        var.location = (-91.47061157226562, -27.269161224365234)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MIX'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.006'
+        var.location = (-78.30709838867188, 176.90353393554688)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'ADD'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='NodeGroupInput')
+        var.name = 'Group Input'
+        var.location = (-784.1309814453125, 76.58642578125)
+
+        var = tree.nodes.new(type='NodeGroupOutput')
+        var.name = 'Group Output'
+        var.location = (188.0198974609375, 181.97006225585938)
+        var.inputs[0].default_value = (0.0, 0.0, 0.0, 1.0)
+        var.inputs[1].default_value = 0.0
+        var.is_active_output = True
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.003'
+        var.location = (-294.0052490234375, 256.9545593261719)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.004'
+        var.location = (-528.9423828125, 289.3802795410156)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
+        var.use_clamp = False
+
+        # Group Node links
+        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Mix.008"].inputs[1])
+        tree.links.new(tree.nodes["Mix.008"].outputs[0], tree.nodes["Group Output"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[3], tree.nodes["Math"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Math"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Mix.006"].inputs[1])
+        tree.links.new(tree.nodes["Mix.003"].outputs[0], tree.nodes["Mix.006"].inputs[2])
+        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Mix.003"].inputs[2])
+        tree.links.new(tree.nodes["Mix.006"].outputs[0], tree.nodes["Group Output"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Mix.004"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Mix.004"].inputs[2])
+        tree.links.new(tree.nodes["Mix.004"].outputs[0], tree.nodes["Mix.003"].inputs[1])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix.008"].inputs[0])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix.008"].inputs[2])
+
+    @staticmethod
+    def _nn_rgb_specular2():
+        tree = bpy.data.node_groups.new('_NN_RGB_SPEC_2', 'ShaderNodeTree')
+        tree.use_fake_user = True
+
+        # Group inputs
+        var = tree.interface.new_socket(name='Color 1', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 1', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Alpha 2', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = True
+
+        var = tree.interface.new_socket(name='Color 2 Multiplier', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.default_value = 1.0
+        var.min_value = 0.0
+        var.max_value = 1.0
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Shader Init', in_out='INPUT', socket_type='NodeSocketColor')
+        var.default_value = (1.0, 1.0, 1.0, 1.0)
+        var.hide_value = True
+
+        # Group outputs
+        var = tree.interface.new_socket(name='Color', in_out='OUTPUT', socket_type='NodeSocketColor')
+        var.default_value = (0.0, 0.0, 0.0, 1.0)
+        var.hide_value = False
+
+        var = tree.interface.new_socket(name='Alpha', in_out='OUTPUT', socket_type='NodeSocketFloat')
+        var.default_value = 0.0
+        var.min_value = -3.4028234663852886e+38
+        var.max_value = 3.4028234663852886e+38
+        var.hide_value = False
+
+        # Group Nodes
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math'
+        var.location = (-448.8157043457031, -249.10488891601562)
+        var.inputs[0].default_value = 0.5
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.operation = 'MULTIPLY'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.008'
+        var.location = (-132.8723907470703, -99.1357421875)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.006'
+        var.location = (-119.70887756347656, 105.03695678710938)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'ADD'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='NodeGroupInput')
+        var.name = 'Group Input'
+        var.location = (-825.5327758789062, 4.7198486328125)
+
+        var = tree.nodes.new(type='NodeGroupOutput')
+        var.name = 'Group Output'
+        var.location = (146.6181182861328, 110.10348510742188)
+        var.inputs[0].default_value = (0.0, 0.0, 0.0, 1.0)
+        var.inputs[1].default_value = 0.0
+        var.is_active_output = True
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.003'
+        var.location = (-335.40704345703125, 185.08798217773438)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeMixRGB')
+        var.name = 'Mix.004'
+        var.location = (-570.3441772460938, 217.51370239257812)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        var.use_alpha = False
+        var.blend_type = 'MULTIPLY'
+        var.use_clamp = False
+
+        # Group Node links
+        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Mix.008"].inputs[1])
+        tree.links.new(tree.nodes["Mix.008"].outputs[0], tree.nodes["Group Output"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[3], tree.nodes["Math"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Math"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Mix.006"].inputs[1])
+        tree.links.new(tree.nodes["Mix.003"].outputs[0], tree.nodes["Mix.006"].inputs[2])
+        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Mix.003"].inputs[2])
+        tree.links.new(tree.nodes["Mix.006"].outputs[0], tree.nodes["Group Output"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Mix.004"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Mix.004"].inputs[2])
+        tree.links.new(tree.nodes["Mix.004"].outputs[0], tree.nodes["Mix.003"].inputs[1])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix.008"].inputs[2])

@@ -70,7 +70,7 @@ def main(operator, context, settings):
         uv.location = (-660, -260)
         mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
         mix_node.location = (-260, 0)
-        mix_node.blend_type = "_NN_RGB_MULTI"
+        mix_node.blend_type = "_NN_RGB_SPEC"
 
         tree.links.new(mix_node.inputs["Color 1"], spec_rgb.outputs[0])
         tree.links.new(mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
