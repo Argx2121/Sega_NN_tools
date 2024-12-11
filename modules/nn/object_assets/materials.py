@@ -325,13 +325,7 @@ class Read:
         def sonic_and_the_black_knight_g():
             t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
             mix_type = texture_flags & 255
-            if TextureFlags.byte3bit6:  # is reflection map
-                if TextureFlags.byte4bit1 and TextureFlags.byte4bit2 and \
-                        not TextureFlags.byte4bit3 and TextureFlags.byte4bit4:  # add
-                    t_type = "reflection"
-                elif TextureFlags.byte4bit1:  # multiply
-                    t_type = "reflection_multi"
-            elif texture_flags >> 8 & 255 == 2 and mix_type in {71, 2}:
+            if texture_flags >> 8 & 255 == 2 and mix_type in {71, 2}:
                 t_type = "emission"
             elif mix_type == 66:
                 t_type = "specular_ref_alpha"
@@ -456,47 +450,6 @@ class Read:
                 texture_flags = read_int(f, ">")
 
                 class TextureFlags(Flag):
-
-                    # 0x40
-                    # no idea what it does ??
-                    # 0x0C
-                    # no idea what it does
-                    # 0x01, 0x2, 0x20
-                    # uv1, uv2 or reflection, checks in that order  uv2 is guess btw but i think mostly does uvs
-                    # i think this byte is just to store uv index or lack of one (reflection)
-                    # > 0x01
-                    # this and last one probably vary between games
-                    # usually 01
-
-                    # 01 = MULTIPLY
-                    # 02 = DO NOT COMBINE, ONLY USE TEXTURE (makes unshaded) for first index tetxure
-                    # so basically mix
-                    # 04 = ADD
-                    # 08 is really weird as subtract it acts strange
-                    # its more of a blender issue than a mixing issue it is subtract blenders just weird
-                    # 08 = SUBTRACT (if texture in 1st index is diffuse or this is texture in 1st index)
-                    # 08 changes from subtract to specular if another mix type is set
-                    # 09 = specular
-                    # 40 0C 20 09 or 40 0C 20 0A reflection only at the specular
-                    # 8 and 2
-                    # gl max_shininess = 128f;
-                    # 40 = combine with colour as well
-                    # so branch 1 = 0X branch 2 = 4X
-                    # so if you have one texture and its set as 4X itll be double shaded essentially
-
-
-                    # byte 1
-
-                    # byte 2
-
-                    # byte 3
-                    byte3bit6 = texture_flags >> 13 & 1
-
-                    # byte 4
-                    byte4bit4 = texture_flags >> 3 & 1
-                    byte4bit3 = texture_flags >> 2 & 1
-                    byte4bit2 = texture_flags >> 1 & 1
-                    byte4bit1 = texture_flags >> 0 & 1
                     # ---- NEW DATA ----
                     # byte 1
                     ignore_uv_offset = texture_flags >> 30 & 1
@@ -512,8 +465,7 @@ class Read:
 
                     # byte 3
                     # vector type (reflection or uv map - multiple cannot be set)
-                    #reflection_2 = mat_data[-1] == 8 and (index == 2 or index == 1)
-                    reflection = texture_flags >> 13 & 1 #and not reflection_2
+                    reflection = texture_flags >> 13 & 1
                     uv4 = texture_flags >> 11 & 1
                     uv3 = texture_flags >> 10 & 1
                     uv2 = texture_flags >> 9 & 1
