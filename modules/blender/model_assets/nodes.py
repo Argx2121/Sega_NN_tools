@@ -33,7 +33,7 @@ class CustomNodetreeNodeBaseNNExpandLink:
     def draw_buttons(self, context, layout):
         has_link = False
         for link in self.id_data.links:
-            if link.to_socket == self.inputs["Unshaded"]:
+            if link.to_socket == self.inputs["Specular"]:
                 has_link = True
                 break
         if not has_link:
@@ -73,8 +73,6 @@ class ShaderNodeNNMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
             ('_NN_RGB_ALPHA', "Alpha Texture", ""),
             ('_NN_RGB_DECAL_2', "Decal 2", ""),
             ('_NN_RGB_SUB', "Subtract", "If you use Subtract as the first mixing type, you can only have 3 textures"),
-            ('_NN_RGB_SPEC', "Specular", ""),
-            ('_NN_RGB_SPEC_2', "Specular 2", ""),
             ('_NN_RGB_ADD', "Add", ""),
         )
         return mix_types
@@ -113,25 +111,10 @@ class ShaderNodeNNMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         self.inputs["Shader Init"].hide = True
 
 
-class ShaderNodeNNShader(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomGroup):
+class ShaderNodeNNShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_label = "NN Shader"
     bl_idname = "ShaderNodeNNShader"
     bl_width_default = 180
-
-    def update_init(self, context):
-        for node in self.id_data.nodes:
-            if node.bl_idname == "ShaderNodeNNShaderInit":
-                self.id_data.links.new(node.outputs["Unshaded"], self.inputs["Unshaded"])
-                node_inputs = [node.to_socket for node in self.id_data.links]
-                if self.inputs["Color"] not in node_inputs:
-                    self.id_data.links.new(node.outputs["Diffuse Color"], self.inputs["Color"])
-                if self.inputs["Alpha"] not in node_inputs:
-                    self.id_data.links.new(node.outputs["Diffuse Alpha"], self.inputs["Alpha"])
-                break
-
-    find_init = (
-        ('find_init', "Find Init", ""),
-    )
 
     def blend_types(self, context):
         blend_types = (
@@ -285,7 +268,6 @@ class ShaderNodeNNShader(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomGro
 
         self.inputs["Alpha Op"].default_value = int(self.alpha_op)
 
-    connect_init: EnumProperty(name="Find Init", update=update_init, items=find_init)
     blend_type: EnumProperty(name="Blend Type", update=update_blend_type, items=blend_types)
     source_fact: EnumProperty(name="Source Factor", update=update_source_fact, items=source_facts)
     dest_fact: EnumProperty(name="Destination Factor", update=update_dest_fact, items=dest_facts)
@@ -334,6 +316,64 @@ class ShaderNodeNNShaderInit(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     def init(self, context):
         self.node_tree = bpy.data.node_groups['_NN_SHADER_INIT']
+
+
+class ShaderNodeNNSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomGroup):
+    bl_label = "NN Specular"
+    bl_idname = "ShaderNodeNNSpecular"
+    bl_width_default = 180
+
+    def update_init(self, context):
+        for node in self.id_data.nodes:
+            if node.bl_idname == "ShaderNodeNNShaderInit":
+                self.id_data.links.new(node.outputs["Specular"], self.inputs["Specular"])
+                break
+
+    find_init = (
+        ('find_init', "Find Init", ""),
+    )
+
+    def blend_types(self, context):
+        # Enum items list
+        mix_types = (
+            ('_NN_RGB_SPEC', "Specular", ""),
+            ('_NN_RGB_SPEC_2', "Specular 2", ""),
+        )
+        return mix_types
+
+    def copy(self, node):
+        self.node_tree = node.node_tree
+
+    def free(self):
+        pass  # defining this so blender doesn't try to remove the group
+
+    def update_props(self, context):
+        if not self.blend_type:
+            self.blend_type = self.blend_types(context)[0][0]
+
+        self.node_tree = bpy.data.node_groups[self.blend_type]
+
+    def update_shading(self, context):
+        if self.multi_shading:
+            for node in self.id_data.nodes:
+                if node.bl_idname == "ShaderNodeNNShaderInit":
+                    self.id_data.links.new(node.outputs["Diffuse Color"], self.inputs["Shader Init"])
+                    break
+        else:
+            for link in self.id_data.links:
+                if link.to_socket == self.inputs["Shader Init"]:
+                    self.id_data.links.remove(link)
+                    break
+        self.inputs["Shader Init"].hide = True
+
+    connect_init: EnumProperty(name="Find Init", update=update_init, items=find_init)
+    blend_type: EnumProperty(name="Blend", update=update_props, items=blend_types)
+    multi_shading: BoolProperty(name="Use Shading Init", update=update_shading, default=False)
+
+    def init(self, context):
+        self.node_tree = bpy.data.node_groups['_NN_RGB_SPEC']
+        self.blend_type = self.blend_types(context)[0][0]
+        self.inputs["Shader Init"].hide = True
 
 
 class ShaderNodeNNReflection(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
@@ -405,6 +445,7 @@ classes = (
     ShaderNodeNNMixRGB,
     ShaderNodeNNShader,
     ShaderNodeNNShaderInit,
+    ShaderNodeNNSpecular,
     ShaderNodeNNReflection,
     ShaderNodeNNVector,
 )
