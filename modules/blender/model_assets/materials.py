@@ -26,7 +26,7 @@ def _make_image(tree, image, settings):
 
 
 def _make_image_vect(tree, image, settings):
-    vect = tree.nodes.new(type="ShaderNodeNNVector")
+    vect = tree.nodes.new(type="ShaderNodeGNOVector")
     node = tree.nodes.new(type="ShaderNodeTexImage")
     node.image = image
     node.interpolation = settings.interpolation
@@ -209,8 +209,8 @@ def material_gno(self):
         mat_flags = m.mat_flags
 
         bpy.context.scene.eevee.use_bloom = True
-        gno_shader = tree.nodes.new('ShaderNodeNNShader')
-        colour_init = tree.nodes.new('ShaderNodeNNShaderInit')
+        gno_shader = tree.nodes.new('ShaderNodeGNOShader')
+        colour_init = tree.nodes.new('ShaderNodeGNOShaderInit')
 
         colour_init.inputs["Material Color"].default_value = m_col.diffuse
         colour_init.inputs["Material Alpha"].default_value = m_col.diffuse[-1]
@@ -317,7 +317,7 @@ def material_gno(self):
                 mix_type = "_NN_RGB_SPEC"
                 if m_mix.specular2:
                     mix_type = "_NN_RGB_SPEC_2"
-                mix_node = tree.nodes.new('ShaderNodeNNSpecular')
+                mix_node = tree.nodes.new('ShaderNodeGNOSpecular')
                 mix_node.blend_type = mix_type
 
                 tree.links.new(mix_node.inputs["Specular"], colour_init.outputs["Specular"])
@@ -327,7 +327,7 @@ def material_gno(self):
                 tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
                 last_node = mix_node
             else:
-                mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+                mix_node = tree.nodes.new('ShaderNodeGNOMixRGB')
                 mix_type = "_NN_RGB_MULTI"
                 if m_mix.multiply:
                     mix_type = "_NN_RGB_MULTI"

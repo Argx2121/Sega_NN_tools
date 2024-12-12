@@ -10,9 +10,9 @@ class MakeGroups:
             return
         self._nn_reflection()
         # self._reflection_normal()
-        self._nn_vector()
-        self._nn_shader_init()
-        self._nn_shader()
+        self._gno_vector()
+        self._gno_shader_init()
+        self._gno_shader()
         self._nn_rgb_multi()
         self._nn_rgb_decal()
         self._nn_rgb_add()
@@ -153,8 +153,8 @@ class MakeGroups:
         tree.links.new(vector_multi2.outputs[0], group_outputs.inputs['Reflection Vector'])
 
     @staticmethod
-    def _nn_vector():
-        tree = bpy.data.node_groups.new('_NN_VECTOR', 'ShaderNodeTree')
+    def _gno_vector():
+        tree = bpy.data.node_groups.new('_GNO_VECTOR', 'ShaderNodeTree')
         tree.use_fake_user = True
 
         # Group inputs
@@ -467,8 +467,8 @@ class MakeGroups:
         tree.links.new(tree.nodes["Vector Math.001"].outputs[0], tree.nodes["Separate XYZ"].inputs[0])
 
     @staticmethod
-    def _nn_shader():
-        tree = bpy.data.node_groups.new('_NN_SHADER', 'ShaderNodeTree')
+    def _gno_shader():
+        tree = bpy.data.node_groups.new('_GNO_SHADER', 'ShaderNodeTree')
         tree.use_fake_user = True
 
         # Group inputs
@@ -611,8 +611,8 @@ class MakeGroups:
         tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Mix Shader"].inputs[0])
 
     @staticmethod
-    def _nn_shader_init():
-        tree = bpy.data.node_groups.new('_NN_SHADER_INIT', 'ShaderNodeTree')
+    def _gno_shader_init():
+        tree = bpy.data.node_groups.new('_GNO_SHADER_INIT', 'ShaderNodeTree')
         tree.use_fake_user = True
 
         # Group inputs

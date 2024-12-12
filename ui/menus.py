@@ -13,9 +13,9 @@ def main(operator, context, settings):
         for node in tree.nodes:
             tree.nodes.remove(node)
 
-    gno_shader = tree.nodes.new('ShaderNodeNNShader')
+    gno_shader = tree.nodes.new('ShaderNodeGNOShader')
     gno_shader.location = (10, 310)
-    colour_init = tree.nodes.new('ShaderNodeNNShaderInit')
+    colour_init = tree.nodes.new('ShaderNodeGNOShaderInit')
     colour_init.location = (-1970, 450)
     last_node = colour_init
 
@@ -36,11 +36,11 @@ def main(operator, context, settings):
     if settings.diffuse:
         image = tree.nodes.new(type="ShaderNodeTexImage")
         image.location = (-1640, 250)
-        vector = tree.nodes.new(type="ShaderNodeNNVector")
+        vector = tree.nodes.new(type="ShaderNodeGNOVector")
         vector.location = (-1940, 10)
         uv = tree.nodes.new(type="ShaderNodeUVMap")
         uv.location = (-2170, -120)
-        mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+        mix_node = tree.nodes.new('ShaderNodeGNOMixRGB')
         mix_node.location = (-1250, 500)
         mix_node.blend_type = "_NN_RGB_MULTI"
 
@@ -55,10 +55,10 @@ def main(operator, context, settings):
     if settings.reflection:
         image = tree.nodes.new(type="ShaderNodeTexImage")
         image.location = (-1160, 160)
-        vector = tree.nodes.new(type="ShaderNodeNNVector")
+        vector = tree.nodes.new(type="ShaderNodeGNOVector")
         vector.location = (-1440, -50)
         vector.inputs["Reflection Vector"].default_value = True
-        mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+        mix_node = tree.nodes.new('ShaderNodeGNOMixRGB')
         mix_node.location = (-770, 410)
         mix_node.blend_type = "_NN_RGB_MULTI"
 
@@ -72,11 +72,11 @@ def main(operator, context, settings):
     if settings.specular:
         image = tree.nodes.new(type="ShaderNodeTexImage")
         image.location = (-700, 70)
-        vector = tree.nodes.new(type="ShaderNodeNNVector")
+        vector = tree.nodes.new(type="ShaderNodeGNOVector")
         vector.location = (-940, -140)
         uv = tree.nodes.new(type="ShaderNodeUVMap")
         uv.location = (-1150, -260)
-        mix_node = tree.nodes.new('ShaderNodeNNSpecular')
+        mix_node = tree.nodes.new('ShaderNodeGNOSpecular')
         mix_node.location = (-320, 320)
         mix_node.blend_type = "_NN_RGB_SPEC"
 

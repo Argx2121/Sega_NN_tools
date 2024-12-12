@@ -57,9 +57,9 @@ class CustomNodetreeNodeBaseNNExpandLink:
                         layout.prop(self, prop.identifier, text=prop.name)
 
 
-class ShaderNodeNNMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
-    bl_label = "NN MixRGB"
-    bl_idname = "ShaderNodeNNMixRGB"
+class ShaderNodeGNOMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
+    bl_label = "GNO MixRGB"
+    bl_idname = "ShaderNodeGNOMixRGB"
     bl_width_default = 180
 
     def blend_types(self, context):
@@ -92,7 +92,7 @@ class ShaderNodeNNMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     def update_shading(self, context):
         if self.multi_shading:
             for node in self.id_data.nodes:
-                if node.bl_idname == "ShaderNodeNNShaderInit":
+                if node.bl_idname == "ShaderNodeGNOShaderInit":
                     self.id_data.links.new(node.outputs["Diffuse Color"], self.inputs["Shader Init"])
                     break
         else:
@@ -111,9 +111,9 @@ class ShaderNodeNNMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         self.inputs["Shader Init"].hide = True
 
 
-class ShaderNodeNNShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
-    bl_label = "NN Shader"
-    bl_idname = "ShaderNodeNNShader"
+class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
+    bl_label = "GNO Shader"
+    bl_idname = "ShaderNodeGNOShader"
     bl_width_default = 180
 
     def blend_types(self, context):
@@ -284,7 +284,7 @@ class ShaderNodeNNShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         pass
 
     def init(self, context):
-        self.node_tree = bpy.data.node_groups['_NN_SHADER']
+        self.node_tree = bpy.data.node_groups['_GNO_SHADER']
         self.blend_type = self.blend_types(context)[1][0]
         self.inputs["Blend Type"].hide = True
         self.source_fact = self.source_facts(context)[4][0]
@@ -303,9 +303,9 @@ class ShaderNodeNNShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         self.inputs["Alpha Op"].hide = True
 
 
-class ShaderNodeNNShaderInit(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
-    bl_label = "NN Shader Init"
-    bl_idname = "ShaderNodeNNShaderInit"
+class ShaderNodeGNOShaderInit(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
+    bl_label = "GNO Shader Init"
+    bl_idname = "ShaderNodeGNOShaderInit"
     bl_width_default = 180
 
     def copy(self, node):
@@ -315,17 +315,17 @@ class ShaderNodeNNShaderInit(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         pass
 
     def init(self, context):
-        self.node_tree = bpy.data.node_groups['_NN_SHADER_INIT']
+        self.node_tree = bpy.data.node_groups['_GNO_SHADER_INIT']
 
 
-class ShaderNodeNNSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomGroup):
-    bl_label = "NN Specular"
-    bl_idname = "ShaderNodeNNSpecular"
+class ShaderNodeGNOSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomGroup):
+    bl_label = "GNO Specular"
+    bl_idname = "ShaderNodeGNOSpecular"
     bl_width_default = 180
 
     def update_init(self, context):
         for node in self.id_data.nodes:
-            if node.bl_idname == "ShaderNodeNNShaderInit":
+            if node.bl_idname == "ShaderNodeGNOShaderInit":
                 self.id_data.links.new(node.outputs["Specular"], self.inputs["Specular"])
                 break
 
@@ -356,7 +356,7 @@ class ShaderNodeNNSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomG
     def update_shading(self, context):
         if self.multi_shading:
             for node in self.id_data.nodes:
-                if node.bl_idname == "ShaderNodeNNShaderInit":
+                if node.bl_idname == "ShaderNodeGNOShaderInit":
                     self.id_data.links.new(node.outputs["Diffuse Color"], self.inputs["Shader Init"])
                     break
         else:
@@ -376,9 +376,9 @@ class ShaderNodeNNSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomG
         self.inputs["Shader Init"].hide = True
 
 
-class ShaderNodeNNVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
-    bl_label = "NN Vector"
-    bl_idname = "ShaderNodeNNVector"
+class ShaderNodeGNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
+    bl_label = "GNO Vector"
+    bl_idname = "ShaderNodeGNOVector"
     bl_width_default = 180
 
     def u_types(self, context):
@@ -419,7 +419,7 @@ class ShaderNodeNNVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     v_type: EnumProperty(name="V Wrapping", update=update_v, items=v_types)
 
     def init(self, context):
-        self.node_tree = bpy.data.node_groups['_NN_VECTOR']
+        self.node_tree = bpy.data.node_groups['_GNO_VECTOR']
         self.u_type = self.u_types(context)[1][0]
         self.v_type = self.v_types(context)[1][0]
         self.inputs["U"].hide = True
@@ -427,9 +427,9 @@ class ShaderNodeNNVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
 
 classes = (
-    ShaderNodeNNMixRGB,
-    ShaderNodeNNShader,
-    ShaderNodeNNShaderInit,
-    ShaderNodeNNSpecular,
-    ShaderNodeNNVector,
+    ShaderNodeGNOMixRGB,
+    ShaderNodeGNOShader,
+    ShaderNodeGNOShaderInit,
+    ShaderNodeGNOSpecular,
+    ShaderNodeGNOVector,
 )
