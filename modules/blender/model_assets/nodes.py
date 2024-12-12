@@ -376,21 +376,6 @@ class ShaderNodeNNSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomG
         self.inputs["Shader Init"].hide = True
 
 
-class ShaderNodeNNReflection(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
-    bl_label = "NN Reflection"
-    bl_idname = "ShaderNodeNNReflection"
-    bl_width_default = 180
-
-    def copy(self, node):
-        self.node_tree = node.node_tree
-
-    def free(self):
-        pass
-
-    def init(self, context):
-        self.node_tree = bpy.data.node_groups['_NN_REFLECTION']
-
-
 class ShaderNodeNNVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_label = "NN Vector"
     bl_idname = "ShaderNodeNNVector"
@@ -446,6 +431,5 @@ classes = (
     ShaderNodeNNShader,
     ShaderNodeNNShaderInit,
     ShaderNodeNNSpecular,
-    ShaderNodeNNReflection,
     ShaderNodeNNVector,
 )
