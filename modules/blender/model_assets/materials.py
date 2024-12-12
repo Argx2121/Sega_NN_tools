@@ -204,15 +204,7 @@ def material_gno(self):
         material.blend_method = m.transparency
         material.show_transparent_back = False
         material.use_backface_culling = True
-        # show_transparent_back is usually needed off however if used on shadows 06 model it messes up the normals
-        # if black means transparent and the image has gradients, separate hsv -> image input, v output
         tree.nodes.remove(tree.nodes["Principled BSDF"])
-
-        colour = False
-        alpha = 1
-        reflection = False
-        spectacular = False
-        emission = False
 
         mat_flags = m.mat_flags
 
@@ -239,25 +231,21 @@ def material_gno(self):
             tree.links.new(colour_init.inputs["Vertex Color"], node.outputs[0])
             tree.links.new(colour_init.inputs["Vertex Alpha"], node.outputs[1])
 
-        if unlit:  # "unshaded" in m.special or
+        if unlit:
             colour_init.inputs["Unshaded"].default_value = 1
-        # if "black_alpha" in m.special:
-        #    gno_shader.inputs["Black is alpha"].default_value = 1
         if ignore_depth:
             gno_shader.inputs["Ignore Depth"].default_value = 1
         if dont_write_depth:
             gno_shader.inputs["Don't Write Depth"].default_value = 1
 
         colour_init.inputs["Ambient"].default_value = m_col.ambient
-        gno_shader.inputs["Specular"].default_value = m_col.specular
-        colour_init.inputs["Emission"].default_value = m_col.emission
-        colour_init.inputs["Emission"].hide = True
-        gno_shader.inputs["Specular Gloss"].default_value = m_col.shininess
-        gno_shader.inputs["Specular Level"].default_value = m_col.specular_value
+        colour_init.inputs["Specular"].default_value = m_col.specular
+        colour_init.inputs["Specular Gloss"].default_value = m_col.shininess
+        colour_init.inputs["Specular Level"].default_value = m_col.specular_value
+        colour_init.inputs["Use Specular"].default_value = has_spec
 
         gno_shader.inputs["Mat Flags"].default_value = mat_flags
-
-        gno_shader.blend_type = str(m.render.blend)
+        gno_shader.blend_type = str(m.render.blend)  # setting the values of these changes no calculations
         gno_shader.source_fact = str(m.render.source)
         gno_shader.dest_fact = str(m.render.destination)
         gno_shader.blend_op = str(m.render.operation)
@@ -269,19 +257,11 @@ def material_gno(self):
         gno_shader.alpha_op = str(m.render.alpha)
         gno_shader.inputs["User"].default_value = m.user
 
-        tree.links.new(gno_shader.inputs["Unshaded"], colour_init.outputs["Unshaded"])
         tree.links.new(tree.nodes["Material Output"].inputs[0], gno_shader.outputs[0])
-
-        diff_col = colour_init.outputs["Diffuse Color"]
-        diff_alpha = colour_init.outputs["Diffuse Alpha"]
-        spec_col = False
-        diff_end_connected = False
-        diff_end_image = False
-        diff_end_mix = False
+        last_node = colour_init
 
         for t_index in range(m_texture_count):
             m_tex = m.texture[t_index]
-            m_tex_type = m_tex.type
             m_tex_index = m_tex.index
             m_mix = m_tex.texture_flags
 
@@ -332,24 +312,20 @@ def material_gno(self):
                 node.uv_map = model_name_strip + "_UV4_Map"
                 tree.links.new(vector_node.inputs["UV Map"], node.outputs[0])
 
+            # onwards my mixnodes
             if m_mix.specular or m_mix.specular2:
                 mix_type = "_NN_RGB_SPEC"
                 if m_mix.specular2:
                     mix_type = "_NN_RGB_SPEC_2"
-                mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
+                mix_node = tree.nodes.new('ShaderNodeNNSpecular')
                 mix_node.blend_type = mix_type
-                spec_col = mix_node.outputs[0]
 
-                spec_rgb = tree.nodes.new('ShaderNodeRGB')
-                spec_rgb.outputs[0].default_value = m_col.specular
-                spec_alpha = tree.nodes.new(type="ShaderNodeValue")
-                spec_alpha.outputs[0].default_value = m_col.specular[-1]
-
-                mix_node.inputs["Color 1"].default_value = m_col.specular
-                tree.links.new(mix_node.inputs["Color 1"], spec_rgb.outputs[0])
-                tree.links.new(mix_node.inputs["Alpha 1"], spec_alpha.outputs[0])
+                tree.links.new(mix_node.inputs["Specular"], colour_init.outputs["Specular"])
+                tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
+                tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
                 tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
                 tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
+                last_node = mix_node
             else:
                 mix_node = tree.nodes.new('ShaderNodeNNMixRGB')
                 mix_type = "_NN_RGB_MULTI"
@@ -373,33 +349,20 @@ def material_gno(self):
                     mix_type = "_NN_RGB_ADD"
                 elif m_mix.subtract_2:
                     mix_type = "_NN_RGB_SUB"
-                if m_mix.multiply_shading:
-                    mix_node.multi_shading = True
                 mix_node.blend_type = mix_type
 
-                mix_node.inputs["Color 2 Multiplier"].default_value = m_tex.alpha
-
-                tree.links.new(mix_node.inputs["Color 1"], diff_col)
-                tree.links.new(mix_node.inputs["Alpha 1"], diff_alpha)
-
-                diff_col = mix_node.outputs["Color"]
-                diff_alpha = mix_node.outputs["Alpha"]
-
-                if diff_end_image:
-                    tree.links.new(mix_node.inputs["Color 1"], diff_end_image.outputs[0])
-                    tree.links.new(mix_node.inputs["Alpha 1"], diff_end_image.outputs[1])
-                    tree.links.new(diff_end_mix.inputs["Color 2"], mix_node.outputs[0])
-                    tree.links.new(diff_end_mix.inputs["Alpha 2"], mix_node.outputs[1])
-                    diff_end_image = False
-
+                tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
+                tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
                 tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
                 tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
+                last_node = mix_node
 
-        if not diff_end_connected:
-            tree.links.new(gno_shader.inputs["Color"], diff_col)
-            tree.links.new(gno_shader.inputs["Alpha"], diff_alpha)
-        if spec_col:
-            tree.links.new(gno_shader.inputs["Specular"], spec_col)
+            if m_mix.multiply_shading:
+                mix_node.multi_shading = True
+            mix_node.inputs["Color 2 Multiplier"].default_value = m_tex.alpha
+
+        tree.links.new(gno_shader.inputs["Color"], last_node.outputs[0])
+        tree.links.new(gno_shader.inputs["Alpha"], last_node.outputs[1])
 
 
 def material_complex(self):
