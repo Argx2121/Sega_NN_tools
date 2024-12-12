@@ -224,49 +224,33 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         if not self.blend_type:
             self.blend_type = self.blend_types(context)[1][0]
 
-        self.inputs["Blend Type"].default_value = int(self.blend_type)
-
     def update_source_fact(self, context):
         if not self.source_fact:
             self.source_fact = self.source_facts(context)[4][0]
-
-        self.inputs["Source Fact"].default_value = int(self.source_fact)
 
     def update_dest_fact(self, context):
         if not self.dest_fact:
             self.dest_fact = self.dest_facts(context)[5][0]
 
-        self.inputs["Dest Fact"].default_value = int(self.dest_fact)
-
     def update_blend_op(self, context):
         if not self.blend_op:
             self.blend_op = self.blend_ops(context)[5][0]
-
-        self.inputs["Blend Op"].default_value = int(self.blend_op)
 
     def update_z_mode(self, context):
         if not self.z_mode:
             self.z_mode = self.z_modes(context)[2][0]
 
-        self.inputs["Z Mode"].default_value = int(self.z_mode)
-
     def update_alpha_comp0(self, context):
         if not self.alpha_comp0:
             self.alpha_comp0 = self.alpha_comp0s(context)[6][0]
-
-        self.inputs["Alpha comp0"].default_value = int(self.alpha_comp0)
 
     def update_alpha_comp1(self, context):
         if not self.alpha_comp1:
             self.alpha_comp1 = self.alpha_comp1s(context)[7][0]
 
-        self.inputs["Alpha comp1"].default_value = int(self.alpha_comp1)
-
     def update_alpha_op(self, context):
         if not self.alpha_op:
             self.alpha_op = self.alpha_ops(context)[0][0]
-
-        self.inputs["Alpha Op"].default_value = int(self.alpha_op)
 
     blend_type: EnumProperty(name="Blend Type", update=update_blend_type, items=blend_types)
     source_fact: EnumProperty(name="Source Factor", update=update_source_fact, items=source_facts)
@@ -286,21 +270,13 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     def init(self, context):
         self.node_tree = bpy.data.node_groups['_GNO_SHADER']
         self.blend_type = self.blend_types(context)[1][0]
-        self.inputs["Blend Type"].hide = True
         self.source_fact = self.source_facts(context)[4][0]
-        self.inputs["Source Fact"].hide = True
         self.dest_fact = self.dest_facts(context)[5][0]
-        self.inputs["Dest Fact"].hide = True
         self.blend_op = self.blend_ops(context)[5][0]
-        self.inputs["Blend Op"].hide = True
         self.z_mode = self.z_modes(context)[2][0]
-        self.inputs["Z Mode"].hide = True
         self.alpha_comp0 = self.alpha_comp0s(context)[6][0]
-        self.inputs["Alpha comp0"].hide = True
         self.alpha_comp1 = self.alpha_comp1s(context)[7][0]
-        self.inputs["Alpha comp1"].hide = True
         self.alpha_op = self.alpha_ops(context)[0][0]
-        self.inputs["Alpha Op"].hide = True
 
 
 class ShaderNodeGNOShaderInit(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
