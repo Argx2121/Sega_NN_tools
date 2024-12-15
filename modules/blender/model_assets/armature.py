@@ -178,9 +178,9 @@ def get_bones(self):
     if self.settings.riders_default:
         used_bones = [bone_names[2]]
 
-    for obj in self.mesh_list:
-        mesh = obj.data
-        b_names = [a.name for a in obj.vertex_groups]
+    for obj_m in self.mesh_list:
+        mesh = obj_m.data
+        b_names = [a.name for a in obj_m.vertex_groups]
 
         for vert in mesh.vertices:
             for group in vert.groups[::]:
@@ -189,9 +189,14 @@ def get_bones(self):
         used_bones = list(set(used_bones))
     used_bones = [b for b in bone_names if b in used_bones]
 
+    bpy.context.active_object.select_set(False)
+    obj.hide_set(False)
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+
     pose_data = []
     bpy.ops.object.mode_set(mode="POSE")
-    for pose_b in arma.bones:
+    for pose_b in self.armature.pose.bones:
         pose_var = False
         if "LIMIT_ROTATION" in [a.type for a in pose_b.constraints]:
             pose_var = True

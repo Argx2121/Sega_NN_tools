@@ -72,6 +72,8 @@ class MeshTypes:
     complex_opaque: list
     simple_alpha: list
     complex_alpha: list
+    simple_clip: list
+    complex_clip: list
 
 
 class ModelInfo:
@@ -109,7 +111,7 @@ class ModelInfo:
     def get_empty_rig(self):
         bone, bone_depth, bone_used = console_out("Getting Bone Info...", armature.get_bones, self)
         material = console_out("Getting Material Info...", materials.get_materials, self)
-        meshes = MeshTypes([], [], [], [])
+        meshes = MeshTypes([], [], [], [], [], [])
         meshes, geometry = console_out("Generating Geometry...", mesh.get_geometry, (meshes, self.settings, self))
         return ModelData(self.name, (0, 0, 0), 0, bone, material, meshes, geometry, bone_depth, bone_used)
 
@@ -127,42 +129,34 @@ class ModelInfo:
             mat_index = mat_name_list.index(m.material_name)
             mat = material.material_list[mat_index]
             m.material_name = mat_index
-            if m.bpy_obj.data.vertex_colors:
-                mesh_v_alpha = [0, 0, 0, 0] * len(m.bpy_obj.data.vertex_colors[0].data)
-                m.bpy_obj.data.vertex_colors[0].data.foreach_get("color", mesh_v_alpha)
-                mesh_v_alpha = set(mesh_v_alpha[3::4])
-                if len(mesh_v_alpha) > 1 or 1 > list(mesh_v_alpha)[0]:
-                    m.opaque = False
-                    continue
-            for tex in mat.texture_list:
-                img_alpha = set(tex.name.image.pixels[::][3::4])
-                # sometimes bpy.data.images[mat.image].pixels[3::4] as a slice issue (warning it's not an int?)
-                if len(img_alpha) > 1 or (list(img_alpha) and 1 > list(img_alpha)[0]):
-                    # check if the texture has pixels (if texture path was valid but files were moved)
-                    m.opaque = False
-                    continue
-            if 1 > mat.alpha:
-                m.opaque = False
+            m.blend_method = mat.blend_method
 
     def build_mesh_list(self):
         simple_opaque = []
         complex_opaque = []
         simple_alpha = []
         complex_alpha = []
+        simple_clip = []  # guys.... its simple clips...
+        complex_clip = []
 
         for m in self.meshes:
-            if m.opaque:
+            if m.blend_method == "Opaque":
                 if len(m.bone_names) > 1:
                     complex_opaque.append(m)
                 else:
                     simple_opaque.append(m)
+            elif m.blend_method == "Alpha Clip":
+                if len(m.bone_names) > 1:
+                    complex_clip.append(m)
+                else:
+                    simple_clip.append(m)
             else:
                 if len(m.bone_names) > 1:
                     complex_alpha.append(m)
                 else:
                     simple_alpha.append(m)
 
-        self.meshes = MeshTypes(simple_opaque, complex_opaque, simple_alpha, complex_alpha)
+        self.meshes = MeshTypes(simple_opaque, complex_opaque, simple_alpha, complex_alpha, simple_clip, complex_clip)
 
     def model(self):
         self.generic()
@@ -184,23 +178,6 @@ class ModelInfo:
         self.build_mesh_list()
 
         meshes, geometry = console_out("Generating Geometry...", mesh.get_geometry, (self.meshes, self.settings, self))
-
-        if self.format[-1] == "G":
-            for me, geo in zip([meshes.simple_opaque, meshes.complex_opaque, meshes.simple_alpha, meshes.complex_alpha],
-                               geometry):
-                if me:  # first level is complex_opaque / simple_opaque etc.
-                    for m, g in zip(me, geo.faces):
-                        has_col = g.colours_type
-                        if has_col:
-                            self.material.material_list[m.material_name].v_col = True
-        else:
-            for me, geo in zip([meshes.simple_opaque, meshes.complex_opaque, meshes.simple_alpha, meshes.complex_alpha],
-                               geometry):
-                if me:  # first level is complex_opaque / simple_opaque etc.
-                    for m, g in zip(me, geo.faces):
-                        has_col = g.colours
-                        if has_col:
-                            self.material.material_list[m.material_name].v_col = True
 
         return ModelData(
             name, self.center, self.radius, self.bone, self.material, meshes, geometry, self.bone_depth, self.bone_used)
