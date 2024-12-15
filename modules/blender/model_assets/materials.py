@@ -189,7 +189,8 @@ def material_gno(self):
     if not texture_name:
         skip_textures = True
     elif texture_name:
-        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures, self.settings.load_incomplete)
+        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures,
+                                         self.settings.load_incomplete)
 
     for mat_index in range(material_count):
         material = bpy.data.materials.new(mat_names[mat_index])
@@ -382,7 +383,8 @@ def material_complex(self):
     if not texture_name:
         skip_textures = True
     elif texture_name:
-        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures, self.settings.load_incomplete)
+        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures,
+                                         self.settings.load_incomplete)
 
     for mat_index in range(material_count):
         material = bpy.data.materials.new(mat_names[mat_index])
@@ -492,7 +494,8 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
     if not texture_name:
         skip_textures = True
     elif texture_name:
-        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures, self.settings.load_incomplete)
+        texture_name = make_bpy_textures(file_path, texture_name, self.settings.recursive_textures,
+                                         self.settings.load_incomplete)
 
     for mat_index in range(material_count):
         material = bpy.data.materials.new(mat_names[mat_index])
