@@ -598,19 +598,60 @@ class MaterialList:
 
 
 @dataclass
-class Mat:
+class MatGNOSimple:
     name: str
-    v_col: bool  # 00 00 00 01
-    unlit: bool  # 00 00 01 00
-    boolean: bool  # 00 02 00 00
+    blend_method: str
+    v_col: bool
+    unlit: bool
+    boolean: bool
     diffuse: list
     alpha: float
-    emission: list
+    texture_list: list
+
+
+@dataclass
+class MatGNOComplex:
+    name: str
+    blend_method: str
+    override_mat: bool
+    mat_flags: int
+    diffuse: list
+    alpha: float
+    v_col: str  # storing number as str
+    backface_off: bool
+    unlit: bool
+    ignore_depth: bool
+    dont_write_depth: bool
+    has_spec: bool
     ambient: list
     specular: list
-    specular_gloss: float
-    specular_level: float
+    shininess: float
+    specular_value: float
+    blend_type: int
+    source_fact: int
+    dest_fact: int
+    blend_op: int
+    z_mode: int
+    ref0: int
+    ref1: int
+    comp0: int
+    comp1: int
+    alpha_op: int
+    user: int
     texture_list: list
+
+
+@dataclass
+class GnoTexture:
+    name: str
+    reflection: bool
+    uv_map: int
+    u_wrap: int
+    v_wrap: int
+    uv_offset: list
+    multiply_shading: bool
+    col_2_multi: float
+    mix_type: str
 
 
 def get_materials(self):
@@ -625,18 +666,11 @@ def get_materials(self):
         type: str
         name: str
 
-    @dataclass
-    class TextureComplex:
-        type: int
-        name: str
-        x: float
-        y: float
-        multiplier: float
-
     if self.settings.riders_default:
         class ImageFake:
             class image:
                 filepath = "bd_15.png"
+
         # we have to parse blenders image path data later... (bpy.path.basename(node.image.filepath))
         #  so we will fake it because the image won't actually be loaded into blender
         texture_list = ["bd_15.png"]
@@ -658,124 +692,107 @@ def get_materials(self):
         alpha = 1.0
         node_types = [node.bl_idname for node in material.node_tree.nodes]
         mat_type = True
-        if "ShaderNodeNNShader" in node_types:
-            mat_type = False
-            for node in material.node_tree.nodes[::]:
-                if node.bl_idname == "ShaderNodeNNShaderInit":
-                    start_node = node
-                    break
-            diffuse = start_node.inputs["Material Color"].default_value
-            alpha = start_node.inputs["Material Alpha"].default_value
-            emission = start_node.inputs["Emission"].default_value
-            ambient = start_node.inputs["Ambient"].default_value
-            unlit = start_node.inputs["Unshaded"].default_value
+        if "ShaderNodeGNOShader" in node_types:
+            def get_list(node_input):
+                node_to_work_on = to_socket_from_socket.get(node_input, node_input)
+                return node_to_work_on.default_value[::]
 
+            def get_value(node_input):
+                node_to_work_on = to_socket_from_socket.get(node_input, node_input)
+                return node_to_work_on.default_value
+
+            mat_type = False
             from_socket_to_socket = dict([[link.from_socket, link.to_socket] for link in material.node_tree.links])
             to_socket_from_socket = dict([[link.to_socket, link.from_socket] for link in material.node_tree.links])
-            mix_node = from_socket_to_socket[start_node.outputs[1]].node
-            # we are going to use the alpha value connection to determine the next connected node
-            #  this is because the colour output is used for adding shading to textures
-            #  and the unshaded output is just for user convenience so they dont have to assign it twice
+            for node in material.node_tree.nodes[::]:
+                if node.bl_idname == "ShaderNodeGNOShaderInit":
+                    start_node = node
+                    break
+            blend_method = material.blend_method
+            backface_off = material.use_backface_culling
 
-            # textures aren't required, so we will check if it connects to the based node first
-            if mix_node.bl_idname == "ShaderNodeNNShader":
-                end_node = mix_node
-                specular = end_node.inputs["Specular"].default_value
-                specular_gloss = end_node.inputs["Specular Gloss"].default_value
-                specular_level = end_node.inputs["Specular Level"].default_value
-                # you can't have a specular texture without a diffuse texture with NN, so we don't need to check
-                # todo boolean, unlit, v col, etc
-                material_list.append(Mat(
-                    name, False, False, False,
-                    diffuse, alpha, emission, ambient, specular, specular_gloss, specular_level, m_texture_list))
-                continue
-            # parse texture nodes
-            while True:
-                mix_col = False
-                mix_alpha = False
-                mix_value = mix_node.inputs[4].default_value
-                mix_shading = mix_node.multi_shading
-                mix_blend = mix_node.blend_type
+            diffuse = get_list(start_node.inputs["Material Color"])
+            alpha = get_value(start_node.inputs["Material Alpha"])
+            unlit = get_value(start_node.inputs["Unshaded"])
+            has_spec = get_value(start_node.inputs["Use Specular"])
+            ambient = get_list(start_node.inputs["Ambient"])
+            specular = get_list(start_node.inputs["Specular"])
+            shininess = get_value(start_node.inputs["Specular Gloss"])
+            specular_value = get_value(start_node.inputs["Specular Level"])
+            v_col_node = to_socket_from_socket.get(start_node.inputs["Vertex Color"], False)
+            if v_col_node and v_col_node.node.layer_name != "":
+                v_col = v_col.node.layer_name
+                for child in self.mesh_list:
+                    if child.active_material.name == name:
+                        v_col_names = [col_set.name for col_set in child.data.color_attributes]
+                        if v_col in v_col_names:
+                            v_col = v_col_names.index(v_col)
+                        elif len(v_col_names) > 0:
+                            v_col = 0
+            else:
+                v_col = -1
 
-                # the first two links will always be the same :)
-                mix_col = to_socket_from_socket[mix_node.inputs[2]].node
-                mix_alpha = to_socket_from_socket[mix_node.inputs[3]].node
-                if mix_col != mix_alpha:
-                    if mix_col.bl_idname == "ShaderNodeNNMixRGB":
-                        pass
-                    if mix_alpha.bl_idname == "ShaderNodeNNMixRGB":
-                        pass
-                else:
-                    if mix_col.bl_idname == "ShaderNodeNNMixRGB":
-                        pass
-                    elif mix_col.bl_idname == "ShaderNodeTexImage":
-                        image_trans_x = mix_col.texture_mapping.translation[0]
-                        image_trans_y = mix_col.texture_mapping.translation[1]
-                        image_vector = ""
-                        node_check = to_socket_from_socket[mix_col.inputs[0]].node
-                        if node_check.bl_idname == "ShaderNodeUVMap":
-                            image_vector = node_check.uv_map
-                        elif node_check.bl_idname == "ShaderNodeNNReflection":
-                            image_vector = "REF"
-                        image_flags = 786432  # unknown
+            mix_node = from_socket_to_socket.get(start_node.outputs[0]).node
 
-                        if image_trans_x == image_trans_y == 0:
-                            image_flags |= 1073741824
+            while mix_node.bl_idname != "ShaderNodeGNOShader":
+                # its time to get images
+                multiply_shading = mix_node.multi_shading
+                mix_type = mix_node.blend_type
+                col_2_multi = get_value(mix_node.inputs["Color 2 Multiplier"])
 
-                        if not image_vector:
-                            image_flags |= 256
-                        elif image_vector == "REF":
-                            image_flags |= 8192
-                        else:
-                            for child in self.mesh_list:
-                                if child.active_material.name == name:
-                                    uv_names = [uv.name for uv in child.data.uv_layers]
-                                    print(uv_names, image_vector, name)
-                                    if image_vector not in uv_names:
-                                        image_flags |= 256
-                                    else:
-                                        image_vector = uv_names.index(image_vector)
-                                        if image_vector > 8:
-                                            image_flags |= 256
-                                        else:
-                                            image_flags |= 256 * 2 ** image_vector
+                image_node = to_socket_from_socket.get(mix_node.inputs[2]).node
+                texture_list.append(image_node.image.filepath)
 
-                        if mix_shading:
-                            image_flags |= 64
+                vector_node = to_socket_from_socket.get(image_node.inputs[0]).node
+                u_wrap = int(vector_node.u_type)
+                v_wrap = int(vector_node.v_type)
+                reflection = vector_node.inputs["Reflection Vector"].default_value
+                uv_offset = get_list(vector_node.inputs["UV Offset"])
 
-                        if mix_blend == "_NN_RGB_MULTI":
-                            image_flags |= 1
-                        elif mix_blend == "_NN_RGB_DECAL":
-                            image_flags |= 2
-                        elif mix_blend == "_NN_RGB_ADD":
-                            image_flags |= 4
-                        elif mix_blend == "_NN_RGB_SUB":
-                            image_flags |= 8
+                uv_map = -1
 
-                        m_texture_list.append(
-                            TextureComplex(image_flags, mix_col, image_trans_x, image_trans_y, mix_value))
+                if not reflection:
+                    for child in self.mesh_list:
+                        if child.active_material.name == name:
+                            uv_node = to_socket_from_socket.get(vector_node.inputs[1]).node
+                            uv_names = [uv.name for uv in child.data.uv_layers]
+                            if uv_node.uv_map in uv_names:
+                                uv_map = uv_names.index(uv_node.uv_map)
+                            elif len(uv_names) > 0:
+                                uv_map = 0
 
-                        if mix_col.image.filepath not in texture_list:
-                            texture_list.append(mix_col.image.filepath)
+                m_texture_list.append(GnoTexture(image_node, reflection, uv_map, u_wrap,
+                                                 v_wrap, uv_offset, multiply_shading, col_2_multi, mix_type))
 
-                        for link in material.node_tree.links:
-                            if link.from_socket == mix_node.outputs[0]:
-                                mix_node = link.to_node
-                                break
-                        if mix_node.bl_idname == "ShaderNodeNNShader":
-                            break
+                mix_node = from_socket_to_socket.get(mix_node.outputs[0], False).node
 
-            end_node = mix_node
-            specular = end_node.inputs["Specular"].default_value
-            specular_gloss = end_node.inputs["Specular Gloss"].default_value
-            specular_level = end_node.inputs["Specular Level"].default_value
-            # todo boolean, unlit, v col, etc
-            material_list.append(Mat(
-                name, False, False, False,
-                diffuse, alpha, emission, ambient, specular, specular_gloss, specular_level,
-                m_texture_list))
+            gno_shader = mix_node
+
+            ignore_depth = get_value(gno_shader.inputs["Ignore Depth"])
+            dont_write_depth = get_value(gno_shader.inputs["Don't Write Depth"])
+            mat_flags = get_value(gno_shader.inputs["Mat Flags"])
+            override_mat = get_value(gno_shader.inputs["Override Flags"])
+            blend_type = int(gno_shader.blend_type)
+            source_fact = int(gno_shader.source_fact)
+            dest_fact = int(gno_shader.dest_fact)
+            blend_op = int(gno_shader.blend_op)
+            z_mode = int(gno_shader.z_mode)
+            ref0 = get_value(gno_shader.inputs["Alpha ref0"])
+            ref1 = get_value(gno_shader.inputs["Alpha ref1"])
+            comp0 = int(gno_shader.alpha_comp0)
+            comp1 = int(gno_shader.alpha_comp1)
+            alpha_op = int(gno_shader.alpha_op)
+            user = int(get_value(gno_shader.inputs["User"]))
+
+            texture_list = list(set(texture_list))
+            material_list.append(
+                MatGNOComplex(name, blend_method, override_mat, mat_flags, diffuse, alpha, v_col, backface_off, unlit,
+                              ignore_depth, dont_write_depth, has_spec, ambient, specular, shininess, specular_value,
+                              blend_type, source_fact, dest_fact, blend_op, z_mode, ref0, ref1, comp0, comp1, alpha_op,
+                              user, m_texture_list))
         else:
             for mat in material.node_tree.nodes[::]:
+                blend_method = mat.blend_method
                 # check if we read this type, if this image node actually has a texture
                 if mat.name == "DiffuseTexture" and mat.image:
                     m_texture_list.append(Texture("DiffuseTexture", mat))
@@ -793,5 +810,5 @@ def get_materials(self):
                     rgb = mat.outputs[0].default_value[::]
                 elif mat.name == "Value":
                     alpha = mat.outputs[0].default_value
-            material_list.append(Mat(name, False, False, False, rgb, alpha, [], [], [], 0, 0, m_texture_list))
+                material_list.append(MatGNOSimple(name, blend_method, False, False, False, rgb, alpha, m_texture_list))
     return MaterialList(mat_type, material_list, texture_list)

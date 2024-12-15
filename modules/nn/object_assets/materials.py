@@ -1058,8 +1058,7 @@ class Write:
     def _gno_texture_simple(self):
         f = self.f
         textures = self.material_data.texture_list
-        # todo possibly blender import all material data so i have to do less manually
-        # todo get material data correctly somehow lol?
+        # evil cringe society
 
         for mat in self.material_data.material_list:
             self.mat_offsets.append(f.tell())
@@ -1118,30 +1117,85 @@ class Write:
 
         for mat in self.material_data.material_list:
             self.mat_offsets.append(f.tell())
-            mat_flags = 0
-            if mat.boolean:
-                mat_flags = mat_flags | 131072
-            if mat.unlit:
-                mat_flags = mat_flags | 256
-            if mat.v_col:
-                mat_flags = mat_flags | 1
-
-            if not mat.unlit and not mat.boolean:
-                mat_flags = mat_flags | 16777216
+            if mat.override_mat:
+                mat_flags = mat.mat_flags
+            else:
+                mat_flags = 0
+                if mat.v_col == 0:
+                    mat_flags |= 1
+                if mat.backface_off:
+                    mat_flags |= 32
+                if mat.unlit:
+                    mat_flags |= 256
+                if mat.ignore_depth:
+                    mat_flags |= 65536
+                if mat.dont_write_depth:
+                    mat_flags |= 131072
+                if mat.blend_method == "Alpha Clip":  # cutout
+                    mat_flags |= 262144
+                if mat.has_spec:
+                    mat_flags |= 16777216
 
             write_integer(f, ">", mat_flags)
             write_float(f, ">", *mat.diffuse[0:3], mat.alpha)
             write_float(f, ">", *mat.ambient[0:3])
-            write_float(f, ">", *mat.specular[0:3], mat.specular_level, mat.specular_gloss)
+            write_float(f, ">", *mat.specular[0:3], mat.specular_value, mat.shininess)
 
-            write_integer(f, ">", 1, 4, 5, 5, 2, 0, 6, 7, 0, 0)
+            write_integer(f, ">", mat.blend_type, mat.source_fact, mat.dest_fact, mat.blend_op, mat.z_mode)
+            write_byte(f, ">", mat.ref0, mat.ref1, 0, 0)
+            write_integer(f, ">", mat.comp0, mat.comp1, mat.alpha_op)
+            f.write(pack(">i", mat.user))
+
+            image_count = 0  # subtract moment
 
             for image in mat.texture_list:
-                write_integer(f, ">", image.type)
-                # write index
+                image_flags = 0
+                if image.uv_offset[0] == image.uv_offset[1] == 0:
+                    image_flags |= 1073741824
+
+                if image.u_wrap == 0:
+                    image_flags |= 65536
+                elif image.u_wrap == 2:
+                    image_flags |= 1048576
+                else:  # elif image.u_wrap == 1:
+                    image_flags |= 262144
+                if image.v_wrap == 0:
+                    image_flags |= 131072
+                elif image.v_wrap == 2:
+                    image_flags |= 2097152
+                else:  # elif image.v_wrap == 1:
+                    image_flags |= 524288
+
+                if image.reflection:
+                    image_flags |= 8192
+                elif image.uv_map == 0:
+                    image_flags |= 256
+                elif image.uv_map == 1:
+                    image_flags |= 512
+                elif image.uv_map == 2:
+                    image_flags |= 1024
+                elif image.uv_map == 3:
+                    image_flags |= 2048
+
+                mix_types = {
+                    '_NN_RGB_MULTI': 1, "_NN_RGB_DECAL": 2, '_NN_RGB_REPLACE': 3, "_NN_RGB_BLEND": 4,
+                    '_NN_RGB_PASS': 5, "_NN_RGB_ALPHA": 6, '_NN_RGB_DECAL_2': 7,
+                    '_NN_RGB_ADD': 11, "_NN_RGB_SPEC": 9, '_NN_RGB_SPEC_2': 10,
+                }
+
+                if image.mix_type != "_NN_RGB_SUB":
+                    image_flags |= mix_types[image.mix_type]
+                else:
+                    if image_count == 0:
+                        image_flags |= 8
+                    else:
+                        image_flags |= 12
+
+                write_integer(f, ">", image_flags)
                 write_integer(f, ">", textures.index(image.name.image.filepath))
-                write_float(f, ">", image.x, image.y)
-                write_float(f, ">", image.multiplier)
+                write_float(f, ">", *image.uv_offset[:2])
+                write_float(f, ">", image.col_2_multi)
+                image_count += 1
 
     def _xno_texture(self):
         f = self.f
