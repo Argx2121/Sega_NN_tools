@@ -317,7 +317,7 @@ class Read:
     def _gno_texture(self):
         def super_monkey_ball_g():
             t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
-            if TextureFlags.byte4bit1:
+            if TextureFlags.multiply:
                 t_type = "diffuse"
 
             return t_type, t_interp, t_proj, t_ext, t_space
@@ -342,32 +342,20 @@ class Read:
 
         def sonic_and_the_secret_rings_g():
             t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
-            if TextureFlags.byte4bit4:
-                t_type = "none"  # "spectacular"
-            elif TextureFlags.byte4bit2:
-                t_type = "wx_alpha"
-            elif TextureFlags.byte3bit6:
-                t_type = "reflection"
-            elif TextureFlags.byte4bit1:
+            if TextureFlags.multiply:
                 t_type = "diffuse"
-
-            if not TextureFlags.byte4bit1:
-                t_type = "none"
-
             return t_type, t_interp, t_proj, t_ext, t_space
 
         def sonic_riders_zero_gravity_g():
             t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
-            if TextureFlags.byte4bit2:
-                t_type = "reflection"
-            elif TextureFlags.byte4bit1:
+            if TextureFlags.multiply:
                 t_type = "diffuse"
 
             return t_type, t_interp, t_proj, t_ext, t_space
 
         def bleach_shattered_blade_g():
             t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
-            if TextureFlags.byte4bit1:
+            if TextureFlags.multiply:
                 t_type = "diffuse"
 
             return t_type, t_interp, t_proj, t_ext, t_space
@@ -381,29 +369,14 @@ class Read:
 
         def sonic_riders_g():
             t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
-
-            if texture_flags == 1074528514:
-                t_type = "emission"
-            elif texture_flags == 1074528516:
-                t_type = "emission"
-            elif TextureFlags.byte4bit1:
+            if TextureFlags.multiply:
                 t_type = "diffuse"
-            elif TextureFlags.byte4bit3:
-                t_type = "reflection"
-            elif TextureFlags.byte4bit4:
-                t_type = "none"
             return t_type, t_interp, t_proj, t_ext, t_space
 
         def sonic_unleashed_g():
             t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
-            if TextureFlags.byte4bit1 and not TextureFlags.byte4bit4 and not TextureFlags.byte4bit2:
+            if TextureFlags.multiply:
                 t_type = "diffuse"
-            elif TextureFlags.byte4bit2 and TextureFlags.byte4bit4:
-                t_type = "none"  # "reflection"
-            elif TextureFlags.byte4bit2:
-                t_type = "none"
-            elif TextureFlags.byte4bit4:
-                t_type = "none"
             return t_type, t_interp, t_proj, t_ext, t_space
 
         format_dict = {
