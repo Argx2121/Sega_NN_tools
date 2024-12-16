@@ -178,9 +178,9 @@ def get_bones(self):
     if self.settings.riders_default:
         used_bones = [bone_names[2]]
 
-    for obj in self.mesh_list:
-        mesh = obj.data
-        b_names = [a.name for a in obj.vertex_groups]
+    for obj_m in self.mesh_list:
+        mesh = obj_m.data
+        b_names = [a.name for a in obj_m.vertex_groups]
 
         for vert in mesh.vertices:
             for group in vert.groups[::]:
@@ -190,6 +190,7 @@ def get_bones(self):
     used_bones = [b for b in bone_names if b in used_bones]
 
     pose_data = []
+    bpy.context.active_object.select_set(False)
     self.armature.hide_set(False)
     self.armature.select_set(True)
     bpy.context.view_layer.objects.active = self.armature
@@ -322,8 +323,9 @@ def get_bones(self):
             if a != 1.0:
                 flags[1] = flags[1] | 64
         if pose_b:
-            flags[1] = flags[1] | pose_b
-        flags[2] = 1
+            flags[1] = flags[1] | pose_b  # was flags[1] = 28
+        if self.format in {"SonicRiders_G", "SonicRiders_X"}:
+            flags[2] = 1
         # guesses
         flags[3] = flags[3] | 4
         flags[3] = flags[3] | 128

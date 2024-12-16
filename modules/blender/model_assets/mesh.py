@@ -22,7 +22,7 @@ def make_mesh(self):
 
     def build_mesh():
         def make_uvs():
-            uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV_Map")
+            uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV1_Map")
             for vert_index in range(v_loop_count):
                 v_index = vert_index * 3
                 face_index = face_list[vert_index]
@@ -157,7 +157,7 @@ def make_mesh(self):
 
         if is_gno:
             if uv_short_hand:
-                uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV_Map")
+                uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV1_Map")
                 make_uvs_faces(uv_tex, uv_short_hand, face_uvs)
             if uv2_short_hand:
                 uv_tex = mesh.uv_layers.new(name=model_name_strip + "_UV2_Map")
@@ -287,7 +287,7 @@ class MeshData:
     center: tuple
     bone_names: list
     material_name: str
-    opaque: bool
+    blend_method: ""
     vert: int
     face: int
 
@@ -323,7 +323,7 @@ def get_meshes(obj_mesh_list):
         radius_list = [math.sqrt(((a[0] - center_x) ** 2 + (a[1] - center_y) ** 2 + (a[2] - center_z) ** 2)) for a in pos]
         radius = max(radius_list)
 
-        mesh_list.append(MeshData(child, radius, center, bone_names, material_name, True, 0, 0))
+        mesh_list.append(MeshData(child, radius, center, bone_names, material_name, "", 0, 0))
 
     return mesh_list
 
@@ -1124,19 +1124,24 @@ def get_geometry(data):
             mesh_gen.simple_faces(meshes.simple_opaque)
         else:
             mesh_gen.geometry_list.append([])
-
         if meshes.complex_opaque:
             mesh_gen.complex_faces(meshes.complex_opaque)
         else:
             mesh_gen.geometry_list.append([])
-
         if meshes.simple_alpha:
             mesh_gen.simple_faces(meshes.simple_alpha)
         else:
             mesh_gen.geometry_list.append([])
-
         if meshes.complex_alpha:
             mesh_gen.complex_faces(meshes.complex_alpha)
+        else:
+            mesh_gen.geometry_list.append([])
+        if meshes.simple_clip:
+            mesh_gen.simple_faces(meshes.simple_clip)
+        else:
+            mesh_gen.geometry_list.append([])
+        if meshes.complex_clip:
+            mesh_gen.complex_faces(meshes.complex_clip)
         else:
             mesh_gen.geometry_list.append([])
     else:
@@ -1146,19 +1151,24 @@ def get_geometry(data):
             mesh_gen.meshes(meshes.simple_opaque)
         else:
             mesh_gen.geometry_list.append([])
-
         if meshes.complex_opaque:
             mesh_gen.meshes(meshes.complex_opaque)
         else:
             mesh_gen.geometry_list.append([])
-
         if meshes.simple_alpha:
             mesh_gen.meshes(meshes.simple_alpha)
         else:
             mesh_gen.geometry_list.append([])
-
         if meshes.complex_alpha:
             mesh_gen.meshes(meshes.complex_alpha)
+        else:
+            mesh_gen.geometry_list.append([])
+        if meshes.simple_clip:
+            mesh_gen.meshes(meshes.simple_clip)
+        else:
+            mesh_gen.geometry_list.append([])
+        if meshes.complex_clip:
+            mesh_gen.meshes(meshes.complex_clip)
         else:
             mesh_gen.geometry_list.append([])
 

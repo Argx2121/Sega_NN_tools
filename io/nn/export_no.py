@@ -44,7 +44,7 @@ class ExportSegaNO(bpy.types.Operator, ExportHelper):
     G: EnumProperty(
         name="Game",
         description="Game the asset is from (to get the correct game variant)",
-        items=gn_list[-1::],
+        items=gn_list,
     )
     I: EnumProperty(
         name="Game",
