@@ -371,6 +371,10 @@ class Write:
             mesh_sets += 1
         if model_data.meshes.complex_alpha:
             mesh_sets += 1
+        if model_data.meshes.simple_clip:
+            mesh_sets += 1
+        if model_data.meshes.complex_clip:
+            mesh_sets += 1
 
         write_float(f, "<", model_data.center[0], model_data.center[1], model_data.center[2], model_data.radius)
         write_integer(f, "<", len(model_data.materials.material_list), offsets[1])

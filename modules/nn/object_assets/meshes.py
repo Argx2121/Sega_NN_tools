@@ -381,6 +381,27 @@ class Write:
                 write_integer(f, "<", self.bone_count - 1, 4294967295, mesh.material_name, mesh.vert, mesh.face, i)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
+        if meshes.simple_clip:
+            start = f.tell()
+            mat_list = []
+            for i, mesh in enumerate(meshes.simple_clip):
+                write_float(f, "<", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
+                bone = bone_used.index(mesh.bone_names[0])
+                bone2 = bone_names.index(mesh.bone_names[0])
+                write_integer(f, "<", bone2, bone, mesh.material_name, mesh.vert, mesh.face, i)
+                if mesh.material_name not in mat_list:
+                    mat_list.append(mesh.material_name)
+            end = f.tell()
+            length = self._get_textures_le(mat_list)
+            tex_simple_alpha = TextureData(start, end, length)
+        if meshes.complex_clip:
+            start = f.tell()
+            mat_list = []
+            for i, mesh in enumerate(meshes.complex_clip):
+                write_float(f, "<", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
+                write_integer(f, "<", self.bone_count - 1, 4294967295, mesh.material_name, mesh.vert, mesh.face, i)
+                if mesh.material_name not in mat_list:
+                    mat_list.append(mesh.material_name)
             end = f.tell()
             length = self._get_textures_le(mat_list)
             tex_complex_alpha = TextureData(start, end, length)
@@ -415,6 +436,24 @@ class Write:
                 write_integer(f, "<", 0)
         if meshes.complex_alpha:
             write_integer(f, "<", 514, len(meshes.complex_alpha))
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, "<", tex_complex_alpha.start, tex_complex_alpha.length)
+            if tex_complex_alpha.length:
+                self.nof0_offsets.append(f.tell())
+                write_integer(f, "<", tex_complex_alpha.end)
+            else:
+                write_integer(f, "<", 0)
+        if meshes.simple_clip:
+            write_integer(f, "<", 260, len(meshes.simple_clip))
+            self.nof0_offsets.append(f.tell())
+            write_integer(f, "<", tex_simple_alpha.start, tex_simple_alpha.length)
+            if tex_simple_alpha.length:
+                self.nof0_offsets.append(f.tell())
+                write_integer(f, "<", tex_simple_alpha.end)
+            else:
+                write_integer(f, "<", 0)
+        if meshes.complex_clip:
+            write_integer(f, "<", 516, len(meshes.complex_clip))
             self.nof0_offsets.append(f.tell())
             write_integer(f, "<", tex_complex_alpha.start, tex_complex_alpha.length)
             if tex_complex_alpha.length:
