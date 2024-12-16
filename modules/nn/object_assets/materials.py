@@ -68,14 +68,13 @@ class Read:
 
     @dataclass
     class Material:
-        __slots__ = ["texture_count", "colour", "texture", "transparency", "mat_flags", "mat_data", "special"]
+        __slots__ = ["texture_count", "colour", "texture", "transparency", "mat_flags", "mat_data"]
         texture_count: int
         colour: Any
         texture: Any
         transparency: str
         mat_flags: int
         mat_data: list
-        special: tuple  # gave up
 
     @dataclass
     class GnoMaterial:
@@ -424,9 +423,9 @@ class Read:
             mat_data = self.GnoRender(
                 *unpack(">5i", f.read(20)), *unpack(">4B", f.read(4))[:2], *unpack(">3i", f.read(12)))
 
-            mat_special = unpack(">i", f.read(4))[0]
+            user = unpack(">i", f.read(4))[0]
 
-            self.mat_set_list.append((mat_type, mat_data, mat_special))
+            self.mat_set_list.append((mat_type, mat_data, user))
 
             for index in range(count):
                 texture_flags = read_int(f, ">")
