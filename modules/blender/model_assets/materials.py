@@ -501,6 +501,8 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
     for mat_index in range(material_count):
         material = bpy.data.materials.new(mat_names[mat_index])
         material_list_blender.append(material)
+        material.show_transparent_back = False
+        material.use_backface_culling = True
 
         m = material_list[mat_index]
         m_texture_count = m.texture_count
