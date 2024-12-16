@@ -431,45 +431,45 @@ def material_complex(self):
             else:
                 image_node = _make_image(tree, texture_name[m_tex_index], m_tex)
 
-        if m_tex_type == "diffuse":
-            colour, alpha = _diffuse_rgba(tree, image_node, m_col, skip_textures)
-            vertex_colours = _vertex_colours(tree, model_name_strip)
-            colour = _mix_rgb(tree, colour, vertex_colours)
-        elif m_tex_type == "normal":
-            displacement = _normal(tree, image_node, m_tex, skip_textures)
-            tree.links.new(n_end.inputs["Normal"], displacement)
-        elif m_tex_type == "emission":
-            image_node.name = "EmissionTexture"
-            emission = image_node.outputs[0]
-            tree.links.new(n_end.inputs["Emissive Color"], image_node.outputs["Color"])
-        elif m_tex_type == "reflection":
-            reflection = _reflection(tree, image_node)
-        elif m_tex_type == "reflection_wx":
-            reflection = _reflection_wx(tree, image_node, model_name_strip)
-        elif m_tex_type == "bump":
-            displacement = _bump(tree, image_node)
-            tree.links.new(n_end.inputs["Normal"], displacement)
-        elif m_tex_type == "spectacular":  # guys what lmao
-            spectacular = image_node.outputs[0]
-            tree.links.new(n_end.inputs["Specular"], image_node.outputs["Color"])
-        elif m_tex_type == "wx_alpha":
-            colour = _wx_alpha(tree, colour, image_node, model_name_strip)
-        elif m_tex_type == "wx":
-            colour = _wx(tree, colour, image_node, model_name_strip)
+            if m_tex_type == "diffuse":
+                colour, alpha = _diffuse_rgba(tree, image_node, m_col, skip_textures)
+                vertex_colours = _vertex_colours(tree, model_name_strip)
+                colour = _mix_rgb(tree, colour, vertex_colours)
+            elif m_tex_type == "normal":
+                displacement = _normal(tree, image_node, m_tex)
+                tree.links.new(n_end.inputs["Normal"], displacement)
+            elif m_tex_type == "emission":
+                image_node.name = "EmissionTexture"
+                emission = image_node.outputs[0]
+                tree.links.new(n_end.inputs["Emissive Color"], image_node.outputs["Color"])
+            elif m_tex_type == "reflection":
+                reflection = _reflection(tree, image_node)
+            elif m_tex_type == "reflection_wx":
+                reflection = _reflection_wx(tree, image_node, model_name_strip)
+            elif m_tex_type == "bump":
+                displacement = _bump(tree, image_node)
+                tree.links.new(n_end.inputs["Normal"], displacement)
+            elif m_tex_type == "spectacular":  # guys what lmao
+                spectacular = image_node.outputs[0]
+                tree.links.new(n_end.inputs["Specular"], image_node.outputs["Color"])
+            elif m_tex_type == "wx_alpha":
+                colour = _wx_alpha(tree, colour, image_node, model_name_strip)
+            elif m_tex_type == "wx":
+                colour = _wx(tree, colour, image_node, model_name_strip)
 
-        if not colour:  # if a diffuse texture hasn't been found
-            colour, alpha = _rgba(tree, m_col)
-            vertex_colours = _vertex_colours(tree, model_name_strip)
-            colour = _mix_rgb(tree, colour, vertex_colours)
+            if not colour:  # if a diffuse texture hasn't been found
+                colour, alpha = _rgba(tree, m_col)
+                vertex_colours = _vertex_colours(tree, model_name_strip)
+                colour = _mix_rgb(tree, colour, vertex_colours)
 
-        if reflection:
-            colour = _mix_colour_reflection(tree, colour, reflection)
-            # for some reason shadow 06 and probably other character models
-            #  like eye reflection colour output for fac in transparency shader
-            #  there isn't a way to determine if this needs to be set up though
+            if reflection:
+                colour = _mix_colour_reflection(tree, colour, reflection)
+                # for some reason shadow 06 and probably other character models
+                #  like eye reflection colour output for fac in transparency shader
+                #  there isn't a way to determine if this needs to be set up though
 
-        tree.links.new(n_end.inputs["Base Color"], colour)
-        tree.links.new(n_end.inputs["Transparency"], alpha)
+            tree.links.new(n_end.inputs["Base Color"], colour)
+            tree.links.new(n_end.inputs["Transparency"], alpha)
 
 
 def link_uv(m_tex, model_name_strip, tree, node):
