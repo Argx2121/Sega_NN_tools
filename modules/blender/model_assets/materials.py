@@ -125,19 +125,20 @@ def _reflection_wx(tree, image, model_name_strip):
     return image.outputs["Color"]
 
 
-def _normal(tree, image, settings, skip_textures):
+def _normal(tree, image, settings):
     image.name = "NormalTexture"
-    if not skip_textures:
+    if image.image:
         image.image.colorspace_settings.name = 'Non-Color'
     node = tree.nodes.new(type="ShaderNodeNormalMap")
     tree.links.new(node.inputs["Color"], image.outputs["Color"])
-    node.space = settings.space
+    node.space = settings.space.upper()
     return node.outputs["Normal"]
 
 
 def _bump(tree, image):
     image.name = "BumpTexture"
-    image.image.colorspace_settings.name = 'Non-Color'
+    if image.image:
+        image.image.colorspace_settings.name = 'Non-Color'
     node = tree.nodes.new(type="ShaderNodeBump")
     tree.links.new(node.inputs["Height"], image.outputs["Color"])
     return node.outputs["Normal"]
@@ -533,7 +534,7 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
 
                 tree.links.new(diffuse.inputs["Base Color"], image_node.outputs["Color"])
             elif m_tex_type == "normal":
-                displacement = _normal(tree, image_node, m_tex, skip_textures)
+                displacement = _normal(tree, image_node, m_tex)
 
                 tree.links.new(diffuse.inputs["Normal"], displacement)
             elif m_tex_type == "emission":
