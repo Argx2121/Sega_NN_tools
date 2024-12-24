@@ -36,6 +36,7 @@ def main(operator, context, settings):
     if settings.diffuse:
         image = tree.nodes.new(type="ShaderNodeTexImage")
         image.location = (-1640, 250)
+        image.label = "Diffuse Texture"
         vector = tree.nodes.new(type="ShaderNodeGNOVector")
         vector.location = (-1940, 10)
         uv = tree.nodes.new(type="ShaderNodeUVMap")
@@ -55,6 +56,7 @@ def main(operator, context, settings):
     if settings.reflection:
         image = tree.nodes.new(type="ShaderNodeTexImage")
         image.location = (-1160, 160)
+        image.label = "Reflection Texture"
         vector = tree.nodes.new(type="ShaderNodeGNOVector")
         vector.location = (-1440, -50)
         vector.inputs["Reflection Vector"].default_value = True
@@ -72,6 +74,7 @@ def main(operator, context, settings):
     if settings.specular:
         image = tree.nodes.new(type="ShaderNodeTexImage")
         image.location = (-700, 70)
+        image.label = "Specular Texture"
         vector = tree.nodes.new(type="ShaderNodeGNOVector")
         vector.location = (-940, -140)
         uv = tree.nodes.new(type="ShaderNodeUVMap")
