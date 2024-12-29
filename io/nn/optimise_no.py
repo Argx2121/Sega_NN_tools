@@ -229,6 +229,24 @@ def get_armatures():
                 break
         if obj.type == "ARMATURE":
             arma_list.append(obj)
+        if obj.type == "MESH":
+            bpy.ops.object.add(type="ARMATURE")
+            arma = bpy.context.object
+            bpy.ops.object.mode_set(mode="EDIT")
+            bone = arma.data.edit_bones.new("Bone")
+            bone.tail = (0, 0, 1)
+
+            bpy.ops.object.mode_set(mode="OBJECT")
+            arma.name = arma.data.name = obj.name  # Object name, Armature name
+            obj.modifiers.new(name=arma.name, type='ARMATURE').object = obj.parent = arma
+            obj.matrix_parent_inverse = arma.matrix_world.inverted()
+            obj.matrix_world = arma.matrix_world
+            obj.vertex_groups.clear()
+
+            bone = arma.data.bones[0]
+            obj.vertex_groups.new(name=bone.name)
+            obj.vertex_groups[0].add(list(range(len(obj.data.vertices[::]))), 1, "REPLACE")
+            arma_list.append(arma)
         selected_obj = selected_obj - set(obj.children)
 
     arma_list = tuple(set(arma_list))
