@@ -1119,7 +1119,7 @@ class Write:
                     mat_flags |= 65536
                 if mat.dont_write_depth:
                     mat_flags |= 131072
-                if mat.blend_method == "Alpha Clip":  # cutout
+                if mat.blend_method == "CLIP":  # cutout
                     mat_flags |= 262144
                 if mat.has_spec:
                     mat_flags |= 16777216

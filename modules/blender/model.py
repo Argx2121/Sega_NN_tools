@@ -140,12 +140,12 @@ class ModelInfo:
         complex_clip = []
 
         for m in self.meshes:
-            if m.blend_method == "Opaque":
+            if m.blend_method == "OPAQUE":
                 if len(m.bone_names) > 1:
                     complex_opaque.append(m)
                 else:
                     simple_opaque.append(m)
-            elif m.blend_method == "Alpha Clip":
+            elif m.blend_method == "CLIP":
                 if len(m.bone_names) > 1:
                     complex_clip.append(m)
                 else:

@@ -192,6 +192,8 @@ class Write:
         tex_complex_opaque = []  # >1 bone  no transparency  1 2
         tex_simple_alpha = []    #  1 bone     transparency  2 1
         tex_complex_alpha = []   # >1 bone     transparency  2 2
+        tex_simple_clip = []    #  1 bone      clip          4 1
+        tex_complex_clip = []   # >1 bone      clip          4 2
 
         if meshes.simple_opaque:
             start = f.tell()
@@ -253,7 +255,7 @@ class Write:
                     mat_list.append(mesh.material_name)
             end = f.tell()
             length = self._get_textures_be(mat_list)
-            tex_simple_alpha = TextureData(start, end, length)
+            tex_simple_clip = TextureData(start, end, length)
         if meshes.complex_clip:
             start = f.tell()
             mat_list = []
@@ -264,7 +266,7 @@ class Write:
                     mat_list.append(mesh.material_name)
             end = f.tell()
             length = self._get_textures_be(mat_list)
-            tex_complex_alpha = TextureData(start, end, length)
+            tex_complex_clip = TextureData(start, end, length)
 
         mesh_offset = f.tell()
         if meshes.simple_opaque:
@@ -306,19 +308,19 @@ class Write:
         if meshes.simple_clip:
             write_integer(f, ">", 260, len(meshes.simple_clip))
             self.nof0_offsets.append(f.tell())
-            write_integer(f, ">", tex_simple_alpha.start, tex_simple_alpha.length)
-            if tex_simple_alpha.length:
+            write_integer(f, ">", tex_simple_clip.start, tex_simple_clip.length)
+            if tex_simple_clip.length:
                 self.nof0_offsets.append(f.tell())
-                write_integer(f, ">", tex_simple_alpha.end)
+                write_integer(f, ">", tex_simple_clip.end)
             else:
                 write_integer(f, ">", 0)
         if meshes.complex_clip:
             write_integer(f, ">", 516, len(meshes.complex_clip))
             self.nof0_offsets.append(f.tell())
-            write_integer(f, ">", tex_complex_alpha.start, tex_complex_alpha.length)
-            if tex_complex_alpha.length:
+            write_integer(f, ">", tex_complex_clip.start, tex_complex_clip.length)
+            if tex_complex_clip.length:
                 self.nof0_offsets.append(f.tell())
-                write_integer(f, ">", tex_complex_alpha.end)
+                write_integer(f, ">", tex_complex_clip.end)
             else:
                 write_integer(f, ">", 0)
         return mesh_offset, self.nof0_offsets
@@ -335,6 +337,8 @@ class Write:
         tex_complex_opaque = []  # >1 bone  no transparency  1 2
         tex_simple_alpha = []    #  1 bone     transparency  2 1
         tex_complex_alpha = []   # >1 bone     transparency  2 2
+        tex_simple_clip = []    #  1 bone      clip          4 1
+        tex_complex_clip = []   # >1 bone      clip          4 2
 
         if meshes.simple_opaque:
             start = f.tell()
@@ -393,7 +397,7 @@ class Write:
                     mat_list.append(mesh.material_name)
             end = f.tell()
             length = self._get_textures_le(mat_list)
-            tex_simple_alpha = TextureData(start, end, length)
+            tex_simple_clip = TextureData(start, end, length)
         if meshes.complex_clip:
             start = f.tell()
             mat_list = []
@@ -404,7 +408,7 @@ class Write:
                     mat_list.append(mesh.material_name)
             end = f.tell()
             length = self._get_textures_le(mat_list)
-            tex_complex_alpha = TextureData(start, end, length)
+            tex_complex_clip = TextureData(start, end, length)
 
         mesh_offset = f.tell()
         if meshes.simple_opaque:
@@ -446,19 +450,19 @@ class Write:
         if meshes.simple_clip:
             write_integer(f, "<", 260, len(meshes.simple_clip))
             self.nof0_offsets.append(f.tell())
-            write_integer(f, "<", tex_simple_alpha.start, tex_simple_alpha.length)
-            if tex_simple_alpha.length:
+            write_integer(f, "<", tex_simple_clip.start, tex_simple_clip.length)
+            if tex_simple_clip.length:
                 self.nof0_offsets.append(f.tell())
-                write_integer(f, "<", tex_simple_alpha.end)
+                write_integer(f, "<", tex_simple_clip.end)
             else:
                 write_integer(f, "<", 0)
         if meshes.complex_clip:
             write_integer(f, "<", 516, len(meshes.complex_clip))
             self.nof0_offsets.append(f.tell())
-            write_integer(f, "<", tex_complex_alpha.start, tex_complex_alpha.length)
-            if tex_complex_alpha.length:
+            write_integer(f, "<", tex_complex_clip.start, tex_complex_clip.length)
+            if tex_complex_clip.length:
                 self.nof0_offsets.append(f.tell())
-                write_integer(f, "<", tex_complex_alpha.end)
+                write_integer(f, "<", tex_complex_clip.end)
             else:
                 write_integer(f, "<", 0)
         return mesh_offset, self.nof0_offsets
