@@ -1111,7 +1111,7 @@ class Write:
                 mat_flags = 0
                 if mat.v_col == 0:
                     mat_flags |= 1
-                if mat.backface_off:
+                if not mat.backface_off:
                     mat_flags |= 32
                 if mat.unlit:
                     mat_flags |= 256
