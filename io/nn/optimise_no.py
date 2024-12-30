@@ -8,6 +8,7 @@ from ...modules.blender.model import ModelInfo
 from ...modules.nn.nn import ReadNn
 from ...modules.util import *
 import bmesh
+import mathutils
 import bpy
 
 
@@ -299,6 +300,31 @@ def ensure_weights(obj):
     obj.vertex_groups[0].add(list(v_ind), 1, "REPLACE")
 
 
+def normals_store(obj):
+    # https://github.com/pixelbutterfly/stash_vertex_normals
+    normals = obj.data.attributes.new(name="normals", type='BYTE_COLOR', domain='CORNER')
+    for poly in obj.data.polygons:
+        for loop_index in poly.loop_indices:
+            normal = obj.data.loops[loop_index].normal.copy()
+            normal.normalize()
+            color = (normal * 0.5) + mathutils.Vector((0.5,) * 3)
+            color.resize_4d()
+            normals.data[loop_index].color = color
+
+
+def normals_return(obj):
+    normals = []
+    for poly in obj.data.polygons:
+        for loop_index in poly.loop_indices:
+            color = obj.data.attributes["normals"].data[loop_index].color
+            vector = mathutils.Vector([color[0], color[1], color[2]])
+            vector = (vector * 2) - mathutils.Vector((1,) * 3)
+            vector.normalize()
+            normals.append(vector)
+    obj.data.normals_split_custom_set(normals)
+    obj.data.attributes.remove(obj.data.attributes["normals"])
+
+
 def triangulate(mesh):
     bm = bmesh.new()
     bm.from_mesh(mesh)
@@ -395,12 +421,8 @@ def model_simple_split(context, old_obj):
         return True
 
     def main_funct():
+        normals_store(old_obj)
         bpy.ops.object.duplicate(linked=0, mode='TRANSLATION')
-        bpy.ops.object.modifier_add(type='DATA_TRANSFER')
-        bpy.context.object.modifiers["DataTransfer"].object = old_obj
-        bpy.context.object.modifiers["DataTransfer"].use_loop_data = True
-        bpy.context.object.modifiers["DataTransfer"].data_types_loops = {'CUSTOM_NORMAL'}
-        bpy.context.object.modifiers["DataTransfer"].loop_mapping = 'NEAREST_POLYNOR'
         new_obj = bpy.context.active_object
         new_mesh = new_obj.data
 
@@ -442,7 +464,7 @@ def model_simple_split(context, old_obj):
         for obj in mesh_after:
             obj.select_set(True)
             bpy.context.view_layer.objects.active = obj
-            bpy.ops.object.modifier_apply(modifier="DataTransfer")
+            normals_return(obj)
             bpy.context.view_layer.objects.active = None
             obj.select_set(False)
             remove_extra_bones(obj)
@@ -486,12 +508,8 @@ def model_complex_split_gno(context, old_obj):
         return True
 
     def main_funct():
+        normals_store(old_obj)
         bpy.ops.object.duplicate(linked=0, mode='TRANSLATION')
-        bpy.ops.object.modifier_add(type='DATA_TRANSFER')
-        bpy.context.object.modifiers["DataTransfer"].object = old_obj
-        bpy.context.object.modifiers["DataTransfer"].use_loop_data = True
-        bpy.context.object.modifiers["DataTransfer"].data_types_loops = {'CUSTOM_NORMAL'}
-        bpy.context.object.modifiers["DataTransfer"].loop_mapping = 'NEAREST_POLYNOR'
         new_obj = bpy.context.active_object
         new_mesh = new_obj.data
 
@@ -527,7 +545,7 @@ def model_complex_split_gno(context, old_obj):
         for obj in mesh_after:
             obj.select_set(True)
             bpy.context.view_layer.objects.active = obj
-            bpy.ops.object.modifier_apply(modifier="DataTransfer")
+            normals_return(obj)
             bpy.context.view_layer.objects.active = None
             obj.select_set(False)
             remove_extra_bones(obj)
@@ -582,13 +600,8 @@ def model_complex_split(context, old_obj):
 
     old_obj.select_set(True)
     bpy.context.view_layer.objects.active = old_obj
-
+    normals_store(old_obj)
     bpy.ops.object.duplicate(linked=0, mode='TRANSLATION')
-    bpy.ops.object.modifier_add(type='DATA_TRANSFER')
-    bpy.context.object.modifiers["DataTransfer"].object = old_obj
-    bpy.context.object.modifiers["DataTransfer"].use_loop_data = True
-    bpy.context.object.modifiers["DataTransfer"].data_types_loops = {'CUSTOM_NORMAL'}
-    bpy.context.object.modifiers["DataTransfer"].loop_mapping = 'NEAREST_POLYNOR'
     new_obj = bpy.context.active_object
     new_mesh = new_obj.data
 
@@ -662,7 +675,7 @@ def model_complex_split(context, old_obj):
     for obj in mesh_after:
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
-        bpy.ops.object.modifier_apply(modifier="DataTransfer")
+        normals_return(obj)
         bpy.context.view_layer.objects.active = None
         obj.select_set(False)
         remove_extra_bones(obj)
@@ -679,13 +692,8 @@ def model_material_split(context, old_obj):
 
     old_obj.select_set(True)
     bpy.context.view_layer.objects.active = old_obj
-
+    normals_store(old_obj)
     bpy.ops.object.duplicate(linked=0, mode='TRANSLATION')
-    bpy.ops.object.modifier_add(type='DATA_TRANSFER')
-    bpy.context.object.modifiers["DataTransfer"].object = old_obj
-    bpy.context.object.modifiers["DataTransfer"].use_loop_data = True
-    bpy.context.object.modifiers["DataTransfer"].data_types_loops = {'CUSTOM_NORMAL'}
-    bpy.context.object.modifiers["DataTransfer"].loop_mapping = 'NEAREST_POLYNOR'
 
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.separate(type='MATERIAL')
@@ -702,7 +710,7 @@ def model_material_split(context, old_obj):
     for obj in mesh_after:
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
-        bpy.ops.object.modifier_apply(modifier="DataTransfer")
+        normals_return(obj)
         bpy.context.view_layer.objects.active = None
         obj.select_set(False)
         material = obj.material_slots[obj.data.polygons[0].material_index].material
@@ -723,12 +731,8 @@ def model_face_split(context, old_obj):
     bpy.context.view_layer.objects.active = old_obj
 
     def main_funct():
+        normals_store(old_obj)
         bpy.ops.object.duplicate(linked=0, mode='TRANSLATION')
-        bpy.ops.object.modifier_add(type='DATA_TRANSFER')
-        bpy.context.object.modifiers["DataTransfer"].object = old_obj
-        bpy.context.object.modifiers["DataTransfer"].use_loop_data = True
-        bpy.context.object.modifiers["DataTransfer"].data_types_loops = {'CUSTOM_NORMAL'}
-        bpy.context.object.modifiers["DataTransfer"].loop_mapping = 'NEAREST_POLYNOR'
         new_obj = bpy.context.active_object
         new_mesh = new_obj.data
 
@@ -752,7 +756,7 @@ def model_face_split(context, old_obj):
         for obj in mesh_after:
             obj.select_set(True)
             bpy.context.view_layer.objects.active = obj
-            bpy.ops.object.modifier_apply(modifier="DataTransfer")
+            normals_return(obj)
             bpy.context.view_layer.objects.active = None
             obj.select_set(False)
             remove_extra_bones(obj)
