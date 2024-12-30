@@ -724,7 +724,7 @@ def get_materials(self):
             specular_value = get_value(start_node.inputs["Specular Level"])
             v_col_node = to_socket_from_socket.get(start_node.inputs["Vertex Color"], False)
             if v_col_node and v_col_node.node.layer_name != "":
-                v_col = v_col.node.layer_name
+                v_col = v_col_node.node.layer_name
                 for child in self.mesh_list:
                     if child.active_material.name == name:
                         v_col_names = [col_set.name for col_set in child.data.color_attributes]
