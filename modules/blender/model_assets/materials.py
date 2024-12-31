@@ -794,8 +794,8 @@ def get_materials(self):
                               blend_type, source_fact, dest_fact, blend_op, z_mode, ref0, ref1, comp0, comp1, alpha_op,
                               user, m_texture_list))
         else:
+            blend_method = material.blend_method
             for mat in material.node_tree.nodes[::]:
-                blend_method = mat.blend_method
                 # check if we read this type, if this image node actually has a texture
                 if mat.name == "DiffuseTexture" and mat.image:
                     m_texture_list.append(Texture("DiffuseTexture", mat))
@@ -813,5 +813,5 @@ def get_materials(self):
                     rgb = mat.outputs[0].default_value[::]
                 elif mat.name == "Value":
                     alpha = mat.outputs[0].default_value
-                material_list.append(MatGNOSimple(name, blend_method, False, False, False, rgb, alpha, m_texture_list))
+            material_list.append(MatGNOSimple(name, blend_method, False, False, False, rgb, alpha, m_texture_list))
     return MaterialList(mat_type, material_list, texture_list)
