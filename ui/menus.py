@@ -8,6 +8,12 @@ from dataclasses import dataclass
 def main(operator, context, settings):
     tree = context.space_data.node_tree
     MakeGroups().execute()
+    existing_diffuse = None
+
+    if settings.existing_diffuse:
+        node = tree.nodes.get("Image Texture")  # blender wants node name w/e
+        if node and node.image:
+            existing_diffuse = node.image
 
     if settings.remove_existing:
         for node in tree.nodes:
@@ -44,6 +50,9 @@ def main(operator, context, settings):
         mix_node = tree.nodes.new('ShaderNodeGNOMixRGB')
         mix_node.location = (-1250, 500)
         mix_node.blend_type = "_NN_RGB_MULTI"
+
+        if existing_diffuse:
+            image.image = existing_diffuse
 
         tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
         tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
@@ -122,6 +131,12 @@ class NodeGnoSetup(bpy.types.Operator):
         description="Use vertex colors",
     )
 
+    existing_diffuse: BoolProperty(
+        name="Use existing diffuse",
+        description="Use the existing texture as the diffuse texture",
+        default=True,
+    )
+
     remove_existing: BoolProperty(
         name="Remove existing",
         description="Remove existing nodes from the tree",
@@ -141,6 +156,7 @@ class NodeGnoSetup(bpy.types.Operator):
         box.prop(self, "reflection")
         box.prop(self, "vertex_color")
         box.label(text="Advanced settings:", icon="KEYFRAME_HLT")
+        box.prop(self, "existing_diffuse")
         box.prop(self, "remove_existing")
 
     @classmethod
@@ -148,7 +164,8 @@ class NodeGnoSetup(bpy.types.Operator):
         return context.area.ui_type == 'ShaderNodeTree'
 
     def execute(self, context):
-        settings = SetGno(self.diffuse, self.specular, self.reflection, self.vertex_color, self.remove_existing)
+        settings = SetGno(self.diffuse, self.specular, self.reflection, self.vertex_color, self.existing_diffuse,
+                          self.remove_existing)
         main(self, context, settings)
         return {'FINISHED'}
 
@@ -159,6 +176,7 @@ class SetGno:
     specular: bool
     reflection: bool
     vertex_color: bool
+    existing_diffuse: bool
     remove_existing: bool
 
 
