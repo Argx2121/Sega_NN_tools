@@ -18,6 +18,11 @@ def main(operator, context, settings):
         node = tree.nodes.get("Image Texture")  # blender wants node name w/e
         if node and node.image:
             existing_diffuse = node.image
+        else:
+            for node in tree.nodes:
+                if node.bl_idname == "ShaderNodeTexImage" and node.image:
+                    existing_diffuse = node.image
+
     if settings.simple_convert:
         node = tree.nodes.get("DiffuseTexture")
         if node and node.image:
