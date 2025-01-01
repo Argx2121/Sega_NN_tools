@@ -9,11 +9,28 @@ def main(operator, context, settings):
     tree = context.space_data.node_tree
     MakeGroups().execute()
     existing_diffuse = None
+    simple_diffuse = None
+    simple_reflection = None
+    simple_rgb = None
+    simple_alpha = None
 
     if settings.existing_diffuse:
         node = tree.nodes.get("Image Texture")  # blender wants node name w/e
         if node and node.image:
             existing_diffuse = node.image
+    if settings.simple_convert:
+        node = tree.nodes.get("DiffuseTexture")
+        if node and node.image:
+            simple_diffuse = node.image
+        node = tree.nodes.get("ReflectionTexture")
+        if node and node.image:
+            simple_reflection = node.image
+        node = tree.nodes.get("RGB")
+        if node:
+            simple_rgb = node.default_value[::]
+        node = tree.nodes.get("Value")
+        if node:
+            simple_alpha = node.default_value
 
     if settings.remove_existing:
         for node in tree.nodes:
@@ -24,6 +41,10 @@ def main(operator, context, settings):
     colour_init = tree.nodes.new('ShaderNodeGNOShaderInit')
     colour_init.location = (-1970, 450)
     last_node = colour_init
+    if simple_rgb:
+        colour_init.inputs["Material Color"].default_value = simple_rgb
+    if simple_alpha:
+        colour_init.inputs["Material Alpha"].default_value = simple_alpha
 
     node = tree.nodes.get("Material Output")
     if node:
@@ -39,7 +60,7 @@ def main(operator, context, settings):
         tree.links.new(colour_init.inputs["Vertex Color"], vertex_color.outputs[0])
         tree.links.new(colour_init.inputs["Vertex Alpha"], vertex_color.outputs[1])
 
-    if settings.diffuse:
+    if settings.diffuse or simple_diffuse:
         image = tree.nodes.new(type="ShaderNodeTexImage")
         image.location = (-1640, 250)
         image.label = "Diffuse Texture"
@@ -53,6 +74,8 @@ def main(operator, context, settings):
 
         if existing_diffuse:
             image.image = existing_diffuse
+        if simple_diffuse:
+            image.image = simple_diffuse
 
         tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
         tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
@@ -62,7 +85,7 @@ def main(operator, context, settings):
         tree.links.new(vector.inputs["UV Map"], uv.outputs[0])
         last_node = mix_node
 
-    if settings.reflection:
+    if settings.reflection or simple_reflection:
         image = tree.nodes.new(type="ShaderNodeTexImage")
         image.location = (-1160, 160)
         image.label = "Reflection Texture"
@@ -72,6 +95,9 @@ def main(operator, context, settings):
         mix_node = tree.nodes.new('ShaderNodeGNOMixRGB')
         mix_node.location = (-770, 410)
         mix_node.blend_type = "_NN_RGB_MULTI"
+
+        if simple_reflection:
+            image.image = simple_reflection
 
         tree.links.new(image.inputs["Vector"], vector.outputs["Image Vector"])
         tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
@@ -133,6 +159,12 @@ class NodeGnoSetup(bpy.types.Operator):
         description="Use vertex colors",
     )
 
+    simple_convert: BoolProperty(
+        name="Convert simple materials",
+        description="Convert simple materials into the gno set up, does not support EmissionTexture",
+        default=True,
+    )
+
     existing_diffuse: BoolProperty(
         name="Use existing diffuse",
         description="Use the existing texture as the diffuse texture",
@@ -158,6 +190,7 @@ class NodeGnoSetup(bpy.types.Operator):
         box.prop(self, "reflection")
         box.prop(self, "vertex_color")
         box.label(text="Advanced settings:", icon="KEYFRAME_HLT")
+        box.prop(self, "simple_convert")
         box.prop(self, "existing_diffuse")
         box.prop(self, "remove_existing")
 
@@ -166,8 +199,8 @@ class NodeGnoSetup(bpy.types.Operator):
         return context.area.ui_type == 'ShaderNodeTree'
 
     def execute(self, context):
-        settings = SetGno(self.diffuse, self.specular, self.reflection, self.vertex_color, self.existing_diffuse,
-                          self.remove_existing)
+        settings = SetGno(self.diffuse, self.specular, self.reflection, self.vertex_color, self.simple_convert,
+                          self.existing_diffuse, self.remove_existing)
         main(self, context, settings)
         return {'FINISHED'}
 
@@ -178,6 +211,7 @@ class SetGno:
     specular: bool
     reflection: bool
     vertex_color: bool
+    simple_convert: bool
     existing_diffuse: bool
     remove_existing: bool
 
