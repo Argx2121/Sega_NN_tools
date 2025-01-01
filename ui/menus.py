@@ -80,6 +80,15 @@ def main(operator, context, settings):
         tree.links.new(mix_node.inputs["Alpha 2"], image.outputs[1])
         last_node = mix_node
 
+    mix_node = tree.nodes.new('ShaderNodeGNOSpecular')
+    mix_node.location = (-320, 320)
+    mix_node.blend_type = "_NN_RGB_SPEC"
+
+    tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
+    tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
+    tree.links.new(mix_node.inputs["Specular"], colour_init.outputs["Specular"])
+    last_node = mix_node
+
     if settings.specular:
         image = tree.nodes.new(type="ShaderNodeTexImage")
         image.location = (-700, 70)
@@ -88,18 +97,11 @@ def main(operator, context, settings):
         vector.location = (-940, -140)
         uv = tree.nodes.new(type="ShaderNodeUVMap")
         uv.location = (-1150, -260)
-        mix_node = tree.nodes.new('ShaderNodeGNOSpecular')
-        mix_node.location = (-320, 320)
-        mix_node.blend_type = "_NN_RGB_SPEC"
 
-        tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
-        tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
         tree.links.new(mix_node.inputs["Color 2"], image.outputs[0])
         tree.links.new(mix_node.inputs["Alpha 2"], image.outputs[1])
-        tree.links.new(mix_node.inputs["Specular"], colour_init.outputs["Specular"])
         tree.links.new(image.inputs["Vector"], vector.outputs["Image Vector"])
         tree.links.new(vector.inputs["UV Map"], uv.outputs[0])
-        last_node = mix_node
 
     tree.links.new(gno_shader.inputs["Color"], last_node.outputs[0])
     tree.links.new(gno_shader.inputs["Alpha"], last_node.outputs[1])

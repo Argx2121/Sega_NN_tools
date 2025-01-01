@@ -196,6 +196,8 @@ def material_gno(self):
     for mat_index in range(material_count):
         material = bpy.data.materials.new(mat_names[mat_index])
         material_list_blender.append(material)
+        spec_mix = False  # as specular is mixed in a node, we need to make sure that node gets spawned in
+        # if it isnt spawned in during the image node loop we will add it at the end
 
         m = material_list[mat_index]
         m_texture_count = m.texture_count
@@ -316,6 +318,7 @@ def material_gno(self):
 
             # onwards my mixnodes
             if m_mix.specular or m_mix.specular2:
+                spec_mix = True
                 mix_type = "_NN_RGB_SPEC"
                 if m_mix.specular2:
                     mix_type = "_NN_RGB_SPEC_2"
@@ -362,6 +365,17 @@ def material_gno(self):
             if m_mix.multiply_shading:
                 mix_node.multi_shading = True
             mix_node.inputs["Color 2 Multiplier"].default_value = m_tex.alpha
+
+        if not spec_mix:
+            # forced to add to make specular be mixed in
+            mix_type = "_NN_RGB_SPEC"
+            mix_node = tree.nodes.new('ShaderNodeGNOSpecular')
+            mix_node.blend_type = mix_type
+
+            tree.links.new(mix_node.inputs["Specular"], colour_init.outputs["Specular"])
+            tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
+            tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
+            last_node = mix_node
 
         tree.links.new(gno_shader.inputs["Color"], last_node.outputs[0])
         tree.links.new(gno_shader.inputs["Alpha"], last_node.outputs[1])
@@ -742,6 +756,12 @@ def get_materials(self):
                 multiply_shading = mix_node.multi_shading
                 mix_type = mix_node.blend_type
                 col_2_multi = get_value(mix_node.inputs["Color 2 Multiplier"])
+
+                if not to_socket_from_socket.get(mix_node.inputs[2], False) and mix_node.bl_idname == "ShaderNodeGNOSpecular":
+                    # if theres no image linked and the mix node is specular
+                    # then the node exists just to mix spec into shading
+                    mix_node = from_socket_to_socket.get(mix_node.outputs[0], False).node
+                    continue
 
                 image_node = to_socket_from_socket.get(mix_node.inputs[2]).node
                 texture_list.append(image_node.image.filepath)
