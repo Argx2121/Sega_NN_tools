@@ -672,7 +672,7 @@ class MakeGroups:
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.001'
         var.location = (-821.0558471679688, 117.86932373046875)
-        var.inputs[0].default_value = 0.25
+        var.inputs[0].default_value = 0.5
         var.inputs[1].default_value = 1.0
         var.inputs[2].default_value = 0.5
         var.operation = 'ADD'
@@ -707,7 +707,7 @@ class MakeGroups:
         var = tree.nodes.new(type='ShaderNodeMixRGB')
         var.name = 'Mix.001'
         var.location = (-267.8619079589844, 13.413289070129395)
-        var.inputs[0].default_value = 1.0
+        var.inputs[0].default_value = 0.25
         var.inputs[1].default_value = (0.5, 0.5, 0.5, 1.0)
         var.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
         var.blend_type = 'ADD'
