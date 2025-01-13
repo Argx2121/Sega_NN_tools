@@ -1756,7 +1756,7 @@ class MakeGroups:
         var = tree.interface.new_socket(name='Alpha 2', in_out='INPUT', socket_type='NodeSocketFloat')
         var.hide_value = True
         var.max_value = 3.4028234663852886e+38
-        var.default_value = 1.0
+        var.default_value = 0
         var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='Specular', in_out='INPUT', socket_type='NodeSocketColor')
