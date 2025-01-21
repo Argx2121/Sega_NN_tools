@@ -807,7 +807,7 @@ def get_materials(self):
             alpha_op = int(gno_shader.alpha_op)
             user = int(get_value(gno_shader.inputs["User"]))
 
-            texture_list = list(set(texture_list))
+            texture_list = list(dict.fromkeys(texture_list))
             material_list.append(
                 MatGNOComplex(name, blend_method, override_mat, mat_flags, diffuse, alpha, v_col, backface_off, unlit,
                               ignore_depth, dont_write_depth, has_spec, ambient, specular, shininess, specular_value,
