@@ -225,32 +225,25 @@ def get_bones(self):
                 mesh_used.data.vertices.foreach_get("co", pos)
                 co_ords += pos
 
-            co_x = [co_ords[i] for i in range(0, len(co_ords), 3)]
-            co_y = [co_ords[i + 1] for i in range(0, len(co_ords), 3)]
-            co_z = [co_ords[i + 2] for i in range(0, len(co_ords), 3)]
+            co_ords = [bone.matrix_local.inverted() @ mathutils.Vector(co_ords[i:i + 3]) for i in range(0, len(co_ords), 3)]
+
+            co_x = [i[0] for i in co_ords]
+            co_y = [i[1] for i in co_ords]
+            co_z = [i[2] for i in co_ords]
 
             max_x, min_x = max(co_x), min(co_x)
             max_y, min_y = max(co_y), min(co_y)
             max_z, min_z = max(co_z), min(co_z)
 
-            bone_head = bone.head_local
-
             center_x = (max_x + min_x) / 2
             center_y = (max_y + min_y) / 2
             center_z = (max_z + min_z) / 2
-
-            center_x1 = (max_x + min_x) / 2 - bone_head[0]
-            center_y1 = (max_y + min_y) / 2 - bone_head[1]
-            center_z1 = (max_z + min_z) / 2 - bone_head[2]
-
-            center = center_x1, center_y1, center_z1
-
-            pos = [tuple(co_ords[i:i + 3]) for i in range(0, len(co_ords), 3)]
+            center = center_x, center_y, center_z
 
             radius_list = [math.sqrt(((a[0] - center_x) ** 2 + (a[1] - center_y) ** 2 + (a[2] - center_z) ** 2)) for a
-                           in pos]
+                           in co_ords]
             radius = max(radius_list)
-            length = (max_x - center_x, max_y - center_y, max_z - center_z)
+            length = (mathutils.Vector((max_x, max_y, max_z)) - mathutils.Vector((center_x, center_y, center_z))).to_tuple()
 
         used = -1
         if bone.name in used_bones:
