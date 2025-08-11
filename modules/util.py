@@ -13,6 +13,93 @@ from typing import BinaryIO, Tuple, Any, Union  # Union is used by files that im
 # functions
 
 
+def get_bpy_meshes(context, arma, no_poly_test=False):
+    scene_ob = set(context.scene.objects[:])
+    if no_poly_test:
+        mesh_list = [a for a in arma.children if a.type == "MESH" and a in scene_ob]
+    else:
+        mesh_list = [a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0 and a in scene_ob]
+    return mesh_list
+
+
+def interp_mag(interp):
+    i_filter = ""
+    if interp == 0:
+        i_filter = "Closest"
+    elif interp == 1:
+        i_filter = "Linear"
+    elif interp == 2:
+        i_filter = "Anisotropic"
+    return i_filter
+
+
+def interp_min(interp):
+    interp_conv = {
+        0: 'Closest', 1: 'Linear', 2: 'Closest MipMap Closest', 3: 'Closest MipMap Linear', 4: 'Linear MipMap Closest',
+        5: 'Linear MipMap Linear', 6: 'Anisotropic', 7: 'Anisotropic MipMap Closest', 8: 'Anisotropic MipMap Linear',
+        9: 'Anisotropic4', 10: 'Anisotropic4 MipMap Closest', 11: 'Anisotropic4 MipMap Linear', 12: 'Anisotropic8',
+        13: 'Anisotropic8 MipMap Closest', 14: 'Anisotropic8 MipMap Linear',
+    }
+    return interp_conv[interp]
+
+
+def to_interp_mag(interp):
+    i_filter = 0
+    if interp == "Closest":
+        i_filter = 0
+    elif interp == "Linear":
+        i_filter = 1
+    elif interp == "Anisotropic":
+        i_filter = 2
+    return i_filter
+
+
+def to_interp_min(interp):
+    interp_conv = {
+        'Closest': 0, 'Linear': 1, 'Closest MipMap Closest': 2, 'Closest MipMap Linear': 3, 'Linear MipMap Closest': 4,
+        'Linear MipMap Linear': 5, 'Anisotropic': 6, 'Anisotropic MipMap Closest': 7, 'Anisotropic MipMap Linear': 8,
+        'Anisotropic4': 9, 'Anisotropic4 MipMap Closest': 10, 'Anisotropic4 MipMap Linear': 11, 'Anisotropic8': 12,
+        'Anisotropic8 MipMap Closest': 13, 'Anisotropic8 MipMap Linear': 14
+    }
+    return interp_conv[interp]
+
+
+def get_rotation_order(data: int) -> str:
+    """Returns the euler rotation order.
+
+    Parameters
+    ----------
+    data : int
+        Int containing the order.
+
+    Returns
+    -------
+    str
+        Rotation order as a string.
+
+    """
+    get_rot = {0: "XYZ", 1: "XZY", 4: "ZXY"}
+    return get_rot[data]
+
+
+def get_rotation_int(data: str) -> int:
+    """Returns the euler rotation order.
+
+    Parameters
+    ----------
+    data : str
+        str containing the order.
+
+    Returns
+    -------
+    int
+        Rotation order as an int.
+
+    """
+    get_rot = {"XYZ": 0, "XZY": 1, "ZXY": 4}
+    return get_rot[data]
+
+
 def get_files(file_path: str, batch_type: str,
               name_ignore: str = False, name_require: str = False, case_sensitive: bool = True) -> list:
     """Returns a list of file names in the current folder with optional restrictions on name.
@@ -328,6 +415,26 @@ def read_half(file: BinaryIO, endian="<") -> float:
     return unpack(endian + "e", file.read(2))[0]
 
 
+def read_long(file: BinaryIO, endian="<") -> int:
+    """Reads and returns an long.
+
+    Parameters
+    ----------
+    file : BinaryIO
+        The file read.
+
+    endian :
+        Endian of what's being read.
+
+    Returns
+    -------
+    long
+        The long read.
+    """
+
+    return unpack(endian + "Q", file.read(8))[0]
+
+
 def read_int(file: BinaryIO, endian="<") -> int:
     """Reads and returns an integer.
 
@@ -365,7 +472,7 @@ def read_int_bam(file: BinaryIO, endian="<") -> float:
         The BAM read.
     """
 
-    return unpack(endian + "i", file.read(4))[0] * (180 / 32767)
+    return unpack(endian + "i", file.read(4))[0] * (180 / 32768)
 
 
 def read_short(file: BinaryIO, endian="<") -> int:
@@ -405,7 +512,7 @@ def read_short_bam(file: BinaryIO, endian="<") -> float:
         The BAM read.
     """
 
-    return unpack(endian + "h", file.read(2))[0] * (180 / 32767)
+    return unpack(endian + "h", file.read(2))[0] * (180 / 32768)
 
 
 def read_byte(file: BinaryIO, endian="<") -> int:
@@ -494,6 +601,29 @@ def read_half_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[float, ...]
     return unpack(endian + str(count) + "e", file.read(count * 2))
 
 
+def read_long_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
+    """Reads and returns tuple of long.
+
+        Parameters
+        ----------
+        file : BinaryIO
+            The file read.
+
+        count : int
+            How many longs to read.
+
+        endian :
+            Endian of what's being read.
+
+        Returns
+        -------
+        tuple
+            A tuple of longs.
+
+    """
+    return unpack(endian + str(count) + "Q", file.read(count * 8))
+
+
 def read_int_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
     """Reads and returns tuple of integers.
 
@@ -537,7 +667,7 @@ def read_int_bam_tuple(file: BinaryIO, count: int, endian="<") -> tuple:
         The BAMs read.
     """
     var = unpack(endian + str(count) + "i", file.read(count * 4))
-    return tuple([a * (180 / 32767) for a in var])
+    return tuple([a * (180 / 32768) for a in var])
 
 
 def read_short_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:
@@ -583,7 +713,7 @@ def read_short_bam_tuple(file: BinaryIO, count: int, endian="<") -> tuple:
         The BAMs read.
     """
     var = unpack(endian + str(count) + "h", file.read(count * 2))
-    return tuple([a * (180 / 32767) for a in var])
+    return tuple([a * (180 / 327678) for a in var])
 
 
 def read_byte_tuple(file: BinaryIO, count: int, endian="<") -> Tuple[int, ...]:

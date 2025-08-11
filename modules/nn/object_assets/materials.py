@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass
 from enum import Flag
 
@@ -8,7 +9,7 @@ class Read:
     __slots__ = [
         "f", "start", "format_type", "debug",
         "material_count", "texture_count", "info_offset", "colour_offset",
-        "texture_offset", "colour_list", "texture_list", "mat_set_list"
+        "texture_offset", "colour_list", "texture_list", "mat_set_list", "material_offsets", "render_list"
     ]
 
     def __init__(self, var, material_count: int):
@@ -21,6 +22,8 @@ class Read:
         self.colour_list = []
         self.texture_list = []
         self.mat_set_list = []
+        self.material_offsets = []
+        self.render_list = []
 
     @dataclass
     class MaterialSettings:
@@ -36,22 +39,25 @@ class Read:
         ambient: tuple
         specular: tuple
         emission: tuple
-        specular_value: float
         shininess: float
+        specular_value: float
 
     @dataclass
     class Texture:
-        __slots__ = ["type", "interpolation", "projection", "extension", "space", "index", "alpha", "scale", "uv", "texture_flags"]
         type: str
         interpolation: str
         projection: str
         extension: str
         space: str
         index: int
-        alpha: float
-        scale: tuple
+        blend: float
+        offset: tuple
         uv: int
         texture_flags: Flag
+        lod_bias: float = 0
+        max_mip_map_level: int = 0
+        interp_min: str = ''
+        interp_mag: str = ''
 
     @dataclass
     class GnoRender:
@@ -65,6 +71,29 @@ class Read:
         comp0: Flag
         comp1: Flag
         alpha: Flag
+
+    @dataclass
+    class XnoRender:
+        buffer_blend: int
+        source: int
+        destination: int
+        blend_color: tuple
+        blend_operation: int
+        logic_operation: int
+        alpha_test: int
+        alpha_mode: int
+        alpha_ref: int
+        z_compare: int
+        z_mode: int
+        z_update: int
+
+    @dataclass
+    class XnoOffsets:
+        material_flags: int
+        user: int
+        color: int
+        flags: int
+        texture: int
 
     @dataclass
     class Material:
@@ -86,6 +115,22 @@ class Read:
         mat_flags: int
         render: any
         user: tuple  # die
+
+    @staticmethod
+    def _from_shininess(value):
+        if value > 0:
+            x = (1000 * math.log(value / 4)) / 6931
+        else:
+            x = 0
+        return x
+
+    @staticmethod
+    def _gno_overflow(value):
+        # how i look at you
+        while value >= 1.1155:
+            value -= 1.1155
+        value = value / 1.1154
+        return value
 
     def _le_offsets(self):
         self.info_offset = read_int_tuple(self.f, self.material_count * 2)[1::2]
@@ -132,10 +177,8 @@ class Read:
     def _xno_info(self):
         f = self.f
         for offset in self.info_offset:
-            f.seek(offset + self.start + 8)
-            var1, _, var2 = read_int_tuple(f, 3)
-            self.colour_offset.append(var1)
-            self.texture_offset.append(var2)
+            f.seek(offset + self.start)
+            self.material_offsets.append(self.XnoOffsets(*unpack("2i", f.read(8)), *read_int_tuple(f, 3)))
 
     def _lno_zno_info(self):
         f = self.f
@@ -182,13 +225,24 @@ class Read:
             self.texture_count.append(var[-2])
             self.texture_offset.append(var[-1])
 
+    def _xno_flags(self):
+        f = self.f
+        for offset in self.material_offsets:
+            f.seek(offset.flags + self.start)
+            render_data = self.XnoRender(
+                read_int(f), read_int(f), read_int(f),
+                (read_byte(f) / 255, read_byte(f) / 255, read_byte(f) / 255, read_byte(f) / 255),
+                read_int(f), read_int(f), read_int(f), read_int(f), read_int(f), read_int(f), read_int(f), read_int(f)
+            )
+            self.render_list.append(render_data)
+
     def _xno_colour(self):
         f = self.f
-        for offset in self.colour_offset:
-            f.seek(offset + self.start)
+        for offset in self.material_offsets:
+            f.seek(offset.color + self.start)
             self.colour_list.append(self.Colour(
                 read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
-                2, read_float(f) / 160)  # maybe just div by 100?
+                0.5, self._from_shininess(read_float(f)))
             )
 
     def _cno_eno_colour(self):
@@ -200,7 +254,7 @@ class Read:
             # 2 = all data types
             self.colour_list.append(self.Colour(
                 read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"),
-                read_float_tuple(f, 4, ">"), read_float(f, ">") / 1280, read_float(f, ">")
+                read_float_tuple(f, 4, ">"), self._from_shininess(read_float(f, ">")), read_float(f, ">")
             ))
 
     def _cno_texture(self):
@@ -412,12 +466,12 @@ class Read:
             specular = list(read_float_tuple(f, 3, ">"))
             specular += [1.0]
             emission = (0, 0, 0, 1)
-            specular_value = read_float(f, ">")
+            specular_value = self._gno_overflow(read_float(f, ">"))
             shininess = read_float(f, ">")
 
             # speclevel and specgloss
             self.colour_list.append(self.Colour(
-                diffuse, tuple(ambient), tuple(specular), emission, specular_value, shininess
+                diffuse, tuple(ambient), tuple(specular), emission, shininess, specular_value
             ))
 
             mat_data = self.GnoRender(
@@ -431,7 +485,6 @@ class Read:
                 texture_flags = read_int(f, ">")
 
                 class TextureFlags(Flag):
-                    # ---- NEW DATA ----
                     # byte 1
                     ignore_uv_offset = texture_flags >> 30 & 1
 
@@ -446,6 +499,7 @@ class Read:
 
                     # byte 3
                     # vector type (reflection or uv map - multiple cannot be set)
+                    # bump map is >> 14 but doesnt seem to do anything
                     reflection = texture_flags >> 13 & 1
                     uv4 = texture_flags >> 11 & 1
                     uv3 = texture_flags >> 10 & 1
@@ -456,29 +510,19 @@ class Read:
                     # mixing
                     # the colour might be a bit different in blender because the colour space is different
                     multiply_shading = texture_flags >> 6 & 1
-                    subtract_bit = texture_flags >> 3 & 1
-                    add_bit = texture_flags >> 2 & 1
-                    mix_bit = texture_flags >> 1 & 1
-                    multiply_bit = texture_flags >> 0 & 1
-                    # please note that specifying a specular texture starts a new node chain
-                    multiply = multiply_bit and not mix_bit and not add_bit and not subtract_bit
-                    decal = not multiply_bit and mix_bit and not add_bit and not subtract_bit
-                    replace = multiply_bit and mix_bit and not add_bit and not subtract_bit
-                    blend = not multiply_bit and not mix_bit and add_bit and not subtract_bit
-                    pass_clear = multiply_bit and not mix_bit and add_bit and not subtract_bit
-                    alpha_tex = not multiply_bit and mix_bit and add_bit and not subtract_bit  # next texture uses this ones alpha
-                    decal_2 = multiply_bit and mix_bit and add_bit and not subtract_bit
-                    subtract = not multiply_bit and not mix_bit and not add_bit and subtract_bit
-                    specular = multiply_bit and not mix_bit and not add_bit and subtract_bit
-                    specular2 = not multiply_bit and mix_bit and not add_bit and subtract_bit
-                    add = multiply_bit and mix_bit and not add_bit and subtract_bit
-                    subtract_2 = not multiply_bit and not mix_bit and add_bit and subtract_bit  # used if its not the first image
-
-                    # unused:
-                    # unknown = multiply_bit and not mix_bit and add_bit and subtract_bit  # 0xD
-                    # unknown8 = not multiply_bit and mix_bit and add_bit and subtract_bit  # 0xE
-                    # unknown0 = multiply_bit and mix_bit and add_bit and subtract_bit  # 0xF
-                    # unknown15 = not multiply_bit and not mix_bit and not add_bit and not subtract_bit  # 0
+                    tex_type = texture_flags & 15
+                    multiply = bool(tex_type == 1)
+                    decal = bool(tex_type == 2)
+                    replace = bool(tex_type == 3)
+                    blend = bool(tex_type == 4)
+                    pass_color = bool(tex_type == 5)  # nothingburger
+                    alpha_tex = bool(tex_type == 6)  # next texture uses this ones alpha
+                    decal_2 = bool(tex_type == 7)
+                    subtract = bool(tex_type == 8)
+                    specular = bool(tex_type == 9)
+                    specular2 = bool(tex_type == 10)
+                    add = bool(tex_type == 11)
+                    subtract_2 = bool(tex_type == 12)  # used if its not the first image
 
                 t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
                 t_index = read_int(f, ">")
@@ -733,31 +777,19 @@ class Read:
     def _xno_texture(self):
         def sonic_riders_x():
             t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
-            if TextureFlags.byte1bit1 and TextureFlags.diffuse_2:
+            if TextureFlags.multiply:
                 t_type = "diffuse"
-            elif TextureFlags.byte1bit3 and TextureFlags.reflection_2 and not TextureFlags.byte1bit2:
-                t_type = "reflection"
-            elif TextureFlags.byte1bit4:
-                t_type = "none"
 
-            if TextureFlags.clamp_y or TextureFlags.clamp_x:
+            if TextureFlags.clampu or TextureFlags.clampv:
                 t_ext = "EXTEND"
             return t_type, t_interp, t_proj, t_ext, t_space
 
         def sonic_2006_x():
             t_type, t_interp, t_proj, t_ext, t_space = "none", "Linear", "FLAT", "REPEAT", "TANGENT"
-            if TextureFlags.byte1bit4:
-                t_type = "none"
-            elif TextureFlags.byte1bit1 and TextureFlags.byte1bit2:
-                t_type = "diffuse"
-            elif TextureFlags.byte1bit1 and TextureFlags.byte1bit3:
-                t_type = "spectacular"
-            elif TextureFlags.byte1bit2 and TextureFlags.byte1bit3:  # 6
-                t_type = "none"  # normal does 5 and 6 so if more than one image with 5 ignore the one that also has 6
-            elif TextureFlags.byte1bit1 and not TextureFlags.byte1bit2 and not TextureFlags.byte1bit3:
+            if TextureFlags.multiply or TextureFlags.replace:
                 t_type = "diffuse"
 
-            if TextureFlags.clamp_y or TextureFlags.clamp_x:
+            if TextureFlags.clampu or TextureFlags.clampv:
                 t_ext = "EXTEND"
             return t_type, t_interp, t_proj, t_ext, t_space
 
@@ -770,54 +802,68 @@ class Read:
         material_count = self.material_count
         for texture_value in range(material_count):
             texture_list = []
-            texture_offset = self.texture_offset[texture_value]
+            texture_offset = self.material_offsets[texture_value].texture
             if texture_offset:
                 f.seek(texture_offset + self.start)
                 for _ in range(self.texture_count[texture_value]):
-                    texture_flags = read_int(f, ">")
+                    texture_flags = read_int(f)
 
                     class TextureFlags(Flag):
                         # byte 1
-                        byte1bit4 = texture_flags >> 27 & 1  # 00001000 : doesnt use texture
-                        byte1bit3 = texture_flags >> 26 & 1  # 00000100 : no shadows, ignores environment colours
-                        byte1bit2 = texture_flags >> 25 & 1  # 00000010 : don't use texture or texture settings
-                        byte1bit1 = texture_flags >> 24 & 1  # 00000001 : default
+                        # mixing
+                        # the colour might be a bit different in blender because the colour space is different
+                        tex_type = texture_flags & 15
+                        multiply = bool(tex_type == 1)
+                        decal = bool(tex_type == 2)
+                        replace = bool(tex_type == 3)
+                        blend = bool(tex_type == 4)
+                        decal_2 = bool(tex_type == 5)
+                        light_stage = bool(tex_type == 6)  # way to add back shading if u used replace
+                        specular = bool(tex_type == 7)
+                        specular2 = bool(tex_type == 8)
+                        add = bool(tex_type == 9)
+                        subtract = bool(tex_type == 10)
+                        # normal = bool(tex_type == 11) doesnt seem to be supported
 
                         # byte 2
-                        reflection_2 = texture_flags >> 21 & 1  # 00100000 : image reflection
-                        diffuse_2 = texture_flags >> 16 & 1  # 00000001 : default
+                        # vector type (reflection or uv map - multiple cannot be set)
+                        # bump map is >> 14 but doesnt seem to do anything
+                        reflection = texture_flags >> 13 & 1
+                        uv4 = texture_flags >> 11 & 1
+                        uv3 = texture_flags >> 10 & 1
+                        uv2 = texture_flags >> 9 & 1
+                        uv1 = texture_flags >> 8 & 1
 
                         # byte 3
-                        clamp_x = texture_flags >> 9 & 1  # 00000010 : don't repeat texture x ways (--)
-                        clamp_y = texture_flags >> 8 & 1  # 00000001 : don't repeat texture y ways (|)
-                        # clamp can be implemented by
-                        #  uv map -> separate xyz -> clamp -> combine xyz -> vector (image)
-                        #  but not necessary
+                        # uv wrapping modes
+                        clampu = texture_flags >> 16 & 1
+                        clampv = texture_flags >> 17 & 1
+                        repeatu = texture_flags >> 18 & 1
+                        repeatv = texture_flags >> 19 & 1
+                        mirroru = texture_flags >> 20 & 1
+                        mirrorv = texture_flags >> 21 & 1
 
                         # byte 4
-                        not_use_offset = texture_flags >> 6 & 1
-                        # 01000000 : don't use texture offset floats right after texture index
-                        #  first is x second is y as floats
+                        custom_filter = texture_flags >> 25 & 1
+                        lod_bias = texture_flags >> 26 & 1
+                        max_mip_map_level = texture_flags >> 27 & 1
+                        ignore_uv_offset = texture_flags >> 30 & 1
 
                     t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
                     t_index = read_int(f)
-                    f.seek(8, 1)
+                    t_offset = read_float_tuple(f, 2)
                     t_alpha = read_float(f)
-                    t_scale = (1, 1)
                     t_uv = len(format(texture_flags >> 8 & 255, "b"))
+                    f.seek(4, 1)  # whar
+                    min_interp = interp_min(read_short(f))  # fine kitten............. ill add support for stupid......
+                    mag_interp = interp_mag(read_short(f))
+                    lod_bias = read_float(f)
+                    max_mip = read_int(f)
 
                     texture_list.append(self.Texture(
-                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv, TextureFlags))
-                    f.seek(28, 1)
-
-                if self.format_type == "Sonic2006_X":
-                    tex_formats = [a.type for a in texture_list]
-                    if tex_formats.count("spectacular") > 1:
-                        texture_list[tex_formats.index("spectacular") + 1].type = "normal"
-                        texture_list[tex_formats.index("spectacular") + 1].space = "world"
-                    while tex_formats.count("spectacular") > 0:
-                        texture_list[tex_formats.index("spectacular")].type = "none"
-                        tex_formats = [a.type for a in texture_list]
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_offset, t_uv, TextureFlags,
+                        lod_bias=lod_bias, max_mip_map_level=max_mip, interp_min=min_interp, interp_mag=mag_interp))
+                    f.seek(12, 1)
             self.texture_list.append(texture_list)
 
     def _zno_texture(self):
@@ -916,15 +962,23 @@ class Read:
             material_list.append(self.Material(
                 self.texture_count[i],
                 self.Colour(
-                    (0.75, 0.75, 0.75, 1), (0.75, 0.75, 0.75, 1), (0.9, 0.9, 0.9, 1), (0, 0, 0, 1), 0.2, 2),
+                    (0.75, 0.75, 0.75, 1), (0.75, 0.75, 0.75, 1), (0.9, 0.9, 0.9, 1), (0, 0, 0, 1), 0.5, 0.5),
                 self.texture_list[i], "OPAQUE", 0, []))
         return material_list
 
-    def _return_data_3(self):
+    def _return_data_gno(self):
         material_list = []
         for i in range(self.material_count):
             material_list.append(self.GnoMaterial(
                 self.texture_count[i], self.colour_list[i], self.texture_list[i], "OPAQUE", *self.mat_set_list[i]))
+        return material_list
+
+    def _return_data_xno(self):
+        material_list = []
+        for i in range(self.material_count):
+            material_list.append(self.GnoMaterial(
+                self.texture_count[i], self.colour_list[i], self.texture_list[i], "OPAQUE",
+                self.material_offsets[i].material_flags, self.render_list[i], self.material_offsets[i].user))
         return material_list
 
     def cno(self):
@@ -944,7 +998,7 @@ class Read:
     def gno(self):
         self._gno_offsets()
         self._gno_texture()
-        return self._return_data_3()
+        return self._return_data_gno()
 
     def ino(self):
         if self.format_type == "SonicTheHedgehog4EpisodeI_I":
@@ -987,9 +1041,10 @@ class Read:
     def xno(self):
         self._xno_offsets()
         self._xno_info()
+        self._xno_flags()
         self._xno_colour()
         self._xno_texture()
-        return self._return_data_1()
+        return self._return_data_xno()
 
     def zno(self):
         self._le_offsets()
@@ -1010,15 +1065,27 @@ class Write:
         self.nof0_offsets = nof0_offsets
         self.mat_offsets = []
 
+    @staticmethod
+    def _to_shininess(value):
+        y = 4 * math.e ** (6.931 * value)
+        return y
+
+    @staticmethod
+    def _to_gno_overflow(value):
+        # name doesnt really make sense
+        value = value * 1.1154
+        return value
+
     def _xno_colour(self):
         f = self.f
         for mat in self.material_data.material_list:
             self.mat_offsets.append((f.tell(), 0, 0))
-            for a in mat.diffuse:
-                write_float(f, "<", a)
-            f.seek(-4, 1)
-            write_float(f, "<", mat.alpha)
-            write_float(f, "<", 0.7529413, 0.7529413, 0.7529413, 1, 0.9, 0.9, 0.9, 1, 0, 0, 0, 1, 32, 0, 0, 0)
+            write_float(f, "<", *mat.diffuse[0:3], mat.alpha)
+            write_float(f, "<", *mat.ambient[0:4])
+            write_float(f, "<", *mat.specular[0:4])
+            write_float(f, "<", *mat.emission[0:4])
+            write_float(f, "<", self._to_shininess(mat.specular_value))
+            write_integer(f, "<", 0, 0, 0)
 
     def _zno_colour(self):
         f = self.f
@@ -1031,11 +1098,14 @@ class Write:
             write_float(f, "<", mat.alpha)
             write_float(f, "<", 0.7529413, 0.7529413, 0.7529413, 1, 0.0, 0.0, 0.0, 1, 1, 1, 1, 0, 8, 1)
 
-    def _xno_unknown(self):
+    def _xno_flags(self):
         f = self.f
-        offset = f.tell()
-        self.mat_offsets = [[a[0], offset, 0] for a in self.mat_offsets]
-        write_integer(f, "<", 1, 770, 771, 0, 32774, 0, 1, 516, 0, 1, 515, 1, 0, 0, 0, 0)
+        for i, mat in enumerate(self.material_data.material_list):
+            self.mat_offsets[i] = [self.mat_offsets[i][0], f.tell(), 0]
+            write_integer(f, "<", mat.buffer_blend, mat.source_fact, mat.dest_fact)
+            write_byte(f, "<", *[round(a * 255) for a in mat.blend_color])
+            write_integer(f, "<", mat.blend_op, mat.blend_type, mat.alpha_test, mat.comp0, mat.ref0)
+            write_integer(f, "<", mat.buff_comp, mat.z_mode, mat.buff_update)
 
     def _zno_unknown(self):
         f = self.f
@@ -1043,190 +1113,53 @@ class Write:
         self.mat_offsets = [[a[0], offset, 0] for a in self.mat_offsets]
         write_integer(f, "<", 25, 393221, 393221, 0, 352649217, 262149, 0)
 
-    def _gno_texture_simple(self):
+    def _gno_texture(self):
         f = self.f
-        textures = self.material_data.texture_list
-        # evil cringe society
+        textures = list(self.material_data.texture_list.keys())
 
         for mat in self.material_data.material_list:
             self.mat_offsets.append(f.tell())
-            mat_flags = 0
-            if mat.boolean:
-                mat_flags = mat_flags | 131072
-            if mat.unlit:
-                mat_flags = mat_flags | 256
-            if mat.v_col:
-                mat_flags = mat_flags | 1
-
-            if not mat.unlit and not mat.boolean:
-                mat_flags = mat_flags | 16777216
-
-            write_integer(f, ">", mat_flags)
-            for a in mat.diffuse:
-                write_float(f, ">", a)
-            f.seek(-4, 1)
-            write_float(f, ">", mat.alpha)
-            write_float(f, ">", 0.7529413, 0.7529413, 0.7529413, 0.9, 0.9, 0.9, 2, 0.3)
-
-            write_integer(f, ">", 1, 4, 5, 5, 2, 0, 6, 7, 0, 0)
-            tex_types = [a.type for a in mat.texture_list]
-            if "DiffuseTexture" in tex_types and tex_types.index("DiffuseTexture"):
-                # this means its not at index 0
-                # which will mess up shading
-                old_data = mat.texture_list.pop(tex_types.index("DiffuseTexture"))
-                mat.texture_list.insert(0, old_data)
-
-            for image in mat.texture_list:
-                if image.type == "DiffuseTexture":
-                    write_integer(f, ">", 1074528513)
-                    # write index
-                    write_integer(f, ">", textures.index(image.name.image.filepath))
-                    write_integer(f, ">", 2147483648, 0)
-                    write_float(f, ">", 1)
-                elif image.type == "ReflectionTexture":
-                    write_integer(f, ">", 1074536452)
-                    # write index
-                    write_integer(f, ">", textures.index(image.name.image.filepath))
-                    write_integer(f, ">", 2147483648, 0)
-                    write_float(f, ">", 1)
-                elif image.type == "EmissionTexture":
-                    if len(mat.texture_list) > 1:
-                        write_integer(f, ">", 1074528516)
-                    else:
-                        write_integer(f, ">", 1074528514)
-                    # write index
-                    write_integer(f, ">", textures.index(image.name.image.filepath))
-                    write_integer(f, ">", 2147483648, 0)
-                    write_float(f, ">", 1)
-
-    def _gno_texture_complex(self):
-        f = self.f
-        textures = self.material_data.texture_list
-
-        for mat in self.material_data.material_list:
-            self.mat_offsets.append(f.tell())
-            if mat.override_mat:
-                mat_flags = mat.mat_flags
-            else:
-                mat_flags = 0
-                if mat.v_col == 0:
-                    mat_flags |= 1
-                if not mat.backface_off:
-                    mat_flags |= 32
-                if mat.unlit:
-                    mat_flags |= 256
-                if mat.ignore_depth:
-                    mat_flags |= 65536
-                if mat.dont_write_depth:
-                    mat_flags |= 131072
-                if mat.blend_method == "CLIP":  # cutout
-                    mat_flags |= 262144
-                if mat.has_spec:
-                    mat_flags |= 16777216
-
-            write_integer(f, ">", mat_flags)
+            write_integer(f, ">", mat.mat_flags)
             write_float(f, ">", *mat.diffuse[0:3], mat.alpha)
             write_float(f, ">", *mat.ambient[0:3])
-            write_float(f, ">", *mat.specular[0:3], mat.specular_value, mat.shininess)
+            write_float(f, ">", *mat.specular[0:3], self._to_gno_overflow(mat.specular_value), mat.shininess)
 
             write_integer(f, ">", mat.blend_type, mat.source_fact, mat.dest_fact, mat.blend_op, mat.z_mode)
             write_byte(f, ">", mat.ref0, mat.ref1, 0, 0)
             write_integer(f, ">", mat.comp0, mat.comp1, mat.alpha_op)
             f.write(pack(">i", mat.user))
 
-            image_count = 0  # subtract moment
-
             for image in mat.texture_list:
-                image_flags = 0
-                if image.uv_offset[0] == image.uv_offset[1] == 0:
-                    image_flags |= 1073741824
-
-                if image.u_wrap == 0:
-                    image_flags |= 65536
-                elif image.u_wrap == 2:
-                    image_flags |= 1048576
-                else:  # elif image.u_wrap == 1:
-                    image_flags |= 262144
-                if image.v_wrap == 0:
-                    image_flags |= 131072
-                elif image.v_wrap == 2:
-                    image_flags |= 2097152
-                else:  # elif image.v_wrap == 1:
-                    image_flags |= 524288
-
-                if image.reflection:
-                    image_flags |= 8192
-                elif image.uv_map == 0:
-                    image_flags |= 256
-                elif image.uv_map == 1:
-                    image_flags |= 512
-                elif image.uv_map == 2:
-                    image_flags |= 1024
-                elif image.uv_map == 3:
-                    image_flags |= 2048
-
-                mix_types = {
-                    '_NN_RGB_MULTI': 1, "_NN_RGB_DECAL": 2, '_NN_RGB_REPLACE': 3, "_NN_RGB_BLEND": 4,
-                    '_NN_RGB_PASS': 5, "_NN_RGB_ALPHA": 6, '_NN_RGB_DECAL_2': 7,
-                    '_NN_RGB_ADD': 11, "_NN_RGB_SPEC": 9, '_NN_RGB_SPEC_2': 10,
-                }
-
-                if image.mix_type != "_NN_RGB_SUB":
-                    image_flags |= mix_types[image.mix_type]
+                write_integer(f, ">", image.texture_flags)
+                if image.image_index != -1:
+                    write_integer(f, ">", image.image_index)
                 else:
-                    if image_count == 0:
-                        image_flags |= 8
-                    else:
-                        image_flags |= 12
-
-                write_integer(f, ">", image_flags)
-                write_integer(f, ">", textures.index(image.name.image.filepath))
-                write_float(f, ">", *image.uv_offset[:2])
-                write_float(f, ">", image.col_2_multi)
-                image_count += 1
+                    write_integer(f, ">", textures.index(image.name.image.filepath))
+                write_float(f, ">", *image.uv_offset)
+                write_float(f, ">", image.blend)
 
     def _xno_texture(self):
         f = self.f
-        textures = self.material_data.texture_list
-        # todo way to represent material as flat
-
         for i, mat in enumerate(self.material_data.material_list):
+            textures = list(self.material_data.texture_list.keys())
             self.mat_offsets[i][2] = f.tell()
-            tex_types = [a.type for a in mat.texture_list]
-            if "DiffuseTexture" in tex_types and tex_types.index("DiffuseTexture"):
-                # this means its not at index 0
-                # which will fuck up shading
-                old_data = mat.texture_list.pop(tex_types.index("DiffuseTexture"))
-                mat.texture_list.insert(0, old_data)
-
             for image in mat.texture_list:
-                if image.type == "DiffuseTexture":
-                    diff_flags = 1074528513
-                    if "ReflectionTexture" in tex_types:
-                        diff_flags = diff_flags | 3
-                    write_integer(f, "<", diff_flags)
-                    # write index
+                write_integer(f, "<", image.texture_flags)
+                if image.image_index != -1:
+                    write_integer(f, "<", image.image_index)
+                else:
                     write_integer(f, "<", textures.index(image.name.image.filepath))
-                    write_float(f, "<", 0, 0, 1, 0)
-                    write_integer(f, "<", 65540, 0, 0, 0, 0, 0)
-                elif image.type == "ReflectionTexture":
-                    write_integer(f, "<", 1074536452)
-                    # write index
-                    write_integer(f, "<", textures.index(image.name.image.filepath))
-                    write_float(f, "<", 0, 0, 1, 0)
-                    write_integer(f, "<", 65540, 0, 0, 0, 0, 0)
-                    # yes riders does suck
-                    write_integer(f, "<", 1074536454)
-                    # write index
-                    write_integer(f, "<", textures.index(image.name.image.filepath))
-                    write_float(f, "<", 0, 0, 1, 0)
-                    write_integer(f, "<", 65540, 0, 0, 0, 0, 0)
-            if "ReflectionTexture" in tex_types:
-                mat.texture_list.append(mat.texture_list[tex_types.index("ReflectionTexture")])
+
+                write_float(f, "<", *image.uv_offset)
+                write_float(f, "<", image.blend, 0)
+                write_short(f, "<", to_interp_min(image.interp_min), to_interp_mag(image.interp_mag))
+                write_float(f, "<", image.lod_bias)
+                write_integer(f, "<", image.max_mip_map_level)
+                write_float(f, "<", 0, 0, 0)
 
     def _zno_texture(self):
         f = self.f
-        textures = self.material_data.texture_list
+        textures = list(self.material_data.texture_list.keys())
         # todo way to represent material as flat
 
         for i, mat in enumerate(self.material_data.material_list):
@@ -1269,10 +1202,7 @@ class Write:
         new_off = []
         for offset, mat in zip(self.mat_offsets, self.material_data.material_list):
             new_off.append(f.tell())
-            a = 16777248  # todo its the same concept :flushed:
-            if mat.v_col:
-                a = a | 16
-            write_integer(f, "<", a, 0)
+            write_integer(f, "<", mat.mat_flags, mat.user)
             self.nof0_offsets.append(f.tell())
             write_integer(f, "<", offset[0])
             self.nof0_offsets.append(f.tell())
@@ -1287,7 +1217,7 @@ class Write:
         new_off = []
         for offset, mat in zip(self.mat_offsets, self.material_data.material_list):
             new_off.append(f.tell())
-            a = 16777248  # todo its the same concept :flushed:
+            a = 16777248
             # todo all of these are temp hehe
             if mat.v_col:
                 a = a | 16
@@ -1333,17 +1263,14 @@ class Write:
             write_integer(f, "<", a)
 
     def gno(self):
-        if self.material_data.simple:
-            self._gno_texture_simple()
-        else:
-            self._gno_texture_complex()
+        self._gno_texture()
         material_offset = self.f.tell()
         self._gno_offsets()
         return material_offset, self.nof0_offsets
 
     def xno(self):
         self._xno_colour()
-        self._xno_unknown()
+        self._xno_flags()
         self._xno_texture()
         self._xno_info()
         material_offset = self.f.tell()

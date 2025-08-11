@@ -78,6 +78,7 @@ def make_mesh(self):
                 col_layer.data[v_index + 2].color = col_data[face_index[2]]
 
         def make_normals():
+            mesh.shade_smooth()
             mesh.normals_split_custom_set_from_vertices(norm_short_hand)
 
         def make_normals_face():
@@ -86,6 +87,7 @@ def make_mesh(self):
                 norm_new.append(norm_short_hand[f_i[0]])
                 norm_new.append(norm_short_hand[f_i[1]])
                 norm_new.append(norm_short_hand[f_i[2]])
+            mesh.shade_smooth()  # im so embarrassed man
             mesh.normals_split_custom_set(norm_new)
 
         def make_weights_complex():
@@ -142,18 +144,20 @@ def make_mesh(self):
         collection.objects.link(obj)
 
         mesh.from_pydata(pos_short_hand, [], face_list)
+        armature.pose.bones[bone_hide].nn_mesh_count += 1
+        armature.pose.bones[bone_hide].nn_meshes[armature.pose.bones[bone_hide].nn_mesh_count-1].mesh = obj
 
         if not sm.material < len(material_list_blender):
             obj.data.materials.append(material_list_blender[0])
         else:
             obj.data.materials.append(material_list_blender[sm.material])
-        obj.modifiers.new(name=model_name, type='ARMATURE').object = obj.parent = armature
-        obj.matrix_parent_inverse = armature.matrix_world.inverted()
-        obj.matrix_world = armature.matrix_world
+        mod = obj.modifiers.new(name=armature.name, type='ARMATURE').object = obj.parent = armature
 
         # this is called in materials by the v col node. The node needs a data layer, or it will break materials
         # don't get rid of this
         mesh.vertex_colors.new(name=model_name_strip + "_Vertex_Colours")
+
+        mesh.nn_vertex_index = sm_mesh_index
 
         if is_gno:
             if uv_short_hand:
@@ -199,10 +203,17 @@ def make_mesh(self):
                 make_weights_simple()
 
         if self.settings.clean_mesh:
+            if not self.settings.loose_verts:
+                model_util.clean_mesh(obj)
             if self.format in {"KOnAfterSchoolLive_U", "SegaSuperstars_S"}:  # problematic games
                 model_util.clean_mesh_strict(obj)
-            else:
-                model_util.clean_mesh(obj)
+
+        if self.settings.pose:
+            # mb for thinking obj.select_set(True) would work to select an item
+            bpy.context.view_layer.objects.active = obj
+            bpy.ops.object.modifier_apply(modifier=mod.name)  # sigh
+            bpy.context.view_layer.objects.active = None
+            mod = obj.modifiers.new(name=armature.name, type='ARMATURE').object = obj.parent = armature
 
     def face_clean_gno(face_clean, face_high):
         for ind in face_broke:
@@ -218,6 +229,7 @@ def make_mesh(self):
         v_data = vertex_data[sm_mesh_index]
         face_list = face_list1[sm.face]
         vertex_count = len(v_data.positions)
+        bone_hide = sm.bone_visibility
 
         is_gno = False
         face_broke = []
@@ -241,41 +253,78 @@ def make_mesh(self):
         lowest = 0
         highest = max([item for sub in face_list for item in sub]) + 1
 
-        if is_gno:
-            face_list, highest = face_clean_gno(face_list, highest)
+        if not self.settings.loose_verts:
+            if is_gno:
+                face_list, highest = face_clean_gno(face_list, highest)
 
-            if self.model.norm[sm.face]:
-                face_norm, highest = face_clean_gno(self.model.norm[sm.face], highest)
+                if self.model.norm[sm.face]:
+                    face_norm, highest = face_clean_gno(self.model.norm[sm.face], highest)
 
-            if self.model.col[sm.face]:
-                face_col, highest = face_clean_gno(self.model.col[sm.face], highest)
+                if self.model.col[sm.face]:
+                    face_col, highest = face_clean_gno(self.model.col[sm.face], highest)
 
-            face_uvs, face_uvs2, face_uvs3 = [], [], []
-            if self.model.uvs[sm.face]:
-                if self.model.uvs[sm.face][0]:
-                    face_uvs, highest = face_clean_gno(self.model.uvs[sm.face][0], highest)
-                if self.model.uvs[sm.face][1]:
-                    face_uvs2, highest = face_clean_gno(self.model.uvs[sm.face][1], highest)
-                if self.model.uvs[sm.face][2]:
-                    face_uvs3, highest = face_clean_gno(self.model.uvs[sm.face][2], highest)
-            uv_short_hand = []
-            uv2_short_hand = []
-            uv3_short_hand = []
-            if len(v_data.uvs) > 0:
-                uv_short_hand = v_data.uvs[0][lowest: highest]
-            if len(v_data.uvs) > 1:
-                uv2_short_hand = v_data.uvs[1][lowest: highest]
-            if len(v_data.uvs) > 2:
-                uv3_short_hand = v_data.uvs[2][lowest: highest]
+                face_uvs, face_uvs2, face_uvs3 = [], [], []
+                if self.model.uvs[sm.face]:
+                    if self.model.uvs[sm.face][0]:
+                        face_uvs, highest = face_clean_gno(self.model.uvs[sm.face][0], highest)
+                    if self.model.uvs[sm.face][1]:
+                        face_uvs2, highest = face_clean_gno(self.model.uvs[sm.face][1], highest)
+                    if self.model.uvs[sm.face][2]:
+                        face_uvs3, highest = face_clean_gno(self.model.uvs[sm.face][2], highest)
+                uv_short_hand = []
+                uv2_short_hand = []
+                uv3_short_hand = []
+                if len(v_data.uvs) > 0:
+                    uv_short_hand = v_data.uvs[0][lowest: highest]
+                if len(v_data.uvs) > 1:
+                    uv2_short_hand = v_data.uvs[1][lowest: highest]
+                if len(v_data.uvs) > 2:
+                    uv3_short_hand = v_data.uvs[2][lowest: highest]
+            else:
+                uv_short_hand = v_data.uvs[lowest: highest]
+                wx_short_hand = v_data.wxs[lowest: highest]
+
+            v_loop_count = len(face_list)
+            col1_short_hand = v_data.colours[0][lowest: highest]
+            col2_short_hand = v_data.colours[1][lowest: highest]
+            norm_short_hand = v_data.normals[lowest: highest]
+            pos_short_hand = v_data.positions[lowest: highest]
         else:
-            uv_short_hand = v_data.uvs[lowest: highest]
-            wx_short_hand = v_data.wxs[lowest: highest]
+            if is_gno:
+                face_list, highest = face_clean_gno(face_list, highest)
 
-        v_loop_count = len(face_list)
-        col1_short_hand = v_data.colours[0][lowest: highest]
-        col2_short_hand = v_data.colours[1][lowest: highest]
-        norm_short_hand = v_data.normals[lowest: highest]
-        pos_short_hand = v_data.positions[lowest: highest]
+                if self.model.norm[sm.face]:
+                    face_norm, highest = face_clean_gno(self.model.norm[sm.face], highest)
+
+                if self.model.col[sm.face]:
+                    face_col, highest = face_clean_gno(self.model.col[sm.face], highest)
+
+                face_uvs, face_uvs2, face_uvs3 = [], [], []
+                if self.model.uvs[sm.face]:
+                    if self.model.uvs[sm.face][0]:
+                        face_uvs, highest = face_clean_gno(self.model.uvs[sm.face][0], highest)
+                    if self.model.uvs[sm.face][1]:
+                        face_uvs2, highest = face_clean_gno(self.model.uvs[sm.face][1], highest)
+                    if self.model.uvs[sm.face][2]:
+                        face_uvs3, highest = face_clean_gno(self.model.uvs[sm.face][2], highest)
+                uv_short_hand = []
+                uv2_short_hand = []
+                uv3_short_hand = []
+                if len(v_data.uvs) > 0:
+                    uv_short_hand = v_data.uvs[0]
+                if len(v_data.uvs) > 1:
+                    uv2_short_hand = v_data.uvs[1]
+                if len(v_data.uvs) > 2:
+                    uv3_short_hand = v_data.uvs[2]
+            else:
+                uv_short_hand = v_data.uvs
+                wx_short_hand = v_data.wxs
+
+            v_loop_count = len(face_list)
+            col1_short_hand = v_data.colours[0]
+            col2_short_hand = v_data.colours[1]
+            norm_short_hand = v_data.normals
+            pos_short_hand = v_data.positions
 
         build_mesh()
 
@@ -286,21 +335,24 @@ class MeshData:
     radius: float
     center: tuple
     bone_names: list
+    vis_bone: int
     material_name: str
     blend_method: ""
     vert: int
     face: int
 
 
-def get_meshes(obj_mesh_list):
+def get_meshes(a):
+    (obj_mesh_list, vis_bones) = a
     import math
     mesh_list = []
-    for child in obj_mesh_list:
+    for i, child in enumerate(obj_mesh_list):
         child: Object
         # noinspection PyTypeChecker
         mesh: Mesh = child.data
         material_name = child.active_material.name
         bone_names = [a.name for a in child.vertex_groups]
+        vis_bone = vis_bones[i]
 
         co_ords = [0, 0, 0] * len(mesh.vertices)
         mesh.vertices.foreach_get("co", co_ords)
@@ -323,7 +375,7 @@ def get_meshes(obj_mesh_list):
         radius_list = [math.sqrt(((a[0] - center_x) ** 2 + (a[1] - center_y) ** 2 + (a[2] - center_z) ** 2)) for a in pos]
         radius = max(radius_list)
 
-        mesh_list.append(MeshData(child, radius, center, bone_names, material_name, "", 0, 0))
+        mesh_list.append(MeshData(child, radius, center, bone_names, vis_bone, material_name, "", 0, 0))
 
     return mesh_list
 
@@ -387,6 +439,7 @@ class GenerateMeshesGno:
         self.face_ind = 0
         self.vert_ind = 0
         self.geometry_list = []
+        self.round_normal = 6
 
     def _convert_data_types_simple(self, data_types):
         pos, norms, cols, uvs = data_types
@@ -470,36 +523,39 @@ class GenerateMeshesGno:
         c_type = 0
         u_type = 0
 
-        if pos_type == "float":
-            p_type = 1
-        elif pos_type == "short":
-            pos_max = max([abs(a) for b in pos for a in b])
+        if pos:
+            if pos_type == "float":
+                p_type = 1
+            elif pos_type == "short":
+                pos_max = max([abs(a) for b in pos for a in b])
 
-            if pos_max <= 7.999755859375:
-                p_type = 8
-                pos = [(round(a[0] * 4096), round(a[1] * 4096), round(a[2] * 4096)) for a in pos]
-            elif pos_max <= 31.9990234375:
-                p_type = 7
-                pos = [(round(a[0] * 1024), round(a[1] * 1024), round(a[2] * 1024)) for a in pos]
-            elif pos_max <= 127.99609375:
-                p_type = 6
-                pos = [(round(a[0] * 256), round(a[1] * 256), round(a[2] * 256)) for a in pos]
-            elif pos_max <= 511.984375:
-                p_type = 5
-                pos = [(round(a[0] * 64), round(a[1] * 64), round(a[2] * 64)) for a in pos]
-            elif pos_max <= 2047.9375:
-                p_type = 4
-                pos = [(round(a[0] * 16), round(a[1] * 16), round(a[2] * 16)) for a in pos]
-            elif pos_max <= 8191.75:
-                p_type = 3
-                pos = [(round(a[0] * 4), round(a[1] * 4), round(a[2] * 4)) for a in pos]
-            else:  # pos_max <= 32767:
-                p_type = 2
-                pos = [(round(a[0] * 1), round(a[1] * 1), round(a[2] * 1)) for a in pos]
+                if pos_max <= 7.999755859375:
+                    p_type = 8
+                    pos = [(round(a[0] * 4096), round(a[1] * 4096), round(a[2] * 4096)) for a in pos]
+                elif pos_max <= 31.9990234375:
+                    p_type = 7
+                    pos = [(round(a[0] * 1024), round(a[1] * 1024), round(a[2] * 1024)) for a in pos]
+                elif pos_max <= 127.99609375:
+                    p_type = 6
+                    pos = [(round(a[0] * 256), round(a[1] * 256), round(a[2] * 256)) for a in pos]
+                elif pos_max <= 511.984375:
+                    p_type = 5
+                    pos = [(round(a[0] * 64), round(a[1] * 64), round(a[2] * 64)) for a in pos]
+                elif pos_max <= 2047.9375:
+                    p_type = 4
+                    pos = [(round(a[0] * 16), round(a[1] * 16), round(a[2] * 16)) for a in pos]
+                elif pos_max <= 8191.75:
+                    p_type = 3
+                    pos = [(round(a[0] * 4), round(a[1] * 4), round(a[2] * 4)) for a in pos]
+                else:  # pos_max <= 32767:
+                    p_type = 2
+                    pos = [(round(a[0] * 1), round(a[1] * 1), round(a[2] * 1)) for a in pos]
 
         if norms:
             if norm_type == "float":
                 n_type = 1
+                round_value = self.round_normal
+                norms = [(round(a[0], round_value), round(a[1], round_value), round(a[2], round_value)) for a in norms]
             elif norm_type == "short":
                 n_type = 2
                 norms = [(round(a[0] * 16384), round(a[1] * 16384), round(a[2] * 16384)) for a in norms]
@@ -785,6 +841,9 @@ class GenerateMeshesGno:
                 var = l.normal[::]
                 norm_start.append(var)
 
+            pos_start, norm_start, _, _, p_type, n_type, _, _ = self._convert_data_types_complex(
+                (pos_start, norm_start, None, None))
+
             if norm_start:
                 for p1, p2, p3, w1, w2, w3, n1, n2, n3 in zip(
                         pos_start[0::3], pos_start[1::3], pos_start[2::3],
@@ -902,9 +961,8 @@ class GenerateMeshesGno:
             objm.vert = vert_ind
             face_ind += 1
             vert_ind += 1
-            pos, norms, cols, uvs, p_type, n_type, c_type, u_type = self._convert_data_types_complex(
-                (pos, norms, cols, uvs))
-            # todo everything needs to checked and cleaned
+            _, _, cols, uvs, _, _, c_type, u_type = self._convert_data_types_complex(
+                (None, None, cols, uvs))
 
             vert_list.append(VertexDataGno(pos, p_type, norms, n_type, cols, c_type, uvs, u_type, weights))
             face_list.append(FaceDataGno(faces, p_type, n_type, c_type, u_type, has_wx, 1))
@@ -1090,7 +1148,7 @@ class GenerateMeshes:
                 face_indices.append(
                     (vertex_data_unique.index(f1), vertex_data_unique.index(f2), vertex_data_unique.index(f3)))
 
-            faces = model_util.TriStripper(([], )).to_tri_strip(face_indices)
+            faces = model_util.TriStripper(([], )).to_tri_strip(face_indices, True)
             vertex_off += vertex_count  # this means the next mesh will have the correct starting value
             objm.face = self.face_ind
             self.face_ind += 1

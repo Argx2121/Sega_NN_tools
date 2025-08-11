@@ -31,10 +31,13 @@ class Read:
         f = self.f
         start_block = f.tell() - 4
         end_of_block = start_block + read_int(f) + 8
-        f.seek(self.post_info + read_int(f) + 4)
+        to_info = read_int(f)
+        f.seek(self.post_info + to_info + 4)
         bone_count = read_int(f)
         name_start = read_int(f)
         f.seek(self.post_info + name_start)
+        if to_info == name_start:
+            f.seek(self.post_info + 16)
         bone_names = [list(read_int_tuple(f, 2)) for _ in range(bone_count)]
         for i in range(bone_count):
             f.seek(bone_names[i][1] + self.post_info)
@@ -48,10 +51,13 @@ class Read:
         f = self.f
         start_block = f.tell() - 4
         end_of_block = start_block + read_int(f) + 8
-        f.seek(self.post_info + read_int(f, ">") + 4)
+        to_info = read_int(f, ">")
+        f.seek(self.post_info + to_info + 4)
         bone_count = read_int(f, ">")
         name_start = read_int(f, ">")
         f.seek(self.post_info + name_start)
+        if to_info == name_start:  # can you guys please stop making malformed files please !!
+            f.seek(self.post_info + 16)
         bone_names = [list(read_int_tuple(f, 2, ">")) for _ in range(bone_count)]
         for i in range(bone_count):
             f.seek(bone_names[i][1] + self.post_info)

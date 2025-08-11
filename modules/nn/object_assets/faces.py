@@ -588,11 +588,12 @@ class Write:
                 elif face_info.uvs_type:
                     face_flags = face_flags | 16
                     face_type_count += 1
+                write_byte(f, ">", face_flags)
 
-                write_byte(f, ">", face_flags, 153)
-                write_short(f, ">", len(face_info.faces) // face_type_count)
-
-                write_short(f, ">", *face_info.faces)
+                for faces in face_info.faces:
+                    write_byte(f, ">", 153)
+                    write_short(f, ">", len(faces) // face_type_count)
+                    write_short(f, ">", *faces)
 
                 write_aligned(f, 32)
                 self.face_offsets.append((start, f.tell(), i, face_info))

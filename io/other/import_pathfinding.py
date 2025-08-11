@@ -13,7 +13,7 @@ from ...modules.other.pathfinding.sfr import ReadX360 as Sfr
 
 class ImportSegaNNPathfinding(bpy.types.Operator, ImportHelper):
     """Import Pathfinding (as edges)"""
-    bl_idname = "import.sega_nn_pathfinding"
+    bl_idname = "import_nn.sega_nn_pathfinding"
     bl_label = "Import Pathfinding (as edges)"
     bl_options = {'REGISTER', 'UNDO'}
     filename_ext = "*.pathfinding"

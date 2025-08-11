@@ -15,6 +15,19 @@ no_export_list = (
     # ("Z", "ZNO", "Zno"),
 )
 
+nn_export_list = (
+    # Formats
+    ("C", "CNO", "Cno"),
+    ("E", "ENO", "Eno"),
+    ("G", "GNO", "Gno"),
+    ("I", "INO", "Ino"),
+    ("L", "LNO", "Lno"),
+    ("S", "SNO", "Sno"),
+    ("U", "UNO", "Uno"),
+    ("X", "XNO", "Xno"),
+    ("Z", "ZNO", "Zno"),
+)
+
 no_list = (
     # Extra import functions
     ("Match__", "Match", "Tries to match the file with a known format (Experimental!!)"),
@@ -90,19 +103,19 @@ nv_list = (
     ("Z", "ZNV", "Znv"),
 )
 
-nf_list = (
+ng_list = (
     # Extra import functions
     ("Match__", "Match", "Tries to match the file with a known format (Experimental!!)"),
     # Formats
-    ("C", "CNF", "Cnf"),
-    ("E", "ENF", "Enf"),
-    ("G", "GNF", "Gnf"),
-    ("I", "INF", "Inf"),
-    ("L", "LNF", "Lnf"),
-    ("S", "SNF", "Snf"),
-    ("U", "UNF", "Unf"),
-    ("X", "XNF", "Xnf"),
-    ("Z", "ZNF", "Znf"),
+    ("C", "CNG", "Cng"),
+    ("E", "ENG", "Eng"),
+    ("G", "GNG", "Gng"),
+    ("I", "ING", "Ing"),
+    ("L", "LNG", "Lng"),
+    ("S", "SNG", "Sng"),
+    ("U", "UNG", "Ung"),
+    ("X", "XNG", "Xng"),
+    ("Z", "ZNG", "Zng"),
 )
 
 # Syntax plays an important role in importing so follow this arrangement:

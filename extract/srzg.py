@@ -58,7 +58,7 @@ class ExtractSRZG:
                                 break
 
                     f.seek(i + 4)
-                    file_name, _ = ReadNn(f, self.file_path, "", False).find_file_name(i)
+                    file_name, _ = ReadNn(f, self.file_path).find_file_name(i)
 
                     f.seek(i)
 
@@ -121,7 +121,7 @@ class ExtractSRZG:
             self.f.close()
 
         else:
-            files_pack = get_files(self.file, self.set_batch,name_require=".pack")
+            files_pack = get_files(self.file, self.set_batch, name_require=".pack", case_sensitive=False)
             for self.file in files_pack:
                 self.f = open(self.file, "rb")
                 self.pack_extract()

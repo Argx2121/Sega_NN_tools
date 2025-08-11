@@ -2,7 +2,7 @@ import bpy
 import math
 
 from dataclasses import dataclass
-from ..util import console_out, bad_mesh
+from ..util import console_out, bad_mesh, get_bpy_meshes
 from .model_assets import model_util, armature, mesh, materials
 
 
@@ -17,6 +17,7 @@ class Model:
         self.model_name = nn.name
         self.model_name_strip = self.model_name[:-4]
         self.texture_names = nn.textures
+        self.effect = nn.effect
         self.armature = None
         self.material_list_blender = []
         self.group_names = []
@@ -27,16 +28,14 @@ class Model:
         print("Making a Model------------------------------------")
         message = "Making" + " " + self.model_name
         print(message + " " * (50 - len(message)) + "|")
+        bpy.context.view_layer.objects.active = None
 
         console_out("Making Armature...", armature.make_armature, self)
         console_out("Generating Names...", model_util.make_names, self)
-        if self.settings.keep_bones_accurate:
-            console_out("Making Accurate Bones...", armature.make_bones_accurate, self)
-        else:
-            console_out("Making Pretty Bones...", armature.make_bones_pretty, self)
+        console_out("Making Accurate Bones...", armature.make_bones_accurate, self)
 
         bpy.ops.object.mode_set(mode="POSE")  # pose bone stuff here
-        console_out("Making Bone Constraints...", armature.make_bone_constraints, self)
+        console_out("Making Pose Bones...", armature.make_bone_pose, self)
         bpy.ops.object.mode_set(mode="OBJECT")  # return to normal
         console_out("Making Bone Collections...", armature.make_bone_collections, self)
         if self.settings.hide_null_bones:
@@ -45,12 +44,17 @@ class Model:
         if self.settings.simple_materials:
             console_out("Making Simple Materials...", materials.material_simple, self)
         else:
-            if self.format[-1] == "G":
-                console_out("Making Accurate Materials...", materials.material_gno, self)
+            if self.format[-1] in {'G', 'X'}:
+                console_out("Making Accurate Materials...", materials.material_accurate, self)
             else:
                 console_out("Making Accurate Materials...", materials.material_complex, self)
 
         console_out("Making Meshes...", mesh.make_mesh, self)
+        if self.settings.pose:
+            bpy.context.view_layer.objects.active = self.armature
+            bpy.ops.object.mode_set(mode="POSE")
+            bpy.ops.pose.armature_apply()
+            bpy.ops.object.mode_set(mode="OBJECT")
 
 
 @dataclass
@@ -77,7 +81,8 @@ class MeshTypes:
 
 
 class ModelInfo:
-    def __init__(self, settings, arma):
+    def __init__(self, context, settings, arma):
+        self.context = context
         self.settings = settings
         self.format = settings.format
         self.armature = arma
@@ -88,16 +93,18 @@ class ModelInfo:
         self.bone = []
         self.bone_depth = 0
         self.bone_used = []
+        self.vis_bone = []
         self.material = []
         self.meshes = []
 
     def generic(self):
         arma = self.armature
         name = arma.name
-        mesh_list = [a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0]
+        mesh_list = get_bpy_meshes(self.context, arma)
         self.mesh_list = mesh_list
 
-        if name.endswith("." + self.format[-1].lower() + "no"):
+        end_str = "." + self.format[-1].lower() + "no"
+        if name.casefold().endswith(end_str.casefold()):
             pass
         else:
             name = name + "." + self.format[-1].lower() + "no"
@@ -109,7 +116,7 @@ class ModelInfo:
         print(message + " " * (50 - len(message)) + "|")
 
     def get_empty_rig(self):
-        bone, bone_depth, bone_used = console_out("Getting Bone Info...", armature.get_bones, self)
+        bone, bone_depth, bone_used, vis_bone = console_out("Getting Bone Info...", armature.get_bones, self)
         material = console_out("Getting Material Info...", materials.get_materials, self)
         meshes = MeshTypes([], [], [], [], [], [])
         meshes, geometry = console_out("Generating Geometry...", mesh.get_geometry, (meshes, self.settings, self))
@@ -117,9 +124,9 @@ class ModelInfo:
 
     def get_generic(self):
         self.center, self.radius = console_out("Generating Bounds...", armature.get_render_data, self.mesh_list)
-        self.bone, self.bone_depth, self.bone_used = console_out("Getting Bone Info...", armature.get_bones, self)
+        self.bone, self.bone_depth, self.bone_used, vis_bone = console_out("Getting Bone Info...", armature.get_bones, self)
         self.material = console_out("Getting Material Info...", materials.get_materials, self)
-        self.meshes = console_out("Getting Mesh Info...", mesh.get_meshes, self.mesh_list)
+        self.meshes = console_out("Getting Mesh Info...", mesh.get_meshes, (self.mesh_list, vis_bone))
 
     def alpha_fix(self):
         material = self.material

@@ -1,7 +1,47 @@
 from dataclasses import dataclass
 from mathutils import Matrix
 
+from enum import Flag
 from ...util import *
+
+
+def bone_flags(bone_flag):
+    class BoneFlags(Flag):
+        init_unit_pos = bone_flag >> 0 & 1  # init matrix doesnt have a not unit position (aka pos = 0, 0, 0)
+        init_unit_rot = bone_flag >> 1 & 1  # init matrix doesnt have a not unit rotation
+        init_unit_scale = bone_flag >> 2 & 1  # init matrix doesnt have a not unit scale
+        init_unit_matrix = bone_flag >> 3 & 1  # init matrix is all unit components
+        # hide = bone_flag >> 4 & 1  # im not adding this bro no ones gonna use the hide bone flag itll be in anims
+        # hide_recursive = bone_flag >> 5 & 1  # why?
+        init_pos = bone_flag >> 6 & 1  # init matrix is all unit components but position
+        init_ortho = bone_flag >> 7 & 1  # inits transposed form = inits inverted form
+
+        xyz = (bone_flag >> 8 & 15) == 0
+        xzy = (bone_flag >> 8 & 15) == 1
+        zxy = (bone_flag >> 8 & 15) == 4
+
+        inherit_pos_only = bone_flag >> 12 & 1
+
+        ik_effector = bone_flag >> 13 & 1
+        ik_1bone_joint1 = bone_flag >> 14 & 1
+        ik_2bone_joint1 = bone_flag >> 15 & 1
+        ik_2bone_joint2 = bone_flag >> 16 & 1
+        ik_minus_z = bone_flag >> 17 & 1  # ???????
+
+        reset_scale_x = bone_flag >> 18 & 1
+        reset_scale_y = bone_flag >> 19 & 1
+        reset_scale_z = bone_flag >> 20 & 1
+
+        bounding_box = bone_flag >> 21 & 1
+        bounding_box_sphere = bone_flag >> 22 & 1
+        bounding_box_dom_x = bone_flag >> 23 & 3 == 1
+        bounding_box_dom_y = bone_flag >> 23 & 3 == 2
+        bounding_box_dom_z = bone_flag >> 23 & 3 == 3
+
+        ik_1bone_root = bone_flag >> 25 & 1
+        ik_2bone_root = bone_flag >> 26 & 1
+        xsiik = bone_flag >> 27 & 1
+    return BoneFlags
 
 
 class Read:
@@ -18,7 +58,7 @@ class Read:
     class Bone:
         __slots__ = [
             "flags", "group", "parent", "child", "sibling",
-            "position", "rotation", "scale", "matrix", "center", "radius", "unknown", "length"
+            "position", "rotation", "scale", "matrix", "center", "radius", "user", "length"
         ]
         flags: int
         group: int
@@ -31,14 +71,14 @@ class Read:
         matrix: Matrix
         center: tuple
         radius: float
-        unknown: int
+        user: int
         length: tuple
 
     def le_full(self):
         f = self.f
         bone_data = [
             self.Bone(
-                read_int(f), read_short(f), read_short(f), read_short(f), read_short(f),
+                bone_flags(read_int(f)), read_short(f), read_short(f), read_short(f), read_short(f),
                 read_float_tuple(f, 3), read_int_bam_tuple(f, 3), read_float_tuple(f, 3),
                 Matrix((read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
                         read_float_tuple(f, 4))).transposed().inverted_safe(),
@@ -51,7 +91,7 @@ class Read:
         f = self.f
         bone_data = []
         for _ in range(self.bone_count):
-            flags = read_int(f)
+            flags = bone_flags(read_int(f))
             group, parent, child, sibling = read_short_tuple(f, 4)
             f.seek(4, 1)
             pos = read_float_tuple(f, 3)
@@ -78,7 +118,7 @@ class Read:
         f = self.f
         bone_data = [
             self.Bone(
-                read_int(f, ">"), read_short(f, ">"), read_short(f, ">"), read_short(f, ">"), read_short(f, ">"),
+                bone_flags(read_int(f, ">")), read_short(f, ">"), read_short(f, ">"), read_short(f, ">"), read_short(f, ">"),
                 read_float_tuple(f, 3, ">"), read_int_bam_tuple(f, 3, ">"), read_float_tuple(f, 3, ">"),
                 Matrix((read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"),
                         read_float_tuple(f, 4, ">"))).transposed().inverted_safe(),
@@ -91,7 +131,7 @@ class Read:
         f = self.f
         bone_data = [
             self.Bone(
-                read_int(f), read_short(f), read_short(f), read_short(f), read_short(f),
+                bone_flags(read_int(f)), read_short(f), read_short(f), read_short(f), read_short(f),
                 read_float_tuple(f, 3), read_int_bam_tuple(f, 3), read_float_tuple(f, 3),
                 Matrix((read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
                         (0, 0, 0, 1))).inverted_safe(),
@@ -104,7 +144,7 @@ class Read:
         f = self.f
         bone_data = [
             self.Bone(
-                read_int(f, ">"), read_short(f, ">"), read_short(f, ">"), read_short(f, ">"), read_short(f, ">"),
+                bone_flags(read_int(f, ">")), read_short(f, ">"), read_short(f, ">"), read_short(f, ">"), read_short(f, ">"),
                 read_float_tuple(f, 3, ">"), read_int_bam_tuple(f, 3, ">"), read_float_tuple(f, 3, ">"),
                 Matrix((read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"),
                         (0, 0, 0, 1))).inverted_safe(),
@@ -125,8 +165,7 @@ class Write:
         f = self.f
         start = f.tell()
         for b in self.bones:
-            for var in b.flags:
-                f.write(pack(">B", var))
+            f.write(pack(">I", b.flags))
             f.write(pack(">h", b.used))
             f.write(pack(">h", b.parent))
             f.write(pack(">h", b.child))
@@ -134,7 +173,7 @@ class Write:
             for var in b.position:
                 write_float(f, ">", var)
             for var in b.rotation:
-                f.write(pack(">i", round(var / (180 / 32767))))
+                f.write(pack(">i", round(var * 182.04444)))
             for var in b.scale:
                 write_float(f, ">", var)
             bmat = b.matrix
@@ -148,7 +187,7 @@ class Write:
             for var in b.center:
                 write_float(f, ">", var)
             write_float(f, ">", b.radius)
-            write_float(f, ">", b.unknown)
+            f.write(pack(">i", b.user))
             for var in b.length:
                 write_float(f, ">", var)
         return start
@@ -158,8 +197,7 @@ class Write:
         start = f.tell()
         for b in self.bones:
             b.flags.reverse()
-            for var in b.flags:
-                f.write(pack("<B", var))
+            f.write(pack("<I", b.flags))
             f.write(pack("<h", b.used))
             f.write(pack("<h", b.parent))
             f.write(pack("<h", b.child))
@@ -167,7 +205,7 @@ class Write:
             for var in b.position:
                 write_float(f, "<", var)
             for var in b.rotation:
-                f.write(pack("<i", round(var / (180 / 32767))))
+                f.write(pack("<i", round(var * 182.04444)))
             for var in b.scale:
                 write_float(f, "<", var)
             bmat = b.matrix
@@ -181,7 +219,7 @@ class Write:
             for var in b.center:
                 write_float(f, "<", var)
             write_float(f, "<", b.radius)
-            write_float(f, "<", b.unknown)
+            f.write(pack("<i", b.user))
             for var in b.length:
                 write_float(f, "<", var)
         return start
@@ -190,8 +228,7 @@ class Write:
         f = self.f
         start = f.tell()
         for b in self.bones:
-            for var in b.flags:
-                f.write(pack(">B", var))
+            f.write(pack(">I", b.flags))
             f.write(pack(">h", b.used))
             f.write(pack(">h", b.parent))
             f.write(pack(">h", b.child))
@@ -199,7 +236,7 @@ class Write:
             for var in b.position:
                 write_float(f, ">", var)
             for var in b.rotation:
-                f.write(pack(">i", round(var / (180 / 32767))))
+                f.write(pack(">i", round(var * 182.04444)))
             for var in b.scale:
                 write_float(f, ">", var)
             bmat = b.matrix.transposed()
@@ -215,7 +252,7 @@ class Write:
             for var in b.center:
                 write_float(f, ">", var)
             write_float(f, ">", b.radius)
-            write_float(f, ">", b.unknown)
+            f.write(pack(">i", b.user))
             for var in b.length:
                 write_float(f, ">", var)
         return start
@@ -224,10 +261,7 @@ class Write:
         f = self.f
         start = f.tell()
         for b in self.bones:
-            # b.flags[2] = 0  # todo needed for zno
-            b.flags.reverse()
-            for var in b.flags:
-                f.write(pack("<B", var))
+            f.write(pack("<I", b.flags))
             f.write(pack("<h", b.used))
             f.write(pack("<h", b.parent))
             f.write(pack("<h", b.child))
@@ -235,7 +269,7 @@ class Write:
             for var in b.position:
                 write_float(f, "<", var)
             for var in b.rotation:
-                f.write(pack("<i", round(var / (180 / 32767))))
+                f.write(pack("<i", round(var * 182.04444)))
             for var in b.scale:
                 write_float(f, "<", var)
             bmat = b.matrix.transposed()
@@ -251,7 +285,7 @@ class Write:
             for var in b.center:
                 write_float(f, "<", var)
             write_float(f, "<", b.radius)
-            write_float(f, "<", b.unknown)
+            f.write(pack("<i", b.user))
             for var in b.length:
                 write_float(f, "<", var)
         return start

@@ -1,38 +1,40 @@
 from dataclasses import dataclass
 
+import bpy
 from bpy.props import StringProperty, EnumProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 
 from ...io.import_util import batch_handler
 from ...io.nn_import_data import *
 from ...io import nn_import_data as nn_data
-from ...modules.blender.model import Model
+from ...modules.blender.morph import *
 from ...modules.nn.nn import ReadNn
 from ...modules.util import *
-from ...modules.blender.animation import *
-from ...modules.blender.morph import *
+from ...modules.blender.model_assets.model_util import clean_mesh
 
-no_list_types = [a[1] for a in no_list[1:]]
 selected_file = ""
 
+# Please tell me if theres a better way to do this
+nn_morph_path = ""
 
-class ImportSegaNO(bpy.types.Operator, ImportHelper):
-    """Import a Sega NN Model"""
-    bl_idname = "import_nn.sega_no"
-    bl_label = "Import *no Model"
+
+class ImportSegaNG(bpy.types.Operator, ImportHelper):
+    """Import a Sega NN Morph"""
+    bl_idname = "import_nn.sega_ng"
+    bl_label = "Import *ng Morph"
     bl_options = {'REGISTER', 'UNDO'}
-    filename_ext = "*.cno;*.eno;*.gno;*.ino;*.lno;*.sno;*.uno;*.xno;*.zno"
+    filename_ext = "*.cng;*.eng;*.gng;*.ing;*.lng;*.sng;*.ung;*.xng;*.zng"
     filter_glob: StringProperty(
-        default="*.cno;*.eno;*.gno;*.ino;*.lno;*.sno;*.uno;*.xno;*.zno",
+        default="*.cng;*.eng;*.gng;*.ing;*.lng;*.sng;*.ung;*.xng;*.zng",
         options={'HIDDEN'},
         maxlen=255)
 
     # generic
     nn_format: EnumProperty(
         name="Format",
-        description="*no variant",
-        items=no_list,
-        default=no_list[0][0],
+        description="*ng variant",
+        items=ng_list,
+        default=ng_list[0][0],
     )
 
     C: EnumProperty(
@@ -82,14 +84,6 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
     )
 
     # other
-    recursive_textures: BoolProperty(
-        name="Recursive texture search",
-        description="Looks for textures in sub folders too",
-        default=True)
-    load_incomplete: BoolProperty(
-        name="Load incomplete textures",
-        description="Load textures even if its missing some",
-        default=True)
     batch: EnumProperty(
         name="Batch usage",
         description="What files should be imported",
@@ -98,29 +92,13 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
             ('Batch', "Batch", "Opens all of the folders files (non recursive)"),
             ('Recursive', "Recursive", "Opens files recursively")),
         default='Single')
-    simple_mat: BoolProperty(
-        name="Simple materials (for fbx export)",
-        description="Keep materials simple for exporting to other formats, meaning not all material info is imported",
-        default=True)
-    pose: BoolProperty(
-        name="Import Pose",
-        description="Imports Pose and bakes data to be the new rest position",
-        default=True)
-    bone: BoolProperty(
-        name="Hide Null bones",
-        description="Hides Null Group bones from view",
+    remove_loose: BoolProperty(
+        name="Remove Loose",
+        description="Remove loose vertices after you've imported all morphs",
         default=False)
-    loose_verts: BoolProperty(
-        name="Import loose vertices",
-        description="Import verts that aren't tied to faces. May be needed for shapekeys.",
-        default=False)
+
 
     # dev specific
-    clean: BoolProperty(
-        name="Clean mesh",
-        description="Remove anything that will make blender crash - speeds up importing at the cost of edit mode",
-        default=True)
-
     debug: BoolProperty(
         name="Debug mode",
         description="Print debug info",
@@ -133,10 +111,7 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         global selected_file
         if selected_file != bpy.context.space_data.params.filename:
             selected_file = bpy.context.space_data.params.filename
-            if len(selected_file) > 2 and selected_file[-3:].upper() in no_list_types:
-                # the file name is a variable that the user can set
-                #  the user could rename this variable to a filetype that isn't supported
-                #  it could also be renamed to gno to pull gno settings without actually selecting a gno file
+            if len(selected_file) > 2 and selected_file[-3:].upper():
                 self.nn_format = selected_file[-3].upper()
 
         nn_format = self.nn_format
@@ -147,99 +122,87 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         box = layout.box()
         box.label(text="Generic settings:", icon="KEYFRAME_HLT")
         box.row().prop(self, "batch", expand=True)
-        box.row().prop(self, "recursive_textures")
-        box.row().prop(self, "load_incomplete")
-        box.row().prop(self, "simple_mat")
-        box.row().prop(self, "pose")
-        box.row().prop(self, "bone")
-        box.row().prop(self, "loose_verts")
+        box.row().prop(self, "remove_loose", expand=True)
         if preferences.dev_mode:
             box = layout.box()
             box.label(text="Dev settings:", icon="KEYFRAME_HLT")
             box.row().prop(self, "debug")
-            box.row().prop(self, "clean")
 
     def execute(self, context):
         preferences = bpy.context.preferences.addons[__package__.partition(".")[0]].preferences
         if not preferences.dev_mode:
-            self.clean = True
             self.debug = False
         settings = Settings(
-            "", 0, self.debug, self.recursive_textures, self.load_incomplete,
-            self.batch, self.clean, self.simple_mat,
-            preferences.max_len, self.bone, self.loose_verts, self.pose
+            "", self.debug, self.batch, self.remove_loose,
         )
+
+        if not context.object.type == "ARMATURE":
+            return {'FINISHED'}
+
         nn_format = self.nn_format  # "Match__", "E" etc
         nn_format = getattr(self, nn_format, nn_format)
         # "Match__", "SonicFreeRiders_E" etc defaults to match
         settings.format = nn_format
-        settings.format_bone_scale = determine_bone[nn_format]
 
         # this gives us a game name
-        # noinspection PyUnresolvedReferences
         if nn_format != "Match__":
             pass  # user selected game name
         elif self.filepath.count(".") > 1 and self.filepath.split(".")[-2] in determine_bone:
             # dictionary has all game types
-            # noinspection PyUnresolvedReferences
             settings.format = self.filepath.split(".")[-2]
             # if extracted by these tools game name is in file name
         else:
             pass  # handled later
-        settings.format_bone_scale = determine_bone[settings.format]
-        # noinspection PyUnresolvedReferences
-        return model_import(self.filepath, settings)
+        return morph_import(self.filepath, settings)
 
 
 def menu_func_import(self, context):  # add to dynamic menu
-    self.layout.operator(ImportSegaNO.bl_idname, text="Sega NN Model (.xno, .zno, etc.)")
+    self.layout.operator(ImportSegaNG.bl_idname, text="Sega NN Morph (.xng, .zng, etc.)")
 
 
 @dataclass
 class Settings:
     format: str
-    format_bone_scale: int
     debug: bool
-    recursive_textures: bool
-    load_incomplete: bool
     batch_import: str
-    clean_mesh: bool
-    simple_materials: bool
-    max_bone_length: float
-    hide_null_bones: bool
-    loose_verts: bool
-    pose: bool
+    remove_loose: bool
 
 
-def model_import(filepath, settings):
+def remove_loose(settings):
+    if settings.remove_loose:
+        arma = bpy.context.object
+        meshes = []
+        for mesh in arma.children:
+            if mesh.type == "MESH":
+                meshes.append(mesh)
+        for mesh in meshes:
+            clean_mesh(mesh)
+
+
+def morph_import(filepath, settings):
     def execute_set(file_path):
-        if "texture_names" in file_path:
-            return
         f = open(file_path, 'rb')
         block = read_str_nulls(f, 4)[0]
         f.seek(0)
         expected_block = "N" + settings.format[-1] + "IF"
         print_line()
         if block == expected_block:
-            nn = ReadNn(f, file_path, settings.format, False, settings.debug).read_file()[1]
-            f.close()
-            if nn.model:
-                Model(nn, file_path, settings).execute()
+            nn = ReadNn(f, file_path, settings.format, settings.debug).read_file()[1]
             if nn.morphs:
-                if settings.format[-1] in {"G"}:
+                print("Making Morphs-------------------------------------")
+                message = "Making" + " " + nn.name
+                start_time = console_out_pre(message)
+                if block[1] in {"G"}:
                     Morph(nn, settings).replace_morph()
                 else:
                     Morph(nn, settings).add_morph()
-            if nn.animation:
-                Animation(nn, settings).node_animation()
+                console_out_post(start_time)
         else:
-            show_not_read("NN Model Importer")
+            show_not_read("NN Morph Importer")
         f.close()
 
     def execute_match(file_path):
-        if not file_path.lower().endswith("no"):
-            return
-        if "texture_names" in file_path:
+        if not file_path.lower().endswith("ng"):
             return
         f = open(file_path, 'rb')
         block = read_str_nulls(f, 4)[0]
@@ -248,28 +211,27 @@ def model_import(filepath, settings):
         print_line()
         if block == expected_block:
             settings.format = getattr(nn_data, block[1].lower() + "n_list")[0][0]
-            nn = ReadNn(f, file_path, settings.format, False, settings.debug).read_file()[1]
-            f.close()
-            if nn.model:
-                Model(nn, file_path, settings).execute()
+            nn = ReadNn(f, file_path, settings.format, settings.debug).read_file()[1]
             if nn.morphs:
-                if settings.format[-1] in {"G"}:
+                print("Making Morphs-------------------------------------")
+                message = "Making" + " " + nn.name
+                start_time = console_out_pre(message)
+                if block[1] in {"G"}:
                     Morph(nn, settings).replace_morph()
                 else:
                     Morph(nn, settings).add_morph()
-            if nn.animation:
-                Animation(nn, settings).node_animation()
+                console_out_post(start_time)
             settings.format = "Match__"
         else:
-            show_not_read("NN Model Importer")
+            show_not_read("NN Morph Importer")
         f.close()
 
-    if bpy.context.object and bpy.context.object.mode != "OBJECT":
-        bpy.ops.object.mode_set(mode="OBJECT")
     if settings.format != "Match__":
-        name_require = "." + settings.format[-1].lower() + "no"
+        name_require = "." + settings.format[-1].lower() + "ng"
         batch_handler(filepath, settings.batch_import, execute_set, name_require=name_require, case_sensitive=False)
+        remove_loose(settings)
     else:
-        name_require = "no"
+        name_require = "ng"
         batch_handler(filepath, settings.batch_import, execute_match, name_require=name_require, case_sensitive=False)
+        remove_loose(settings)
     return {'FINISHED'}

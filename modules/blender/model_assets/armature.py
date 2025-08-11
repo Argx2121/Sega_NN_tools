@@ -18,43 +18,27 @@ def make_bones_accurate(self):
     for i, b in enumerate(bone_data):
         bone = armature.edit_bones.new(bone_names[i])
 
+        if b.flags.inherit_pos_only:
+            bone.use_inherit_rotation = False
+            bone.inherit_scale = 'NONE'
+        elif b.flags.reset_scale_x and b.flags.reset_scale_y and b.flags.reset_scale_z:
+            bone.inherit_scale = 'NONE'
+        bone.use_local_location = False
+
         if b.parent != 65535:
             bone.parent = armature.edit_bones[b.parent]
+
         bone.tail = bone.head + mathutils.Vector((0, 1, 0))
         bone.matrix = b.matrix
         bone.length = tail_var
-
-
-def make_bones_pretty(self):
-    bone_data = self.model.bones
-    bone_names = self.bone_names
-    max_len = self.settings.max_bone_length
-    armature: Armature = bpy.context.object.data
-    tail_var = self.settings.format_bone_scale
-
-    for i, b in enumerate(bone_data):
-        bone = armature.edit_bones.new(bone_names[i])
-
-        if b.parent != 65535:
-            bone.parent = armature.edit_bones[b.parent]
-        bone.tail = b.position  # they store the position relative to parent bone
-        # it's not the correct usage but its aesthetically nice for most bones
-        bone.transform(b.matrix)
-
-        if not 0.0001 < bone.length < tail_var * max_len:  # blender rounds bone len
-            bone.length = tail_var  # 0 = bone isn't made, too big = can't see anything in blender
-        bone.roll = 0
-
-    if self.settings.all_bones_one_length:
-        for bone in armature.edit_bones:
-            bone.length = tail_var
+        if b.flags.ik_1bone_joint1 or b.flags.ik_2bone_joint1 or b.flags.ik_2bone_joint2:
+            bone.length = b.length[0]
 
 
 def make_armature(self):
     bpy.ops.object.add(type="ARMATURE", enter_editmode=True)
     obj = bpy.context.object
     obj.name = obj.data.name = self.model_name  # Object name, Armature name
-    obj.rotation_euler[0] = 1.5707963267949  # rotate 90 deg to stand up
     self.armature = obj
 
 
@@ -79,21 +63,80 @@ def make_bone_collections(self):
             bone.color.palette = "THEME08"  # makes it visibly different
 
 
-def make_bone_constraints(self):
+def make_bone_pose(self):
+    scales = []  # BLENDER
     for pose_b, nn_b in zip(bpy.context.object.pose.bones, self.model.bones):
-        if nn_b.flags & 1835008:
-            constraint = pose_b.constraints.new(type='LIMIT_ROTATION')
-            if nn_b.flags & 256:
-                constraint.use_limit_x = True
-                constraint.use_limit_z = True
-            elif nn_b.flags & 512:
-                constraint.use_limit_y = True
-                constraint.use_limit_z = True
-            elif nn_b.flags & 2048:
-                constraint.use_limit_x = True
-                constraint.use_limit_y = True
-            constraint.euler_order = 'XZY'
-            constraint.owner_space = 'LOCAL'
+        order = "XYZ"
+        if nn_b.flags.zxy:
+            order = "ZXY"
+        elif nn_b.flags.xzy:
+            order = "XZY"
+        pose_b.rotation_mode = order
+        pose_b.nn_euler_rotation = order
+        pose_b.nn_user_int = nn_b.user
+        rot = nn_b.rotation
+        rot = [math.radians(r) for r in rot]
+        pose_b.nn_euler_values = rot
+        pose_b.nn_scale_values = nn_b.scale
+        pose_b.nn_position_values = nn_b.position
+
+        if self.settings.pose:
+            pos = mathutils.Vector(nn_b.position)
+            rot = mathutils.Euler(rot, order)
+            sca = mathutils.Vector(nn_b.scale)
+
+            nnm = nn_b.matrix
+            if pose_b.parent:
+                nnm = self.model.bones[nn_b.parent].matrix.inverted() @ nnm
+
+            np, nr, ns = nnm.decompose()
+            sca_og = sca
+            sca = Vector((sca.x / ns.x, sca.y / ns.y, sca.z / ns.z))
+            new_v = Vector((sca_og.x / sca.x, sca_og.y / sca.y, sca_og.z / sca.z))
+            scales.append(new_v)
+            if pose_b.parent:
+                pl, pr, ps = pose_b.parent.matrix.decompose()
+                # are the blender devs insane why do they remove the scale from the edit bone matrix
+                if nn_b.flags.reset_scale_x:
+                    ps.x = 1
+                if nn_b.flags.reset_scale_y:
+                    ps.y = 1
+                if nn_b.flags.reset_scale_z:
+                    ps.z = 1
+                if nn_b.flags.inherit_pos_only:
+                    pr = None
+                    ps = None
+                pos = scales[nn_b.parent] * pos
+                a = mathutils.Matrix.LocRotScale(pos, rot, sca)
+                parent_mat = mathutils.Matrix.LocRotScale(pl, pr, ps)
+                pose_b.matrix = parent_mat @ a
+            else:
+                a = mathutils.Matrix.LocRotScale(pos, rot, sca)
+                pose_b.matrix = a
+
+        if nn_b.flags.reset_scale_x:
+            pose_b.nn_reset_scale_x = True
+        if nn_b.flags.reset_scale_y:
+            pose_b.nn_reset_scale_y = True
+        if nn_b.flags.reset_scale_z:
+            pose_b.nn_reset_scale_z = True
+
+        if nn_b.flags.ik_effector:
+            pose_b.nn_ik_effector = True
+        if nn_b.flags.ik_minus_z:
+            pose_b.nn_ik_minus_z = True
+        if nn_b.flags.ik_1bone_joint1:
+            pose_b.nn_ik_1bone_joint1 = True
+        if nn_b.flags.ik_2bone_joint1:
+            pose_b.nn_ik_2bone_joint1 = True
+        if nn_b.flags.ik_2bone_joint2:
+            pose_b.nn_ik_2bone_joint2 = True
+        if nn_b.flags.ik_1bone_root:
+            pose_b.nn_ik_1bone_root = True
+        if nn_b.flags.ik_2bone_root:
+            pose_b.nn_ik_2bone_root = True
+        if nn_b.flags.xsiik:
+            pose_b.nn_xsiik = True
 
 
 @dataclass
@@ -110,45 +153,8 @@ class Bone:
     sibling: int
     center: tuple
     radius: float
-    unknown: float
+    user: int
     length: tuple
-    lock: bool
-
-
-# noinspection PyArgumentList
-def to_euler_angles_zyx(q: Quaternion):
-    """Converts the values from Quaternion into Euler angles.
-
-    Parameters
-    ----------
-    q : Quaternion
-        The Quaternion to convert.
-    """
-    # Unit test from: http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
-    sqw = q.w * q.w
-    sqx = q.x * q.x
-    sqy = q.y * q.y
-    sqz = q.z * q.z
-
-    test = q.x * q.y + q.z * q.w
-    # Unit vector to correct for non-normalised quaternions. Just in case.
-    unit = sqx + sqy + sqz + sqw
-
-    # Accounting for 'singularities', or rather, Gimbal Lock.
-    # Honestly I'm unsure about why this has to be done, and why it only has to be done when all the signs are the same
-    #  but that's nn for you
-    if test > 0.4999999 * unit and (copysign(1, q.x) == copysign(1, q.y) == copysign(1, q.z) == copysign(1, q.w)):
-        rotation = (q.inverted() @ Euler((0, -radians(180), 0)).to_quaternion()).inverted()
-        rot = rotation.to_euler('XZY')
-        return Vector((rot.x, rot.y, rot.z)), True
-    if test < -0.4999999 * unit and (copysign(1, q.x) == copysign(1, q.y) == copysign(1, q.z) == copysign(1, q.w)):
-        rotation = (q.inverted() @ Euler((0, -radians(180), 0)).to_quaternion()).inverted()
-        rot = rotation.to_euler('XZY')
-        return Vector((rot.x, rot.y, rot.z)), True
-
-    rot = q.to_euler('XZY')
-
-    return Vector((rot.x, rot.y, rot.z)), False
 
 
 def get_bones(self):
@@ -166,13 +172,23 @@ def get_bones(self):
                 bone_depth = len(bone.parent_recursive) + 1
 
     bone_used_2 = [[] for _ in arma.bones]  # the sequel: bones 2
+    mesh_vis_bone = [[] for _ in self.mesh_list]  # yeah
 
-    for child in self.mesh_list:
-        vert_names = [a.name for a in child.vertex_groups]
-        if len(vert_names) == 1:  # change this when you move to using bmesh
-            bone_used_2[bone_names.index(vert_names[0])].append(child)
-        else:  # :thumbs_up:
-            bone_used_2[-1].append(child)
+    if self.settings.over_bone:
+        for ind, bone in enumerate(obj.pose.bones):
+            if bone.nn_mesh_count:
+                for i in range(bone.nn_mesh_count):
+                    bone_used_2[ind].append(bone.nn_meshes[i].mesh)
+                    mesh_vis_bone[self.mesh_list.index(bone.nn_meshes[i].mesh)] = ind
+    else:
+        for ind, child in enumerate(self.mesh_list):
+            vert_names = [a.name for a in child.vertex_groups]
+            if len(vert_names) == 1:  # change this when you move to using bmesh
+                bone_used_2[bone_names.index(vert_names[0])].append(child)
+                mesh_vis_bone[ind] = bone_names.index(vert_names[0])
+            else:  # :thumbs_up:
+                bone_used_2[-1].append(child)
+                mesh_vis_bone[ind] = len(bone_used_2) - 1
 
     used_bones = []
     if self.settings.riders_default:
@@ -196,28 +212,55 @@ def get_bones(self):
     bpy.context.view_layer.objects.active = self.armature
     bpy.ops.object.mode_set(mode="POSE")
     for pose_b in self.armature.pose.bones:
-        pose_var = False
-        for a in pose_b.constraints:
-            if "LIMIT_ROTATION" in a.type:
-                if a.use_limit_x is True and a.use_limit_z is True:
-                    pose_var = 1
-                elif a.use_limit_y is True and a.use_limit_z is True:
-                    pose_var = 2
-                elif a.use_limit_x is True and a.use_limit_z is True:
-                    pose_var = 8
-        pose_data.append(pose_var)
+        if self.settings.over_scene:
+            euler = pose_b.nn_euler_rotation
+        else:
+            euler = pose_b.rotation_mode
+            if euler not in {'XYZ', 'XZY', 'ZXY'}:
+                euler = 'XZY'
+        flags = {"XYZ": 0, "XZY": 256, "ZXY": 1024}[euler]
+        if pose_b.nn_reset_scale_x:
+            flags |= 1 << 18
+        if pose_b.nn_reset_scale_y:
+            flags |= 1 << 19
+        if pose_b.nn_reset_scale_z:
+            flags |= 1 << 20
+        if pose_b.nn_ik_effector:
+            flags |= 1 << 13
+        if pose_b.nn_ik_1bone_joint1:
+            flags |= 1 << 14
+        if pose_b.nn_ik_2bone_joint1:
+            flags |= 1 << 15
+        if pose_b.nn_ik_2bone_joint2:
+            flags |= 1 << 16
+        if pose_b.nn_ik_minus_z:
+            flags |= 1 << 17
+        if pose_b.nn_ik_1bone_root:
+            flags |= 1 << 25
+        if pose_b.nn_ik_2bone_root:
+            flags |= 1 << 26
+        if pose_b.nn_xsiik:
+            flags |= 1 << 27
+        pose_data.append((flags, pose_b.nn_user_int, euler))
     bpy.ops.object.mode_set(mode="OBJECT")
 
     bone_list = []
+    round_value = 0.0000001
 
-    for bone, mesh_bone, pose_b in zip(arma.bones, bone_used_2, pose_data):
-        flags = [0, 0, 0, 0]
-
+    for bone, mesh_bone, [flags, user, euler] in zip(arma.bones, bone_used_2, pose_data):
         center = (0, 0, 0)
         radius = 0
-        unknown = 0
         length = (0, 0, 0)
+        if bone.inherit_scale == 'NONE' and not bone.use_inherit_rotation:
+            flags |= 1 << 12
+        elif bone.inherit_scale == 'NONE':
+            flags |= 1 << 18
+            flags |= 1 << 19
+            flags |= 1 << 20
+
         if mesh_bone:
+            flags |= 1 << 21
+            flags |= 1 << 22  # sorry all spheres
             co_ords = []
             mesh_bone = list(set(mesh_bone))
             for mesh_used in mesh_bone:
@@ -225,7 +268,8 @@ def get_bones(self):
                 mesh_used.data.vertices.foreach_get("co", pos)
                 co_ords += pos
 
-            co_ords = [bone.matrix_local.inverted() @ mathutils.Vector(co_ords[i:i + 3]) for i in range(0, len(co_ords), 3)]
+            co_ords = [bone.matrix_local.inverted() @ mathutils.Vector(co_ords[i:i + 3]) for i in
+                       range(0, len(co_ords), 3)]
 
             co_x = [i[0] for i in co_ords]
             co_y = [i[1] for i in co_ords]
@@ -243,7 +287,8 @@ def get_bones(self):
             radius_list = [math.sqrt(((a[0] - center_x) ** 2 + (a[1] - center_y) ** 2 + (a[2] - center_z) ** 2)) for a
                            in co_ords]
             radius = max(radius_list)
-            length = (mathutils.Vector((max_x, max_y, max_z)) - mathutils.Vector((center_x, center_y, center_z))).to_tuple()
+            length = (mathutils.Vector((max_x, max_y, max_z)) - mathutils.Vector(
+                (center_x, center_y, center_z))).to_tuple()
 
         used = -1
         if bone.name in used_bones:
@@ -262,73 +307,43 @@ def get_bones(self):
             next_index = children_names.index(bone.name) + 1
             if len(children_names) > next_index:
                 sib = bone_names.index(children_names[next_index])
-
         if bone.children:
             chi = bone.children[0].name
             chi = bone_names.index(chi)
 
-        # Special thanks to Sewer56 for this code
+        child = parent @ mathutils.Matrix(bone.matrix_local)
+        translation, rotation, scale = Matrix(child).decompose()
+        rotation = rotation.to_euler(euler)
 
-        # Remove Parent
-        # Parent * Child = Result
-        # AB = C
-        # (A^-1)AB = A^-1(C)
-        # IB = A^-1(C)
-        # B = A^-1(C)
-
-        # parent = mathutils.Matrix(bone.parent.matrix_local).inverted()
-        child = parent @ mathutils.Matrix(bone.matrix_local) #.inverted()
-        #child = child.inverted()
-
-        # Apply properties
-        translation, rotation, sca = Matrix(child).decompose()
-        rotation, lock = to_euler_angles_zyx(rotation)
-
-        if bone.parent:
-            if bone_list[par].lock:
-                translation, q, sca = Matrix(child).decompose()
-                rotation = (q.inverted() @ Euler((-radians(180), 0, 0)).to_quaternion()).inverted()
-                translation.rotate(Euler((-radians(180), 0, 0)))
-                rotation, lock = to_euler_angles_zyx(rotation)
-
-        # Shouldn't happen, but just in case.
-        if math.isnan(rotation.x):
-            rotation.x = 0
-
-        if math.isnan(rotation.y):
-            rotation.y = 0
-
-        if math.isnan(rotation.z):
-            rotation.z = 0
-
-        # Convert to BAMS
+        # yeah we have to convert it to degrees so we can convert it to radians later lol
         rotation.x = math.degrees(rotation.x)
         rotation.y = math.degrees(rotation.y)
         rotation.z = math.degrees(rotation.z)
         # noinspection PyTypeChecker
         rot = tuple(rotation)
         pos = tuple(translation)
-        sca = tuple(sca)
-
-        if radius:
-            flags[1] = flags[1] | 32
-        for a in sca:
-            if a != 1.0:
-                flags[1] = flags[1] | 64
-        if pose_b:
-            flags[1] = flags[1] | pose_b  # was flags[1] = 28
-        if self.format in {"SonicRiders_G", "SonicRiders_X"}:
-            flags[2] = 1
-        # guesses
-        flags[3] = flags[3] | 4
-        flags[3] = flags[3] | 128
+        sca = tuple(scale)
+        if -round_value < translation.length < round_value:
+            flags |= 1 << 0
+        if -round_value < rot[0] < round_value and -round_value < rot[1] < round_value and -round_value < rot[
+            2] < round_value:
+            flags |= 1 << 1
+        if -round_value < sca[0] - 1 < round_value and -round_value < sca[1] - 1 < round_value and -round_value < sca[
+            2] - 1 < round_value:
+            flags |= 1 << 2
+        if flags >> 0 & 1 and flags >> 1 & 1 and flags >> 1 & 2:
+            flags |= 1 << 3
+        if not flags >> 0 & 1 and flags >> 1 & 1 and flags >> 1 & 2:
+            flags |= 1 << 6
+        if b_mat.to_3x3().is_orthogonal:
+            flags |= 1 << 7
 
         # noinspection PyTypeChecker
         bone_list.append(Bone(
-            flags, bone.name, b_mat, pos, rot, sca, par, used, chi, sib, center, radius, unknown, length, lock))
+            flags, bone.name, b_mat, pos, rot, sca, par, used, chi, sib, center, radius, user, length))
 
     self.armature.location = original_position
-    return bone_list, bone_depth, used_bones
+    return bone_list, bone_depth, used_bones, mesh_vis_bone
 
 
 def get_render_data(mesh_list):
@@ -360,5 +375,3 @@ def get_render_data(mesh_list):
                    in pos]
     radius = max(radius_list)
     return center, radius
-
-

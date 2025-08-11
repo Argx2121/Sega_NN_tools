@@ -18,7 +18,7 @@ class Read:
     @dataclass
     class BuildMesh:
         __slots__ = [
-            "bounds_position", "bounds_scale", "bone_visibility", "bone", "material", "vertex", "face", "index"
+            "bounds_position", "bounds_scale", "bone_visibility", "bone", "material", "vertex", "face", "shader"
         ]
         bounds_position: tuple
         bounds_scale: float
@@ -27,7 +27,9 @@ class Read:
         material: int
         vertex: int
         face: int
-        index: int  # doesn't exist in all formats
+        shader: int
+        # how i look at you after you make a shader system and then replace it with user and then
+        # replace it with a shader file located elsewhere
 
     def le_9(self):
         f = self.f
@@ -162,20 +164,22 @@ class Write:
 
     def _get_textures_be(self, mat_list):
         tex_list = []
+        tex_ind = list(self.model.materials.texture_list.keys())
         for mat in mat_list:
             mat = self.model.materials.material_list[mat]
             for texture in mat.texture_list:
-                tex_list.append(self.model.materials.texture_list.index(texture.name.image.filepath))
+                tex_list.append(tex_ind.index(texture.name.image.filepath))
         for t in tex_list:
             write_integer(self.f, ">", t)
         return len(tex_list)
 
     def _get_textures_le(self, mat_list):
         tex_list = []
+        tex_ind = list(self.model.materials.texture_list.keys())
         for mat in mat_list:
             mat = self.model.materials.material_list[mat]
             for texture in mat.texture_list:
-                tex_list.append(self.model.materials.texture_list.index(texture.name.image.filepath))
+                tex_list.append(tex_ind.index(texture.name.image.filepath))
         for t in tex_list:
             write_integer(self.f, "<", t)
         return len(tex_list)
@@ -201,8 +205,7 @@ class Write:
             for mesh in meshes.simple_opaque:
                 write_float(f, ">", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
                 bone = bone_used.index(mesh.bone_names[0])
-                bone2 = bone_names.index(mesh.bone_names[0])
-                write_integer(f, ">", bone2, bone, mesh.material_name, mesh.vert, mesh.face)
+                write_integer(f, ">", mesh.vis_bone, bone, mesh.material_name, mesh.vert, mesh.face)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
             end = f.tell()
@@ -213,7 +216,7 @@ class Write:
             mat_list = []
             for mesh in meshes.complex_opaque:
                 write_float(f, ">", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
-                write_integer(f, ">", self.bone_count - 1, 4294967295, mesh.material_name, mesh.vert, mesh.face)
+                write_integer(f, ">", mesh.vis_bone, 4294967295, mesh.material_name, mesh.vert, mesh.face)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
             end = f.tell()
@@ -225,8 +228,7 @@ class Write:
             for mesh in meshes.simple_alpha:
                 write_float(f, ">", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
                 bone = bone_used.index(mesh.bone_names[0])
-                bone2 = bone_names.index(mesh.bone_names[0])
-                write_integer(f, ">", bone2, bone, mesh.material_name, mesh.vert, mesh.face)
+                write_integer(f, ">", mesh.vis_bone, bone, mesh.material_name, mesh.vert, mesh.face)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
             end = f.tell()
@@ -237,7 +239,7 @@ class Write:
             mat_list = []
             for mesh in meshes.complex_alpha:
                 write_float(f, ">", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
-                write_integer(f, ">", self.bone_count - 1, 4294967295, mesh.material_name, mesh.vert, mesh.face)
+                write_integer(f, ">", mesh.vis_bone, 4294967295, mesh.material_name, mesh.vert, mesh.face)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
             end = f.tell()
@@ -249,8 +251,7 @@ class Write:
             for mesh in meshes.simple_clip:
                 write_float(f, ">", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
                 bone = bone_used.index(mesh.bone_names[0])
-                bone2 = bone_names.index(mesh.bone_names[0])
-                write_integer(f, ">", bone2, bone, mesh.material_name, mesh.vert, mesh.face)
+                write_integer(f, ">", mesh.vis_bone, bone, mesh.material_name, mesh.vert, mesh.face)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
             end = f.tell()
@@ -261,7 +262,7 @@ class Write:
             mat_list = []
             for mesh in meshes.complex_clip:
                 write_float(f, ">", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
-                write_integer(f, ">", self.bone_count - 1, 4294967295, mesh.material_name, mesh.vert, mesh.face)
+                write_integer(f, ">", mesh.vis_bone, 4294967295, mesh.material_name, mesh.vert, mesh.face)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
             end = f.tell()
@@ -346,8 +347,7 @@ class Write:
             for i, mesh in enumerate(meshes.simple_opaque):
                 write_float(f, "<", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
                 bone = bone_used.index(mesh.bone_names[0])
-                bone2 = bone_names.index(mesh.bone_names[0])
-                write_integer(f, "<", bone2, bone, mesh.material_name, mesh.vert, mesh.face, i)
+                write_integer(f, "<", mesh.vis_bone, bone, mesh.material_name, mesh.vert, mesh.face, i)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
             end = f.tell()
@@ -358,7 +358,7 @@ class Write:
             mat_list = []
             for i, mesh in enumerate(meshes.complex_opaque):
                 write_float(f, "<", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
-                write_integer(f, "<", self.bone_count - 1, 4294967295, mesh.material_name, mesh.vert, mesh.face, i)
+                write_integer(f, "<", mesh.vis_bone, 4294967295, mesh.material_name, mesh.vert, mesh.face, i)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
             end = f.tell()
@@ -370,8 +370,7 @@ class Write:
             for i, mesh in enumerate(meshes.simple_alpha):
                 write_float(f, "<", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
                 bone = bone_used.index(mesh.bone_names[0])
-                bone2 = bone_names.index(mesh.bone_names[0])
-                write_integer(f, "<", bone2, bone, mesh.material_name, mesh.vert, mesh.face, i)
+                write_integer(f, "<", mesh.vis_bone, bone, mesh.material_name, mesh.vert, mesh.face, i)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
             end = f.tell()
@@ -382,17 +381,19 @@ class Write:
             mat_list = []
             for i, mesh in enumerate(meshes.complex_alpha):
                 write_float(f, "<", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
-                write_integer(f, "<", self.bone_count - 1, 4294967295, mesh.material_name, mesh.vert, mesh.face, i)
+                write_integer(f, "<", mesh.vis_bone, 4294967295, mesh.material_name, mesh.vert, mesh.face, i)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
+            end = f.tell()
+            length = self._get_textures_le(mat_list)
+            tex_complex_alpha = TextureData(start, end, length)
         if meshes.simple_clip:
             start = f.tell()
             mat_list = []
             for i, mesh in enumerate(meshes.simple_clip):
                 write_float(f, "<", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
                 bone = bone_used.index(mesh.bone_names[0])
-                bone2 = bone_names.index(mesh.bone_names[0])
-                write_integer(f, "<", bone2, bone, mesh.material_name, mesh.vert, mesh.face, i)
+                write_integer(f, "<", mesh.vis_bone, bone, mesh.material_name, mesh.vert, mesh.face, i)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
             end = f.tell()
@@ -403,7 +404,7 @@ class Write:
             mat_list = []
             for i, mesh in enumerate(meshes.complex_clip):
                 write_float(f, "<", mesh.center[0], mesh.center[1], mesh.center[2], mesh.radius)
-                write_integer(f, "<", self.bone_count - 1, 4294967295, mesh.material_name, mesh.vert, mesh.face, i)
+                write_integer(f, "<", mesh.vis_bone, 4294967295, mesh.material_name, mesh.vert, mesh.face, i)
                 if mesh.material_name not in mat_list:
                     mat_list.append(mesh.material_name)
             end = f.tell()

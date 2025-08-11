@@ -112,6 +112,28 @@ class ExportSegaNO(bpy.types.Operator, ExportHelper):
                ),
     )
 
+    # scene
+    over_scene: BoolProperty(
+        name="Scene data",
+        description="Use NN Data that overrides scene values (eg. Framerate, euler rotation)",
+        default=False,
+    )
+    over_bone: BoolProperty(
+        name="Bone Mesh Visibility",
+        description="Use NN Data that overrides mesh visibility (data stored on the bone)",
+        default=False,
+    )
+    over_material: BoolProperty(
+        name="Material order",
+        description="Use NN Data that overrides materials (good for custom material ordering)",
+        default=False,
+    )
+    over_texture: BoolProperty(
+        name="Textures",
+        description="Use NN Data that overrides textures (good for different textures) COMPLEX MATERIALS ONLY",
+        default=False,
+    )
+
     # non generic
     riders_default: BoolProperty(
         name="Base board model",
@@ -228,6 +250,13 @@ class ExportSegaNO(bpy.types.Operator, ExportHelper):
         box.row().prop(self, "bone_block")
         box.row().prop(self, "order")
 
+        box = layout.box()
+        box.label(text="Override settings:", icon="KEYFRAME_HLT")
+        box.row().prop(self, "over_scene")
+        box.row().prop(self, "over_bone")
+        box.row().prop(self, "over_material")
+        box.row().prop(self, "over_texture")
+
         game_format = getattr(self, nn_format, nn_format)
         if game_format == "SonicRiders_G":
             box = layout.box()
@@ -264,6 +293,10 @@ class ExportSegaNO(bpy.types.Operator, ExportHelper):
             self.bone_block,
             self.order,
             self.riders_default,
+            self.over_scene,
+            self.over_material,
+            self.over_texture,
+            self.over_bone,
         )
 
         nn_format = self.nn_format  # "Match__", "E" etc
@@ -272,7 +305,7 @@ class ExportSegaNO(bpy.types.Operator, ExportHelper):
         settings.format = nn_format
 
         # noinspection PyUnresolvedReferences
-        return model_export(self.filepath, settings)
+        return model_export(context, self.filepath, settings)
 
 
 def menu_func_export(self, context):  # add to dynamic menu
@@ -293,9 +326,14 @@ class Settings:
     bone_block: bool
     order: bool
     riders_default: bool
+    over_scene: bool
+    over_material: bool
+    over_texture: bool
+    over_bone: bool
 
 
-def model_export(file_path, settings):
+def model_export(context, file_path, settings):
+    start_time = time()
     if settings.format == "None__":
         show_no_selection("NN Model Exporter")
         return {'CANCELLED'}
@@ -328,7 +366,9 @@ def model_export(file_path, settings):
         return {'FINISHED'}
 
     for arma in arma_list:
-        model_info = ModelInfo(settings, arma).execute()
+        arma.data.pose_position = 'REST'
+        model_info = ModelInfo(context, settings, arma).execute()
+        arma.data.pose_position = 'POSE'
         if not model_info:
             return {'CANCELLED'}
         name = arma.name
@@ -344,5 +384,8 @@ def model_export(file_path, settings):
         f.close()
 
         print("--------------------------------------------------")
+    print("Done in %f seconds" % (time() - start_time))
+    print_line()
+    stdout.flush()
 
     return {'FINISHED'}

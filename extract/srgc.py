@@ -127,7 +127,7 @@ class ExtractSRPC:
                     # we run a check to see what the file is, and we keep a list with textures because riders
                     f.seek(i)
                     if read_str(f, 4) == "NGIF":
-                        file_name, index = ReadNn(f, self.file_path, "", False).find_file_name(index)
+                        file_name, index = ReadNn(f, self.file_path).find_file_name(index)
                         f.seek(i + 4)
                         if check_obj_no_mat():
                             obj_need_texture.append(sf_path + "\\" + file_name + ".texture_names")

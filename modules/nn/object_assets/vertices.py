@@ -72,32 +72,36 @@ class MeshDataGno:
 class Read:
     __slots__ = [
         "f", "start", "format_type", "debug",
-        "vertex_buffer_count", "vert_info_offset", "vertex_mesh_offset", "mesh_info"
+        "vertex_buffer_count", "vert_info_offset", "vert_info_flag", "vertex_mesh_offset", "mesh_info"
     ]
 
     def __init__(self, var, vertex_buffer_count: int):
         self.f, self.start, self.format_type, self.debug = var
         self.vertex_buffer_count = vertex_buffer_count
         self.vert_info_offset = []
+        self.vert_info_flag = []
         self.vertex_mesh_offset = []
         self.mesh_info = []
 
-    def _be_offsets(self):  # 1, offset, 1, offset, ...
-        self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 2, ">")[1::2]
-
-    def _be_offsets_flags(self):
+    def _be_offsets(self):
         var = read_int_tuple(self.f, self.vertex_buffer_count * 2, ">")
         self.vert_info_offset = var[1::2]
-        return var[0::2]
+        self.vert_info_flag = var[0::2]
 
     def _le_offsets(self):
-        self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 2)[1::2]
+        var = read_int_tuple(self.f, self.vertex_buffer_count * 2)
+        self.vert_info_offset = var[1::2]
+        self.vert_info_flag = var[0::2]
 
     def _le_offsets_3(self):
-        self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 3)[1::3]
+        for _ in range(self.vertex_buffer_count):
+            self.vert_info_flag.append(read_int(self.f))
+            self.vert_info_offset.append(read_long(self.f))
 
     def _le_offsets_4(self):
-        self.vert_info_offset = read_int_tuple(self.f, self.vertex_buffer_count * 4)[2::4]
+        var = read_long_tuple(self.f, self.vertex_buffer_count * 2)
+        self.vert_info_offset = var[1::2]
+        self.vert_info_flag = var[0::2]
 
     def _cno_info(self):
         f = self.f
@@ -282,15 +286,23 @@ class Read:
         vertex_count_list = []
         bone_count_list = []
         bone_offset_complex = []
-        for offset in self.vert_info_offset:
-            f.seek(offset + start)
-            block_type_list.append(unpack(">Q", f.read(8))[0])
-            size, count, offset, b_count, b_offset = read_int_tuple(f, 5, ">")
-            block_size_list.append(size)
-            vertex_count_list.append(count)
-            self.vertex_mesh_offset.append(offset)
-            bone_count_list.append(b_count)  # if > 1 bone its stored here
-            bone_offset_complex.append(b_offset)
+        for flag, offset in zip(self.vert_info_flag, self.vert_info_offset):
+            if flag == 4:
+                block_type_list.append(0)
+                block_size_list.append(0)
+                vertex_count_list.append(0)
+                self.vertex_mesh_offset.append(0)
+                bone_count_list.append(0)  # if > 1 bone its stored here
+                bone_offset_complex.append(0)
+            else:
+                f.seek(offset + start)
+                block_type_list.append(unpack(">Q", f.read(8))[0])
+                size, count, offset, b_count, b_offset = read_int_tuple(f, 5, ">")
+                block_size_list.append(size)
+                vertex_count_list.append(count)
+                self.vertex_mesh_offset.append(offset)
+                bone_count_list.append(b_count)  # if > 1 bone its stored here
+                bone_offset_complex.append(b_offset)
 
         for i in range(len(bone_offset_complex)):
             offset = bone_offset_complex[i] + start
@@ -526,10 +538,10 @@ class Read:
                 ))
         return vertex_data, self.mesh_info
 
-    def _gno_info(self, vert_flags):
+    def _gno_info(self):
         f = self.f
         start = self.start
-        for t, offset in zip(vert_flags, self.vert_info_offset):
+        for t, offset in zip(self.vert_info_flag, self.vert_info_offset):
             f.seek(offset + start)
             if t == 1:
                 vert_type, vert_count = read_short_tuple(f, 2, ">")
@@ -553,6 +565,42 @@ class Read:
                                 0, 0, 0,
                                 0, 0, 0,
                                 bone_type, bone_total, bone_offset, data_bone_type, data_bone_total, data_bone_offset))
+            elif t == 2:
+                # btw this means its probably actually morph flag, data type flag by default but idc
+                _, vert_type = read_byte_tuple(f, 2, ">")
+                vert_count = read_short(f, ">")
+                vert_offset = read_int(f, ">")
+                _, norm_type = read_byte_tuple(f, 2, ">")
+                norm_total = read_short(f, ">")
+                norm_offset = read_int(f, ">")
+                _, col_type = read_byte_tuple(f, 2, ">")
+                col_total = read_short(f, ">")
+                col_offset = read_int(f, ">")
+                _, uv_type = read_byte_tuple(f, 2, ">")
+                uv_total = read_short(f, ">")
+                uv_offset = read_int(f, ">")
+                _, uv2_type = read_byte_tuple(f, 2, ">")
+                uv2_total = read_short(f, ">")
+                uv2_offset = read_int(f, ">")
+                _, uv3_type = read_byte_tuple(f, 2, ">")
+                uv3_total = read_short(f, ">")
+                uv3_offset = read_int(f, ">")
+
+                self.mesh_info.append(
+                    MeshDataGno(vert_type, vert_count, vert_offset, norm_type, norm_total, norm_offset,
+                                col_type, col_total, col_offset,
+                                uv_type, uv_total, uv_offset,
+                                uv2_type, uv2_total, uv2_offset,
+                                uv3_type, uv3_total, uv3_offset,
+                                0, 0, 0, 0, 0, 0))
+            elif t == 4:
+                self.mesh_info.append(
+                    MeshDataGno(0, 0, 0, 0, 0, 0,
+                                0, 0, 0,
+                                0, 0, 0,
+                                0, 0, 0,
+                                0, 0, 0,
+                                0, 0, 0, 0, 0, 0))
             elif t == 16:
                 vert_type, vert_count = read_short_tuple(f, 2, ">")
                 vert_offset = read_int(f, ">")
@@ -590,7 +638,7 @@ class Read:
                     vert_info.append(MeshData(vert_type, block_len, vert_count, vert_offset, 0, ()))
                 self.mesh_info.append(vert_info)
 
-    def _gno_vertices(self, vert_flags):
+    def _gno_vertices(self):
         f = self.f
         vertex_data = []
 
@@ -709,9 +757,9 @@ class Read:
                 v_bones.append(data_int[v * 6 + 3: v * 6 + 5])
                 v_weights.append((data_float[v * 6 + 5], 1 - data_float[v * 6 + 5]))
 
-        for t, m in zip(vert_flags, self.mesh_info):  # for all sub meshes
+        for t, m in zip(self.vert_info_flag, self.mesh_info):  # for all sub meshes
             v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [[], []], []
-            if t in {1, 16}:
+            if t in {1, 2, 16}:
                 if m.vertex_offset:
                     f.seek(m.vertex_offset + self.start)
                     get_verts(m.vertex_type, m.vertex_count)
@@ -745,7 +793,8 @@ class Read:
                         norm()
                     elif info.vertex_block_type == 32:
                         v_uvs = [uv(), ]
-
+            elif t == 4:
+                pass
             vertex_data.append(
                 VertexData(
                     v_positions, v_weights, v_bones, v_normals, v_uvs, [], v_colours
@@ -933,31 +982,34 @@ class Read:
     def _lno_info(self):
         f = self.f
         start = self.start
-        for offset in self.vert_info_offset:
-            f.seek(offset + start + 4)
-            vertex_count, info_count, info_offset = read_int_tuple(f, 3)
-            f.seek(8, 1)
-            v_bone_count, v_bone_off = read_int_tuple(f, 2)
-            f.seek(v_bone_off + start)
-            v_bone_list = read_short_tuple(f, v_bone_count)
+        for flag, offset in zip(self.vert_info_flag, self.vert_info_offset):
+            if flag == 4:
+                v_format, v_format_size, vertex_count, v_offset, v_bone_count, v_bone_list = [], [], 0, [], 0, []
+            else:
+                f.seek(offset + start + 4)
+                vertex_count, info_count, info_offset = read_int_tuple(f, 3)
+                f.seek(8, 1)
+                v_bone_count, v_bone_off = read_int_tuple(f, 2)
+                f.seek(v_bone_off + start)
+                v_bone_list = read_short_tuple(f, v_bone_count)
 
-            f.seek(info_offset + start)
-            v_offset = []
-            v_format = []
-            v_format_size = []
-            det_format = {
-                1: "pos", 8: "norm", 64: "unknown", 128: "unknown", 256: "uv", 2: "weight", 4: "bone",
-                512: "wx",
-            }
+                f.seek(info_offset + start)
+                v_offset = []
+                v_format = []
+                v_format_size = []
+                det_format = {
+                    1: "pos", 8: "norm", 64: "unknown", 128: "unknown", 256: "uv", 2: "weight", 4: "bone",
+                    512: "wx", 2147483649: "pos",
+                }
 
-            for _ in range(info_count):
-                data = read_int_tuple(f, 5)
-                v_offset.append(data[-1])
-                if data[0] in det_format:
-                    v_format.append(det_format[data[0]])
-                else:
-                    v_format.append("unknown")
-                v_format_size.append(data[-2])
+                for _ in range(info_count):
+                    data = read_int_tuple(f, 5)
+                    v_offset.append(data[-1])
+                    if data[0] in det_format:
+                        v_format.append(det_format[data[0]])
+                    else:
+                        v_format.append("unknown")
+                    v_format_size.append(data[-2])
 
             self.mesh_info.append(MeshData(
                 v_format, v_format_size, vertex_count, v_offset, v_bone_count, v_bone_list))
@@ -1550,15 +1602,24 @@ class Read:
         vertex_count_list = []
         bone_count_list = []
         bone_offset_complex = []
-        for offset in self.vert_info_offset:
-            f.seek(offset + start)
-            block_type_list.append(unpack(">Q", f.read(8))[0])  # python gives back as big endian so countering
-            size, count, offset, b_count, b_offset = read_int_tuple(f, 5)
-            block_size_list.append(size)
-            vertex_count_list.append(count)
-            self.vertex_mesh_offset.append(offset)
-            bone_count_list.append(b_count)  # if > 1 bone its stored here
-            bone_offset_complex.append(b_offset)
+        for flag, offset in zip(self.vert_info_flag, self.vert_info_offset):
+            if flag == 4:
+                block_type_list.append(0)
+                block_size_list.append(0)
+                vertex_count_list.append(0)
+                self.vertex_mesh_offset.append(0)
+                bone_count_list.append(0)  # if > 1 bone its stored here
+                bone_offset_complex.append(0)
+            else:
+                f.seek(offset + start)
+                block_type_list.append(unpack(">Q", f.read(8))[0])  # python gives back as big endian so countering
+                size, count, offset, b_count, b_offset = read_int_tuple(f, 5)
+                block_size_list.append(size)
+                vertex_count_list.append(count)
+                self.vertex_mesh_offset.append(offset)
+                bone_count_list.append(b_count)  # if > 1 bone its stored here
+                bone_offset_complex.append(b_offset)
+
         for i in range(len(bone_offset_complex)):
             offset = bone_offset_complex[i] + start
             if offset:  # get bones for meshes with >1 bone
@@ -1710,9 +1771,7 @@ class Read:
                 if BitFlags.normal:
                     off = get_normals(off)
                 if BitFlags.colour_byte:
-                    off += 4
-                    # off = get_colours_byte(off)
-                    # would like to support this better but need material refactor
+                    off = get_colours_byte(off)
 
                 if BitFlags.wx and BitFlags.uv:
                     off = get_uvs(off)
@@ -2007,9 +2066,9 @@ class Read:
         return self._eno_vertices()
 
     def gno(self):
-        vert_flags = self._be_offsets_flags()
-        self._gno_info(vert_flags)
-        return self._gno_vertices(vert_flags)
+        self._be_offsets()
+        self._gno_info()
+        return self._gno_vertices()
 
     def ino(self):
         if self.format_type == "SonicTheHedgehog4EpisodeI_I":

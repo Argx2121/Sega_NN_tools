@@ -27,4 +27,4 @@ class Read:
         f.seek(read_int(f), 1)
 
     def generic(self):
-        console_out("Skipping Unknown N Block %s..." % self.block_name, self._skip)
+        console_out("Skipping N Block %s..." % self.block_name, self._skip)

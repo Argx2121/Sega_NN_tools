@@ -13,7 +13,7 @@ from ...modules.other.collision.sfr import ReadCollision as Sfr
 
 class ImportSegaNNCollision(bpy.types.Operator, ImportHelper):
     """Import a Collision Model"""
-    bl_idname = "import.sega_nn_collision"
+    bl_idname = "import_nn.sega_nn_collision"
     bl_label = "Import Collision"
     bl_options = {'REGISTER', 'UNDO'}
     filename_ext = "*.collision"

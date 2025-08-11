@@ -33,14 +33,6 @@ def clean_mesh_strict(obj):
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     bm.faces.ensure_lookup_table()
-    verts = [v for v in bm.verts if not v.link_faces]
-    bmesh.ops.delete(bm, geom=verts, context="VERTS")
-    bm.to_mesh(obj.data)
-    bm.free()
-
-    bm = bmesh.new()
-    bm.from_mesh(obj.data)
-    bm.faces.ensure_lookup_table()
     faces = [f for f in bm.faces if not f.calc_area()]
     bmesh.ops.delete(bm, geom=faces, context="FACES")
     bm.to_mesh(obj.data)
@@ -87,9 +79,12 @@ class TriStripper:
         self.data = data
         self.pos_list = copy.deepcopy(data[0])
 
-    def to_tri_strip(self, v_indices):
+    def to_tri_strip(self, v_indices, stitch):
         from .pyffi_tstrip.tristrip import stripify
-        return stripify(v_indices, stitchstrips=True)[0]
+        var = stripify(v_indices, stitch)
+        if stitch:
+            var = var[0]
+        return var
 
     def mesh(self):
         pos_org, pos_index, normal_index, colour_index, uv_index, wx_index = self.data
@@ -137,6 +132,8 @@ class TriStripper:
                     if not no_change_set_pos.exists(pos):  # not in list
                         no_change_set_pos.add(pos)
                         no_change_set_1.add(var)
+                    elif no_change_set_1.at_index(no_change_set_pos.get_index(pos)) == var:  # in list, already exists
+                        pass
                     else:
                         if (pos, var) in change_set_face_list:
                             change_set_index_list[change_set_face_list.index((pos, var))].append(i)
@@ -284,72 +281,84 @@ class TriStripper:
 
             set_1 = []
             if no_change_set_1.pair_list:
-                for i in tri_strips:  # position indices we need to convert to uv indices
-                    if no_change_set_pos.exists(i):
-                        i = no_change_set_1.at_index(no_change_set_pos.get_index(i))
-                    else:
-                        i = change_set_face_list[change_set_face_list_pos.index(i)][1]
-                    set_1.append(i)
+                set_1 = [[] for _ in range(len(tri_strips))]
+                for e, strip in enumerate(tri_strips):  # position indices we need to convert to uv indices
+                    for i in strip:
+                        if no_change_set_pos.exists(i):
+                            i = no_change_set_1.at_index(no_change_set_pos.get_index(i))
+                        else:
+                            i = change_set_face_list[change_set_face_list_pos.index(i)][1]
+                        set_1[e].append(i)
 
             set_2 = []
             if no_change_set_2.pair_list:
-                for i in tri_strips:  # position indices we need to convert to normal indices
-                    if no_change_set_pos.exists(i):
-                        i = no_change_set_2.at_index(no_change_set_pos.get_index(i))
-                    else:
-                        i = change_set_face_list[change_set_face_list_pos.index(i)][2]
-                    set_2.append(i)
+                set_2 = [[] for _ in range(len(tri_strips))]
+                for e, strip in enumerate(tri_strips):  # position indices we need to convert to normal indices
+                    for i in strip:
+                        if no_change_set_pos.exists(i):
+                            i = no_change_set_2.at_index(no_change_set_pos.get_index(i))
+                        else:
+                            i = change_set_face_list[change_set_face_list_pos.index(i)][2]
+                        set_2[e].append(i)
 
             set_3 = []
             if no_change_set_3.pair_list:
-                for i in tri_strips:  # position indices we need to convert to colour indices
-                    if no_change_set_pos.exists(i):
-                        i = no_change_set_3.at_index(no_change_set_pos.get_index(i))
-                    else:
-                        i = change_set_face_list[change_set_face_list_pos.index(i)][3]
-                    set_3.append(i)
+                set_3 = [[] for _ in range(len(tri_strips))]
+                for e, strip in enumerate(tri_strips):  # position indices we need to convert to colour indices
+                    for i in strip:
+                        if no_change_set_pos.exists(i):
+                            i = no_change_set_3.at_index(no_change_set_pos.get_index(i))
+                        else:
+                            i = change_set_face_list[change_set_face_list_pos.index(i)][3]
+                        set_3[e].append(i)
 
             set_4 = []
             if no_change_set_4.pair_list:
-                for i in tri_strips:  # position indices we need to convert to colour indices
+                set_4 = [[] for _ in range(len(tri_strips))]
+                for e, strip in enumerate(tri_strips):  # position indices we need to convert to colour indices
+                    for i in strip:
+                        if no_change_set_pos.exists(i):
+                            i = no_change_set_4.at_index(no_change_set_pos.get_index(i))
+                        else:
+                            i = change_set_face_list[change_set_face_list_pos.index(i)][4]
+                        set_4[e].append(i)
+
+            pos_indices = [[] for _ in range(len(tri_strips))]
+            for e, strip in enumerate(tri_strips):  # indices we need to convert to pos indices
+                for i in strip:
                     if no_change_set_pos.exists(i):
-                        i = no_change_set_4.at_index(no_change_set_pos.get_index(i))
+                        pass  # value was never changed
                     else:
-                        i = change_set_face_list[change_set_face_list_pos.index(i)][4]
-                    set_4.append(i)
+                        i = pos_list.index(pos_list[i])
+                    pos_indices[e].append(i)
 
-            pos_indices = []
-            for i in tri_strips:  # indices we need to convert to pos indices
-                if no_change_set_pos.exists(i):
-                    pass  # value was never changed
-                else:
-                    i = pos_list.index(pos_list[i])
-                pos_indices.append(i)
-
-            used_indices = [pos_indices]
+            used_indices = [[pos_indices[i]] for i in range(len(pos_indices))]
             ind_step = 1
             if set_1:
-                used_indices.append(set_1)
+                [used_indices[i].append(set_1[i]) for i in range(len(used_indices))]
                 ind_step += 1
             if set_2:
-                used_indices.append(set_2)
+                [used_indices[i].append(set_2[i]) for i in range(len(used_indices))]
                 ind_step += 1
             if set_3:
-                used_indices.append(set_3)
+                [used_indices[i].append(set_3[i]) for i in range(len(used_indices))]
                 ind_step += 1
             if set_4:
-                used_indices.append(set_4)
+                [used_indices[i].append(set_4[i]) for i in range(len(used_indices))]
                 ind_step += 1
 
-            faces_all_flat = [0] * ind_step * len(pos_indices)
+            faces_not_flat = [[0] * ind_step * len(pos_indices[i]) for i in range(len(pos_indices))]
 
-            for i, ind_type in enumerate(used_indices):
-                for v, var in enumerate(ind_type):
-                    faces_all_flat[v * ind_step + i] = var
-            return faces_all_flat
+            for i, t_strip in enumerate(used_indices):
+                step = 0
+                for data_type in t_strip:
+                    for e, var in enumerate(data_type):
+                        faces_not_flat[i][e*ind_step + step] = var
+                    step += 1
+            return faces_not_flat
 
         edit_faces_for_loops()
-        tri_strips = self.to_tri_strip([pos_index[i:i + 3] for i in range(0, len(pos_index), 3)])
+        tri_strips = self.to_tri_strip([pos_index[i:i + 3] for i in range(0, len(pos_index), 3)], False)
         return update_triangles()
 
 

@@ -29,6 +29,7 @@ class ExtractPkg:
             fn = open(file_path, "wb")
             fn.write(f.read(f_len))
             fn.close()
+        self.f_data = []
 
     def execute(self):
         if self.set_batch == "Single":

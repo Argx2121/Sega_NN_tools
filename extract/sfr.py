@@ -31,7 +31,7 @@ class ExtractSFR:
             f.seek(offset)
             if block_type == "NEIF":
                 f.seek(4, 1)
-                file_name, _ = ReadNn(f, self.file_path, "SonicFreeRiders_E", False).find_file_name(i)
+                file_name, _ = ReadNn(f, self.file_path, "").find_file_name(i)
 
                 f.seek(offset)
 
@@ -39,10 +39,28 @@ class ExtractSFR:
                 pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
 
                 fn = open(file_path, "wb")
-                fn.write(f.read(offset_list[i+1] - offset))
+                fn.write(f.read(offset_list[i + 1] - offset))
                 fn.close()
             elif self.image_check():
                 ExtractImage(f, self.file.split(".")[0] + "_Extracted" + "/").execute()
+            elif self.packed_check():
+                file_count = read_int(f, ">")
+                file_end = read_int(f, ">")
+                file_offsets = [read_int(f, ">") for _ in range(file_count)]
+                file_lens = [read_int(f, ">") for _ in range(file_count)]
+                for e, (off, lens) in enumerate(zip(file_offsets, file_lens)):
+                    f.seek(off + 4 + offset)
+                    file_name, _ = ReadNn(f, self.file_path, "").find_file_name(i)
+
+                    f.seek(off + offset)
+                    file_path = bpy.path.native_pathsep(self.file.split(".")[0] + "_Extracted" + "/" + file_name)
+                    pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
+                    if pathlib.Path(file_path).exists():
+                        file_path = bpy.path.native_pathsep(
+                            self.file.split(".")[0] + "_Extracted" + "/" + file_name[:-4] + str(e) + file_name[-4:])
+                    fn = open(file_path, "wb")
+                    fn.write(f.read(lens))
+                    fn.close()
             else:
                 block_type = read_int(f, ">")
                 # read as int
@@ -61,7 +79,7 @@ class ExtractSFR:
                         block_type = False
 
                 if block_type:
-                    file_name = "Unnamed_File_" + str(i) + ".SonicFreeRiders_E." + str(block_type)
+                    file_name = "Unnamed_File_" + str(i) + "." + str(block_type)
                 else:
                     file_name = "Unnamed_File_" + str(i)
 
@@ -71,7 +89,7 @@ class ExtractSFR:
                 pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
 
                 fn = open(file_path, "wb")
-                fn.write(f.read(offset_list[i+1] - offset))
+                fn.write(f.read(offset_list[i + 1] - offset))
                 fn.close()
         f.close()
 
@@ -119,7 +137,7 @@ class ExtractSFR:
                 pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
 
                 fn = open(file_path, "wb")
-                fn.write(f.read(offset_list[i+1] - offset))
+                fn.write(f.read(offset_list[i + 1] - offset))
                 fn.close()
 
                 if write_texture_names:
@@ -169,6 +187,24 @@ class ExtractSFR:
         if os.path.getsize(self.file) > seek_value:
             f.seek(seek_value)
             if read_str(f, 4) == "DDS ":
+                f.seek(file_start)
+                return True
+        f.seek(file_start)
+        return False
+
+    def packed_check(self):
+        f = self.f
+        file_start = f.tell()
+        if file_start + 12 > os.path.getsize(self.file):
+            return False
+        file_count = read_int(f, ">")
+        file_end = read_int(f, ">")
+        first_file = read_int(f, ">")
+        seek_end = file_start + file_end
+        seek_first = file_start + first_file
+        if os.path.getsize(self.file) >= seek_end and os.path.getsize(self.file) > seek_first:
+            f.seek(seek_first)
+            if read_str(f, 4) == "NEIF":
                 f.seek(file_start)
                 return True
         f.seek(file_start)

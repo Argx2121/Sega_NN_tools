@@ -104,24 +104,19 @@ class OptimiseSegaNO(bpy.types.Operator):
             bpy.context.view_layer.objects.active = arma
             bpy.ops.object.make_single_user(object=True, obdata=True, material=False, animation=False)
             arma.location = 0, 0, 0
-            bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
-            arma.rotation_euler[0] = -1.5707963267949
-            bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
-            arma.rotation_euler[0] = 1.5707963267949
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
             arma.select_set(False)
             bpy.context.view_layer.objects.active = None
-
-            mesh_list = [a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0]
+            mesh_list = get_bpy_meshes(context, arma)
             for obj in mesh_list:  # these functions don't split the mesh
                 obj.hide_set(False)
                 remove_extra_bones(obj)
                 remove_wrong_bones(obj, arma)
                 triangulate(obj.data)
-                rotate_mesh(arma, obj)
+                rotate_mesh(obj)
 
-            mesh_list = [
-                a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0 and (
+            mesh_list = [a for a in get_bpy_meshes(context, arma) if (
                         len(a.material_slots) < 1 or a.material_slots[0].material is None)]
             if mesh_list:
                 material = bpy.data.materials.new("Material")
@@ -132,29 +127,25 @@ class OptimiseSegaNO(bpy.types.Operator):
                     else:
                         obj.material_slots[0].material = material
 
-            mesh_list = [a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0]
+            mesh_list = get_bpy_meshes(context, arma)
             for obj in mesh_list:
                 model_simple_split(context, obj)
 
             # because we split the mesh into simple and complex with only the used v groups used
             #  we can build a list of complex only meshes to check
 
-            mesh_list_a = [
-                a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0 and len(a.vertex_groups) == 0]
-            mesh_list_b = [
-                a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0 and len(a.vertex_groups) > 0]
+            mesh_list_a = [a for a in get_bpy_meshes(context, arma) if len(a.vertex_groups) == 0]
+            mesh_list_b = [a for a in get_bpy_meshes(context, arma) if len(a.vertex_groups) > 0]
             for obj in mesh_list_a:
                 enforce_weight(obj, arma)
             for obj in mesh_list_b:
                 ensure_weights(obj)
 
-            mesh_list = [
-                a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0 and len(a.vertex_groups) > 1]
+            mesh_list = [a for a in get_bpy_meshes(context, arma) if len(a.vertex_groups) > 1]
             if self.nn_format == "G":
                 for obj in mesh_list:
-                    # gno is the only format to allow verts to have more than 4 weights
                     model_complex_split_gno(context, obj)
-            else:  # check if more than 4 weights per vert
+            else:
                 check = [mesh_weight_check(obj) for obj in mesh_list]
                 if check and (len(set(check)) > 1 or list(set(check))[0]):
                     mesh_names = [obj.name for obj in mesh_list]
@@ -170,9 +161,7 @@ class OptimiseSegaNO(bpy.types.Operator):
 
             if game == "Sonic2006_X":
                 # 06 has a better way to store weights than the other two xno formats
-                mesh_list = [
-                    a for a in arma.children if
-                    a.type == "MESH" and len(a.data.polygons) > 0 and len(a.vertex_groups) > 128]
+                mesh_list = [a for a in get_bpy_meshes(context, arma) if len(a.vertex_groups) > 128]
                 # max bone count is 128 per mesh or 256 (it could be signed)
                 #                     a.type == "MESH" and len(a.data.polygons) > 0 and len(a.vertex_groups) > 16]
                 #                 # todo please make a new function
@@ -192,19 +181,37 @@ class OptimiseSegaNO(bpy.types.Operator):
 
                     bpy.context.window_manager.popup_menu(draw_func=draw, title="NN Model Exporter", icon="ERROR")
                     return {'FINISHED'}
-                mesh_list = [
-                    a for a in arma.children if
-                    a.type == "MESH" and len(a.data.polygons) > 0 and len(a.vertex_groups) > 4]
+                mesh_list = [a for a in get_bpy_meshes(context, arma) if len(a.vertex_groups) > 4]
                 for obj in mesh_list:
                     model_complex_split(context, obj)
 
-            mesh_list = [
-                a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 0 and len(a.data.materials) > 1]
+            mesh_list = [a for a in get_bpy_meshes(context, arma) if len(a.data.materials) > 1]
             for obj in mesh_list:
                 model_material_split(context, obj)
+            material_list = list(set([a.data.materials[0] for a in get_bpy_meshes(context, arma)]))
+            before = context.area.ui_type
+            context.area.ui_type = 'ShaderNodeTree'
+            test_mesh = get_bpy_meshes(context, arma)[0]
+            test_mesh.select_set(True)
+            bpy.context.view_layer.objects.active = test_mesh
+            mesh_mat = test_mesh.data.materials[0].name[:]
+            for mat in material_list:
+                if not mat.use_nodes:
+                    mat.use_nodes = True
+                node_ids = set([n.bl_idname for n in mat.node_tree.nodes])
+                if 'ShaderNode' + self.nn_format + 'NOShader' not in node_ids:
+                    test_mesh.data.materials[0] = mat
+                    context.space_data.node_tree = mat.node_tree
+                    # sorry blender i dont trust you
+                    # ive tried to run operators modal in the past and you have ...... had issues
+                    from ...ui.operators import convert_materials, SetGno
+                    convert_materials(None, context, SetGno(game[-1], True, False, False, False, True, True, True))
+            context.area.ui_type = before
+            test_mesh.select_set(False)
+            bpy.context.view_layer.objects.active = None
+            test_mesh.data.materials[0] = bpy.data.materials[mesh_mat]
             # i cannot split this based off what would tri strip best sorry gang
-            mesh_list_f = [
-                a for a in arma.children if a.type == "MESH" and len(a.data.polygons) > 30000]
+            mesh_list_f = [a for a in get_bpy_meshes(context, arma) if len(a.data.polygons) > 30000]
             for obj in mesh_list_f:
                 model_face_split(context, obj)
         #  https://blender.stackexchange.com/questions/55484/when-to-use-bmesh-update-edit-mesh-and-when-mesh-update
@@ -333,18 +340,11 @@ def triangulate(mesh):
     bm.free()
 
 
-def rotate_mesh(arma, obj):
+def rotate_mesh(obj):
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.make_single_user(object=True, obdata=True, material=False, animation=False)
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-    obj.data.transform(obj.matrix_world)
-    obj.matrix_parent_inverse = arma.matrix_world.inverted()
-    obj.rotation_euler[0] = -1.5707963267949
-    bpy.ops.object.transform_apply(location=True, rotation=True, scale=False)
-    from mathutils import Matrix
-    obj.matrix_world = Matrix()
-    obj.rotation_euler[0] = 1.5707963267949
 
     obj.select_set(False)
     bpy.context.view_layer.objects.active = None
@@ -646,7 +646,6 @@ def model_complex_split(context, old_obj):
     group_4 = convert_3_to_4(group_3)
 
     for group in group_4:
-        print(group)
         split_meshes(group)
 
     bone_groups = list(set(get_groups()))
@@ -738,7 +737,7 @@ def model_face_split(context, old_obj):
 
         while len(new_mesh.polygons) > 30000:
             # we know its only going to be triangles because we triangulated earlier
-            for face in new_mesh.polygons[:(30000-1)]:
+            for face in new_mesh.polygons[:(30000 - 1)]:
                 face.select = True
 
             bpy.ops.object.mode_set(mode='EDIT')
@@ -766,4 +765,3 @@ def model_face_split(context, old_obj):
         bpy.ops.object.delete(use_global=False, confirm=False)
 
     main_funct()
-

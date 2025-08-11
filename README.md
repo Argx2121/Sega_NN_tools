@@ -3,7 +3,7 @@
 A Python library for Blender for games using Sega's NN libraries.
 
 ## Requirements
- - Blender 4.1 or above.
+ - Blender 4.1.1.
  - The files you want to import must not be packed.
 
 ## Installation

@@ -13,7 +13,7 @@ from ...modules.other.splines.sfr import ReadPaths as Sfr
 
 class ImportSegaNNSplines(bpy.types.Operator, ImportHelper):
     """Import Splines (as edges)"""
-    bl_idname = "import.sega_nn_splines"
+    bl_idname = "import_nn.sega_nn_splines"
     bl_label = "Import Splines (as edges)"
     bl_options = {'REGISTER', 'UNDO'}
     filename_ext = "*.splines"

@@ -22,15 +22,17 @@ class ExtractBnk:
         f.seek(to_offsets)
         offsets = read_int_tuple(f, count)
 
+        # i think i made this after making like, 50 other file extractors
+        # sorry that the previous version was so ass i was just so over it man
         block_func = {
             "HTEX": self.htex_block,
-            "HTTB": self.skip, "ABDA": self.skip, "ABDT": self.skip, "ABRS": self.skip,
-            "HCCL": self.skip,
+            # "HTTB": self.skip, "ABDA": self.skip, "ABDT": self.skip, "ABRS": self.skip,
+            # "HCCL": self.skip,
             "HMDL": self.nn_block, "HMOT": self.nn_block, "HCAM": self.nn_block, "HLIT": self.nn_block,
-            "HMAT": self.nn_block}
+            "HMAT": self.nn_block, "HMMT": self.nn_block, "HMRT": self.nn_block}
 
         index = 0
-        for off in offsets:
+        for e, off in enumerate(offsets):
             f.seek(off)
             block_name = read_str(f, 4)
             block_len = read_int(f)
@@ -42,17 +44,21 @@ class ExtractBnk:
             if block_name in block_func:
                 index = block_func[block_name](info)
             else:
-                self.skip(info)
+                self.skip(info, e, block_name)
 
     def nn_block(self, info):
         block_len, index = info
         f = self.f
         start = f.tell()
         f.seek(4, 1)
-        name, index = ReadNn(f, self.file_path, "", False).find_file_name(index)
+        name, index = ReadNn(f, self.file_path).find_file_name(index)
 
         f.seek(start)
         data = f.read(block_len)
+
+        if ":" in name:
+            name = pathlib.Path(name)
+            name = str(pathlib.PurePath(name.parent.relative_to(name.parents[1]), name.name))
 
         file_path = bpy.path.native_pathsep(self.file[:-4] + "_Extracted" + "/" + name)
         pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
@@ -62,9 +68,22 @@ class ExtractBnk:
         fn.close()
         return index
 
-    @staticmethod
-    def skip(info):
+    def skip(self, info, e, block_name):
         block_len, index = info
+        f = self.f
+        name = "Unknown_file_" + str(e) + "." + block_name
+        data = f.read(block_len)
+
+        if ":" in name:
+            name = pathlib.Path(name)
+            name = str(pathlib.PurePath(name.parent.relative_to(name.parents[1]), name.name))
+
+        file_path = bpy.path.native_pathsep(self.file[:-4] + "_Extracted" + "/" + name)
+        pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)
+
+        fn = open(file_path, "wb")
+        fn.write(data)
+        fn.close()
         return index
 
     def htex_block(self, info):
@@ -91,6 +110,9 @@ class ExtractBnk:
             data = f.read(tex_len)
 
             tex_name = img_names[i]
+            if ":" in tex_name:
+                name = pathlib.Path(tex_name)
+                tex_name = str(pathlib.PurePath(name.parent.relative_to(name.parents[1]), name.name))
 
             file_path = bpy.path.native_pathsep(self.file[:-4] + "_Extracted" + "/" + tex_name)
             pathlib.Path(file_path).parent.mkdir(parents=True, exist_ok=True)

@@ -353,7 +353,8 @@ class Write:
         info_offset = f.tell()
 
         mesh_set_count = len(model_data.meshes.simple_opaque) + len(model_data.meshes.complex_opaque) + \
-                         len(model_data.meshes.simple_alpha) + len(model_data.meshes.complex_alpha)
+                         len(model_data.meshes.simple_alpha) + len(model_data.meshes.complex_alpha) + \
+                         len(model_data.meshes.simple_clip) + len(model_data.meshes.complex_clip)
         bone_used = self.bone
         vert_sets = 0
 
