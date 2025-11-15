@@ -34,9 +34,8 @@ class Model:
         console_out("Generating Names...", model_util.make_names, self)
         console_out("Making Accurate Bones...", armature.make_bones_accurate, self)
 
-        bpy.ops.object.mode_set(mode="POSE")  # pose bone stuff here
-        console_out("Making Pose Bones...", armature.make_bone_pose, self)
         bpy.ops.object.mode_set(mode="OBJECT")  # return to normal
+        console_out("Making Pose Bones...", armature.make_bone_pose, self)
         console_out("Making Bone Collections...", armature.make_bone_collections, self)
         if self.settings.hide_null_bones:
             console_out("Hiding Null Bones...", armature.hide_null_bones)
