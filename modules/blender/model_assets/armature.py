@@ -65,6 +65,10 @@ def make_bone_collections(self):
 
 def make_bone_pose(self):
     scales = []  # BLENDER
+    round_value = 0.1  # blender..............
+    round_number = 1
+
+    test_list = []
     for pose_b, nn_b in zip(bpy.context.object.pose.bones, self.model.bones):
         order = "XYZ"
         if nn_b.flags.zxy:
@@ -77,6 +81,8 @@ def make_bone_pose(self):
         rot = nn_b.rotation
         rot = [math.radians(r) for r in rot]
         pose_b.nn_euler_values = rot
+        if [round(a, 0) for a in nn_b.scale] == [-1, -1, -1]:
+            nn_b.scale = [1, 1, 1]
         pose_b.nn_scale_values = nn_b.scale
         pose_b.nn_position_values = nn_b.position
 
@@ -110,9 +116,21 @@ def make_bone_pose(self):
                 a = mathutils.Matrix.LocRotScale(pos, rot, sca)
                 parent_mat = mathutils.Matrix.LocRotScale(pl, pr, ps)
                 pose_b.matrix = parent_mat @ a
+                testp1 = [0 if -round_value < a < round_value else round(a, round_number) for a in pose_b.nn_position_values]
+                testp2 = [0 if -round_value < a < round_value else round(a, round_number) for a in np]
+                testr1 = [0 if -round_value < a < round_value else round(a, round_number) for a in rot.to_quaternion().to_euler()]
+                testr2 = [0 if -round_value < a < round_value else round(a, round_number) for a in nr.to_euler()]
+                tests1 = [0 if -round_value < a < round_value else round(a, round_number) for a in pose_b.nn_scale_values]
+                tests2 = [0 if -round_value < a < round_value else round(a, round_number) for a in ns]
+                if (testp1 == testp2) and (testr1 == testr2) and (tests1 == tests2):
+                    test_list.append(False)
+                else:
+                    test_list.append(True)
+
             else:
                 a = mathutils.Matrix.LocRotScale(pos, rot, sca)
                 pose_b.matrix = a
+                test_list.append(False)  # you wouldnt pose a root node.............. right........
 
         if nn_b.flags.reset_scale_x:
             pose_b.nn_reset_scale_x = True
@@ -137,6 +155,8 @@ def make_bone_pose(self):
             pose_b.nn_ik_2bone_root = True
         if nn_b.flags.xsiik:
             pose_b.nn_xsiik = True
+    if set(test_list) == {False}:
+        self.settings.pose = False
 
 
 @dataclass
