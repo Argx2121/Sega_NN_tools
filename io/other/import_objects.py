@@ -14,7 +14,7 @@ from ...modules.other.objects.sfr import ReadInstanceModels as Sfr
 
 class ImportSegaNNObjects(bpy.types.Operator, ImportHelper):
     """Import object placement"""
-    bl_idname = "import.sega_nn_objects"
+    bl_idname = "import_nn.sega_nn_objects"
     bl_label = "Import object placement"
     bl_options = {'REGISTER', 'UNDO'}
     filename_ext = "*.objects"
