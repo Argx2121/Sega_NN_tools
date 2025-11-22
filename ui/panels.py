@@ -243,7 +243,7 @@ class NN_PT_About(GENERIC_panel, bpy.types.Panel):
                 "https://github.com/Argx2121/Sega_NN_tools/releases/latest"
         blender_version = (4, 1, 1)
         if bpy.app.version != blender_version:
-            layout.label(text='Please use Blender version ' + str(blender_version))
+            layout.label(text='Please use Blender version ' + str(blender_version), icon='ERROR')
         layout.label(text="NN tools by Arg!!")
         box = layout.box()
         box.scale_y = 0.6
