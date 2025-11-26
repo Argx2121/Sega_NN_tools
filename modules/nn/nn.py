@@ -118,6 +118,8 @@ class ReadNn:
                 self.read_texture_names()
             if not self.nn.bones:
                 self.read_bone_names()
+            if not self.nn.effect:
+                self.read_effect_names()
         if self.nn.morphs:
             if not self.nn.morph_names:
                 self.read_morph_names()
@@ -183,6 +185,30 @@ class ReadNn:
 
             if self.debug:
                 stdout.write("Bone names: " + str(self.nn.bones) + "\n")
+            f.close()
+
+    def read_effect_names(self):
+        if self.debug:
+            print("Trying external effect names")
+
+        final_letter = "e"
+        if self.filepath[-3:].isupper():
+            final_letter = "E"
+
+        if os.path.exists(self.filepath[:-1] + final_letter):
+            f = open(self.filepath[:-1] + final_letter, "rb")
+            f.seek(4, 1)
+            f.seek(read_int(f), 1)
+            block_name = read_str(f, 4)
+
+            if block_name[0] == "N" and block_name[2] == "E" and block_name[3] == "F":  # N*EF
+                if block_name[1] in self.big_endian:
+                    self.nn.effect = nn_effects.Read(f, f.tell() - 4).be()
+                else:
+                    self.nn.effect = nn_effects.Read(f, f.tell() - 4).le()
+
+            if self.debug:
+                stdout.write("Effect names: " + str(self.nn.effect) + "\n")
             f.close()
 
     def read_morph_names(self):
