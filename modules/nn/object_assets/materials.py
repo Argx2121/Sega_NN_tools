@@ -43,6 +43,17 @@ class Read:
         specular_value: float
 
     @dataclass
+    class Colour2:  # you know i was gonna have them be the same class but idc
+        __slots__ = ["flags", "ambient", "diffuse", "specular", "emission", "specular_value", "shininess"]
+        flags: int
+        ambient: tuple
+        diffuse: tuple
+        specular: tuple
+        emission: tuple
+        shininess: float
+        specular_value: float
+
+    @dataclass
     class Texture:
         type: str
         interpolation: str
@@ -185,7 +196,7 @@ class Read:
         for offset in self.info_offset:
             f.seek(offset + self.start)
             _, _, var1, _, _, var2, var3 = read_int_tuple(f, 7)
-            self.colour_offset.append(var1 + 4)
+            self.colour_offset.append(var1)
             self.texture_count.append(var2)
             self.texture_offset.append(var3)
 
@@ -247,14 +258,24 @@ class Read:
 
     def _cno_eno_colour(self):
         f = self.f
-        for offset in self.colour_offset:  # todo test these
-            f.seek(offset + self.start + 4)
+        for offset in self.colour_offset:
+            f.seek(offset + self.start)
             # the material setting here isn't really needed
-            #  if they don't use a colour property it is also nulled
             # 2 = all data types
-            self.colour_list.append(self.Colour(
+            self.colour_list.append(self.Colour2(
+                read_int(f, ">"),
                 read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"), read_float_tuple(f, 4, ">"),
                 read_float_tuple(f, 4, ">"), self._from_shininess(read_float(f, ">")), read_float(f, ">")
+            ))
+
+    def _ino_lno_zno_colour(self):
+        f = self.f
+        for offset in self.colour_offset:
+            f.seek(offset + self.start)
+            self.colour_list.append(self.Colour2(
+                read_int(f),
+                read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
+                read_float_tuple(f, 4), self._from_shininess(read_float(f)), read_float(f)
             ))
 
     def _cno_texture(self):
@@ -1007,24 +1028,28 @@ class Read:
         else:
             self._le_offsets()
             self._le_info_3()
+        self._ino_lno_zno_colour()
         self._ino_texture()
         return self._return_data_2()
 
     def lno(self):
         self._le_offsets()
         self._lno_zno_info()
+        self._ino_lno_zno_colour()
         self._lno_texture()
         return self._return_data_2()
 
     def lno_s4e2(self):
         self._le_offsets_4()
         self._ino_lno_info_2()
+        self._ino_lno_zno_colour()
         self._lno_texture()
         return self._return_data_2()
 
     def lno_s4e2ouya(self):
         self._le_offsets()
         self._ino_lno_info_2_ouya()
+        self._ino_lno_zno_colour()
         self._lno_texture()
         return self._return_data_2()
 
@@ -1049,8 +1074,9 @@ class Read:
     def zno(self):
         self._le_offsets()
         self._lno_zno_info()
+        self._ino_lno_zno_colour()
         self._zno_texture()
-        return self._return_data_2()
+        return self._return_data_1()
 
 
 class Write:
