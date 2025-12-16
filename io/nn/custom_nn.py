@@ -165,6 +165,8 @@ def hide_function(obj, self):  # obj.is_evaluated
         return
     for i in range(mesh_count):
         mesh = self.nn_meshes[i].mesh
+        if not mesh:
+            continue
         mesh.hide_viewport = hide
         mesh.hide_render = hide
 
