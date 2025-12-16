@@ -532,3 +532,31 @@ class SetNNBones(bpy.types.Operator):
         for i in range(len(meshes)):
             context.active_pose_bone.nn_meshes[i].mesh = meshes[i]
         return {'FINISHED'}
+
+
+class GuessNNBones(bpy.types.Operator):
+    """Guess what meshes you want assigned to bones"""
+    bl_idname = "operator.nn_guess_bones"
+    bl_label = "Assign Meshes to Bones"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    def execute(self, context):
+        obj = context.active_object
+        if obj.id_type != 'OBJECT' and obj.data != 'ARMATURE' and obj.mode != "OBJECT":
+            return {'FINISHED'}
+        meshes = get_bpy_meshes(context, obj, no_poly_test=True)
+
+        for bone in obj.pose.bones:
+            bone.nn_mesh_count = 0
+
+        for ind, child in enumerate(meshes):
+            vert_names = [a.name for a in child.vertex_groups]
+            if len(vert_names) == 1:
+                obj.pose.bones[vert_names[0]].nn_mesh_count += 1
+                obj.pose.bones[vert_names[0]].nn_meshes[obj.pose.bones[vert_names[0]].nn_mesh_count-1].mesh = child
+            elif len(vert_names) == 0:
+                pass  # uhm..?
+            else:
+                obj.pose.bones[-1].nn_mesh_count += 1
+                obj.pose.bones[-1].nn_meshes[obj.pose.bones[vert_names[0]].nn_mesh_count-1].mesh = child
+        return {'FINISHED'}

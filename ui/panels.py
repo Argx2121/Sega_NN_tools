@@ -55,6 +55,7 @@ class NN_PT_Data(ITEM_panel, bpy.types.Panel):
         if context.object.type == "ARMATURE":
             obj = context.object
             if bpy.context.active_object.mode == "OBJECT":
+                layout.operator("operator.nn_guess_bones")
                 layout.prop(obj, "nn_frame_rate")
             if bpy.context.active_object.mode == "POSE" and context.active_pose_bone:
                 bone = context.active_pose_bone
