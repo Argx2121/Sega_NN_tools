@@ -59,7 +59,7 @@ classes = [
     panels.NN_PT_About,
     menus.NN_MT_Node_Add, menus.NN_MT_Node_Setup, operators.NodeNNSetup, operators.NNNodeAdd,
     operators.SyncNNTextures, operators.GetNNMaterials, operators.CopyNNTextures,  # operators.NNObjectSpawner,
-    operators.SetNNBones, operators.GuessNNBones,
+    operators.SetNNBones, operators.GuessNNBones, operators.ShowNNBones,
     custom_nn.NNTexture, custom_nn.NNMaterial, custom_nn.NNMesh,
 ]
 

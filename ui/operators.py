@@ -560,3 +560,20 @@ class GuessNNBones(bpy.types.Operator):
                 obj.pose.bones[-1].nn_mesh_count += 1
                 obj.pose.bones[-1].nn_meshes[obj.pose.bones[vert_names[0]].nn_mesh_count-1].mesh = child
         return {'FINISHED'}
+
+
+class ShowNNBones(bpy.types.Operator):
+    """Unhide any meshes hidden by bones"""
+    bl_idname = "operator.nn_unhide_bones"
+    bl_label = "Unhide Meshes from Bones"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    def execute(self, context):
+        obj = context.active_object
+        if obj.id_type != 'OBJECT' and obj.data != 'ARMATURE' and obj.mode != "OBJECT":
+            return {'FINISHED'}
+
+        for bone in obj.pose.bones:
+            if bone.nn_mesh_count and bone.nn_hide:
+                bone.nn_hide = False
+        return {'FINISHED'}
