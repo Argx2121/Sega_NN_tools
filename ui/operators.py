@@ -1,5 +1,5 @@
 import bpy
-from bpy.props import BoolProperty, StringProperty, EnumProperty
+from bpy.props import BoolProperty, StringProperty, EnumProperty, IntProperty
 from ..modules.blender.model_assets.node_groups import MakeGroups
 from ..io.nn_import_data import no_export_list
 from ..modules.util import get_bpy_meshes
@@ -576,4 +576,81 @@ class ShowNNBones(bpy.types.Operator):
         for bone in obj.pose.bones:
             if bone.nn_mesh_count and bone.nn_hide:
                 bone.nn_hide = False
+        return {'FINISHED'}
+
+
+class ReorderNNItem(bpy.types.Operator):
+    """Move this element"""
+    bl_idname = "operator.nn_change_index"
+    bl_label = "Move NN element"
+    bl_options = {'REGISTER', 'INTERNAL'}
+
+    index: IntProperty(
+        name="index",
+        description="",
+        default=-1,
+    )
+
+    up: BoolProperty(
+        name="up",
+        description="",
+        default=False,
+    )
+
+    material: BoolProperty(
+        name="material",
+        description="",
+        default=False,
+    )
+
+    def execute(self, context):
+        obj = context.active_object
+        if obj.id_type != 'OBJECT' and obj.data != 'ARMATURE' and obj.mode != "OBJECT":
+            return {'FINISHED'}
+
+        if self.material:
+            data_path = obj.data.nn_materials
+            count = obj.data.nn_material_count
+        else:
+            data_path = obj.data.nn_textures
+            count = obj.data.nn_texture_count
+
+        index = self.index
+        current_item = data_path[index]
+        if 2 > count:
+            return {'FINISHED'}
+        if index == 0 and self.up:
+            return {'FINISHED'}
+        if (index+1 == count) and not self.up:
+            return {'FINISHED'}
+
+        ignore_props = {'rna_type', 'name'}
+
+        current_item_props = []
+        for the_prop, prop_set in current_item.bl_rna.properties.items():
+            if the_prop not in ignore_props:
+                current_item_props.append((the_prop, getattr(current_item, the_prop)))
+
+        if self.up:
+            item_before = data_path[index-1]
+            item_before_props = []
+            for the_prop, prop_set in item_before.bl_rna.properties.items():
+                if the_prop not in ignore_props:
+                    item_before_props.append((the_prop, getattr(item_before, the_prop)))
+
+            for the_prop, prop_set in current_item_props:
+                setattr(item_before, the_prop, prop_set)
+            for the_prop, prop_set in item_before_props:
+                setattr(current_item, the_prop, prop_set)
+        else:
+            item_after = data_path[index+1]
+            item_after_props = []
+            for the_prop, prop_set in item_after.bl_rna.properties.items():
+                if the_prop not in ignore_props:
+                    item_after_props.append((the_prop, getattr(item_after, the_prop)))
+
+            for the_prop, prop_set in item_after_props:
+                setattr(current_item, the_prop, prop_set)
+            for the_prop, prop_set in current_item_props:
+                setattr(item_after, the_prop, prop_set)
         return {'FINISHED'}

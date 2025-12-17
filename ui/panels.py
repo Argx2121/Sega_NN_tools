@@ -147,7 +147,16 @@ class NN_PT_Material(ITEM_panel, bpy.types.Panel):
             layout.operator("operator.nn_get_materials")
             layout.prop(obj.data, "nn_material_count")
             for i in range(0, obj.data.nn_material_count):
-                layout.prop(obj.data.nn_materials[i], "material", text="")
+                row = layout.row(align=True)
+                row.prop(obj.data.nn_materials[i], "material", text="")
+                up = row.operator("operator.nn_change_index", text="", icon="TRIA_UP")
+                up.index = i
+                up.up = True
+                up.material = True
+                down = row.operator("operator.nn_change_index", text="", icon="TRIA_DOWN")
+                down.index = i
+                down.up = False
+                down.material = True
 
 
 class NN_PT_Texture(ITEM_panel, bpy.types.Panel):
@@ -169,7 +178,16 @@ class NN_PT_Texture(ITEM_panel, bpy.types.Panel):
             layout.operator("operator.nn_copy_textures")
             layout.prop(obj.data, "nn_texture_count")
             for i in range(0, obj.data.nn_texture_count):
-                layout.prop(obj.data.nn_textures[i], "texture", text="")
+                row = layout.row(align=True)
+                row.prop(obj.data.nn_textures[i], "texture", text="")
+                up = row.operator("operator.nn_change_index", text="", icon="TRIA_UP")
+                up.index = i
+                up.up = True
+                up.material = False
+                down = row.operator("operator.nn_change_index", text="", icon="TRIA_DOWN")
+                down.index = i
+                down.up = False
+                down.material = False
                 row = layout.row(align=True)
                 row.prop(obj.data.nn_textures[i], "interp_min", text="")
                 row.prop(obj.data.nn_textures[i], "interp_mag", text="")
