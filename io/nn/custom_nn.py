@@ -148,7 +148,7 @@ class NNTexture(bpy.types.PropertyGroup):
             ('Anisotropic8', 'Anisotropic8', "Xbox only"),
             ('Anisotropic8 MipMap Closest', 'Anisotropic8 MipMap Closest', "Xbox only"),
             ('Anisotropic8 MipMap Linear', 'Anisotropic8 MipMap Linear', "Xbox only"),
-        ))
+        ), default='Linear MipMap Linear')  # this is because i love gno
     interp_mag: bpy.props.EnumProperty(
         name="Interpolation Mag", description="Texture interpolation when close",
         items=(('Closest', 'Closest', ""), ('Linear', 'Linear', ""), ('Anisotropic', 'Anisotropic', "XBOX")))

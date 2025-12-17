@@ -429,6 +429,81 @@ class GetNNMaterials(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class GetNNTextures(bpy.types.Operator):
+    """Get Textures from this Armature and sets them in the Textures list, allocates new index"""
+    bl_idname = "operator.nn_get_textures"
+    bl_label = "Get Textures"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    def execute(self, context):
+        obj = context.object
+        if obj.id_type != 'OBJECT' and obj.data != 'ARMATURE':
+            return {'FINISHED'}
+        materials = set()
+        for child in get_bpy_meshes(context, obj, no_poly_test=True):
+            for m_slot in child.material_slots:
+                materials.add(m_slot.material)
+        materials = list(materials)
+        textures = set()
+
+        for material in materials:
+            if material.node_tree:
+                for node in material.node_tree.nodes:
+                    node_n = node.bl_idname
+                    if node_n.startswith('ShaderNode') and (
+                            node_n.endswith('NOMixRGB') or node_n.endswith('NOSpecular')):
+                        node.texture_2 = int(node.texture_2)
+                        for node_l in node.inputs['Color 2'].links:
+                            if node_l.from_node.bl_idname == 'ShaderNodeTexImage':
+                                texture = node_l.from_node.image
+                                interp = node_l.from_node.interpolation
+                                textures.add((texture, interp))
+
+        textures = list(textures)
+        obj.data.nn_texture_count = len(textures)
+        for i in range(len(textures)):
+            obj.data.nn_textures[i].texture = textures[i][0]
+            obj.data.nn_textures[i].interp_mag = textures[i][1]
+        return allocate_indices(context)
+
+
+class AssignNNTexturesIndices(bpy.types.Operator):
+    """Assign this Armature's Textures Indices in the Materials"""
+    bl_idname = "operator.nn_assign_indices_textures"
+    bl_label = "Assign Texture Indices"
+    bl_options = {'REGISTER', 'INTERNAL'}
+
+    def execute(self, context):
+        return allocate_indices(context)
+
+
+def allocate_indices(context):  # separate because i KNOW what blender will do
+    obj = context.object
+    if obj.id_type != 'OBJECT' and obj.data != 'ARMATURE':
+        return {'FINISHED'}
+    materials = set()
+    list_of_tex = []
+    for i in range(obj.data.nn_texture_count):
+        if not obj.data.nn_textures[i].texture:
+            return {'FINISHED'}
+        list_of_tex.append((obj.data.nn_textures[i].texture, obj.data.nn_textures[i].interp_mag))
+    for child in get_bpy_meshes(context, obj, no_poly_test=True):
+        for m_slot in child.material_slots:
+            materials.add(m_slot.material)
+    for material in list(materials):
+        if material.node_tree:
+            for node in material.node_tree.nodes:
+                node_n = node.bl_idname
+                if node_n.startswith('ShaderNode') and (node_n.endswith('NOMixRGB') or node_n.endswith('NOSpecular')):
+                    for node_l in node.inputs['Color 2'].links:
+                        if node_l.from_node.bl_idname == 'ShaderNodeTexImage':
+                            texture = node_l.from_node.image
+                            interp = node_l.from_node.interpolation
+                            this_image = (texture, interp)
+                            node.texture_2 = list_of_tex.index(this_image)
+    return {'FINISHED'}
+
+
 def armature_list(scene, context):
     items = [("nn_no_armature", "No Armature", "")]
     armatures = [(a.name, a.name, "") for a in bpy.data.armatures]
@@ -502,7 +577,7 @@ class SyncNNTextures(bpy.types.Operator):
             if material.node_tree:
                 for node in material.node_tree.nodes:
                     node_n = node.bl_idname
-                    if node_n.startswith('ShaderNodeG') and (node_n.endswith('NOMixRGB') or node_n.endswith('NOSpecular')):
+                    if node_n.startswith('ShaderNode') and (node_n.endswith('NOMixRGB') or node_n.endswith('NOSpecular')):
                         node.texture_2 = int(node.texture_2)
                         for node_l in node.inputs['Color 2'].links:
                             if node_l.from_node.bl_idname == 'ShaderNodeTexImage' and obj.data.nn_textures[node.texture_2].interp_mag in {'Linear', 'Closest'}:

@@ -175,6 +175,8 @@ class NN_PT_Texture(ITEM_panel, bpy.types.Panel):
         if context.object.type == "ARMATURE":
             obj = context.object
             layout.operator("operator.nn_sync_textures")
+            layout.operator("operator.nn_get_textures")
+            layout.operator("operator.nn_assign_indices_textures")
             layout.operator("operator.nn_copy_textures")
             layout.prop(obj.data, "nn_texture_count")
             for i in range(0, obj.data.nn_texture_count):

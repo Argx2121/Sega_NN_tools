@@ -60,6 +60,7 @@ classes = [
     menus.NN_MT_Node_Add, menus.NN_MT_Node_Setup, operators.NodeNNSetup, operators.NNNodeAdd,
     operators.SyncNNTextures, operators.GetNNMaterials, operators.CopyNNTextures,  # operators.NNObjectSpawner,
     operators.SetNNBones, operators.GuessNNBones, operators.ShowNNBones, operators.ReorderNNItem,
+    operators.GetNNTextures, operators.AssignNNTexturesIndices,
     custom_nn.NNTexture, custom_nn.NNMaterial, custom_nn.NNMesh,
 ]
 
