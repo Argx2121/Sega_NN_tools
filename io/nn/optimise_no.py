@@ -214,6 +214,11 @@ class OptimiseSegaNO(bpy.types.Operator):
             mesh_list_f = [a for a in get_bpy_meshes(context, arma) if len(a.data.polygons) > 30000]
             for obj in mesh_list_f:
                 model_face_split(context, obj)
+            mesh_list_empty = [a for a in get_bpy_meshes(context, arma, no_poly_test=True) if len(a.data.polygons) == 0]
+            for obj in mesh_list_empty:
+                obj.select_set(True)
+                bpy.context.view_layer.objects.active = obj
+                bpy.ops.object.delete(use_global=False, confirm=False)
         #  https://blender.stackexchange.com/questions/55484/when-to-use-bmesh-update-edit-mesh-and-when-mesh-update
         # todo use bmesh FOR EVERYTHING (including importing bones)
         # todo clean up  https://devtalk.blender.org/t/vertex-weights-and-indices-for-a-bmesh/1457/2
