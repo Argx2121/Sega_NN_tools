@@ -622,7 +622,8 @@ class GuessNNBones(bpy.types.Operator):
         meshes = get_bpy_meshes(context, obj, no_poly_test=True)
 
         for bone in obj.pose.bones:
-            bone.nn_mesh_count = 0
+            if bone.nn_mesh_count != 0:
+                bone.nn_mesh_count = 0
 
         for ind, child in enumerate(meshes):
             vert_names = [a.name for a in child.vertex_groups]
@@ -633,7 +634,7 @@ class GuessNNBones(bpy.types.Operator):
                 pass  # uhm..?
             else:
                 obj.pose.bones[-1].nn_mesh_count += 1
-                obj.pose.bones[-1].nn_meshes[obj.pose.bones[vert_names[0]].nn_mesh_count-1].mesh = child
+                obj.pose.bones[-1].nn_meshes[obj.pose.bones[-1].nn_mesh_count-1].mesh = child
         return {'FINISHED'}
 
 
