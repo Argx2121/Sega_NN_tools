@@ -94,7 +94,7 @@ def _shader_ui_common(self, ignore, layout, pad_ind):
     if self.advanced:  # if show advanced settings
         row = layout.row(align=True)
         row.alignment = 'LEFT'
-        row.label(text="", icon='RIGHTARROW')
+        row.label(text="", icon='DOWNARROW_HLT')
         row.prop(self, 'advanced', emboss=False)
         index = 0
         for prop in self.bl_rna.properties:
@@ -110,7 +110,7 @@ def _shader_ui_common(self, ignore, layout, pad_ind):
     else:
         row = layout.row(align=True)
         row.alignment = 'LEFT'
-        row.label(text="", icon='DOWNARROW_HLT')
+        row.label(text="", icon='RIGHTARROW')
         row.prop(self, 'advanced', emboss=False)
     layout.separator(factor=0.3)
     material = _get_material(self)
