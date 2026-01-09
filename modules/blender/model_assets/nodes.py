@@ -395,7 +395,7 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     def draw_buttons(self, context, layout):
         ignore = {'Advanced'}
-        _shader_ui_common(self, ignore, layout, {3, 8})
+        _shader_ui_common(self, ignore, layout, {5, 8})
 
     blend_type: EnumProperty(name="Blend Mode", update=update_blend_type, items=blend_types, options=set())
     source_fact: EnumProperty(name="Source Factor", update=update_source_fact, items=source_facts, options=set())
