@@ -12,14 +12,7 @@ class NN_MT_Node_Add(bpy.types.Menu):
             var.type = cla.bl_idname
             var.use_transform = True
         # imagine if the world was made of pudding
-
-
-class NN_MT_Node_Setup(bpy.types.Menu):
-    bl_label = "NN Setup"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.operator("node.nn_operator", text="Nodes")
+        layout.operator("node.nn_operator", text="Setup Nodes")
 
 
 def nn_node_menu(self, context):
@@ -27,4 +20,3 @@ def nn_node_menu(self, context):
         layout = self.layout
         layout.separator()
         layout.menu("NN_MT_Node_Add")
-        layout.menu("NN_MT_Node_Setup")

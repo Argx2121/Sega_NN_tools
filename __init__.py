@@ -57,7 +57,7 @@ classes = [
     panels.NN_PT_Data, panels.NN_PT_Material, panels.NN_PT_Texture, panels.NN_PT_Mesh, panels.NN_PT_Ik,
     panels.NN_PT_Extract, panels.NN_PT_ExtraImport,
     panels.NN_PT_About,
-    menus.NN_MT_Node_Add, menus.NN_MT_Node_Setup, operators.NodeNNSetup, operators.NNNodeAdd,
+    menus.NN_MT_Node_Add, operators.NodeNNSetup, operators.NNNodeAdd,
     operators.SyncNNTextures, operators.GetNNMaterials, operators.CopyNNTextures,  # operators.NNObjectSpawner,
     operators.SetNNBones, operators.GuessNNBones, operators.ShowNNBones, operators.ReorderNNItem,
     operators.GetNNTextures, operators.AssignNNTexturesIndices,
