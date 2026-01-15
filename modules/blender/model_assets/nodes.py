@@ -853,9 +853,9 @@ class ShaderNodeGNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
         self.inputs["V"].default_value = int(self.v_type)
 
-    u_type: EnumProperty(name="U Wrapping", update=update_u, items=u_types)
-    v_type: EnumProperty(name="V Wrapping", update=update_v, items=v_types)
-    transform_mode: EnumProperty(name="Transform Mode", update=update_mode, items=transform_modes)
+    u_type: EnumProperty(name="U Wrapping", update=update_u, items=u_types, options=set())
+    v_type: EnumProperty(name="V Wrapping", update=update_v, items=v_types, options=set())
+    transform_mode: EnumProperty(name="Transform Mode", update=update_mode, items=transform_modes, options=set())
 
     def init(self, context):
         self.node_tree = bpy.data.node_groups['.NN_VECTOR_UV']
@@ -930,11 +930,11 @@ class ShaderNodeXNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
         self.inputs["V"].default_value = int(self.v_type)
 
-    u_type: EnumProperty(name="U Wrapping", update=update_u, items=u_types)
-    v_type: EnumProperty(name="V Wrapping", update=update_v, items=v_types)
-    transform_mode: EnumProperty(name="Transform Mode", update=update_mode, items=transform_modes)
-    lod_bias: FloatProperty(name="LOD bias", min=-1, max=1)
-    max_mip_map_level: IntProperty(name="Max MipMap Level", min=0)
+    u_type: EnumProperty(name="U Wrapping", update=update_u, items=u_types, options=set())
+    v_type: EnumProperty(name="V Wrapping", update=update_v, items=v_types, options=set())
+    transform_mode: EnumProperty(name="Transform Mode", update=update_mode, items=transform_modes, options=set())
+    lod_bias: FloatProperty(name="LOD bias", min=-1, max=1, options=set())
+    max_mip_map_level: IntProperty(name="Max MipMap Level", min=0, options=set())
     custom_filter: BoolProperty(name="Custom interpolation", description='Override texture interpolation',
                                 default=False, options=set())
     interp_min: bpy.props.EnumProperty(

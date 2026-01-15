@@ -916,7 +916,6 @@ def get_materials(self):
             vector_node = to_socket_from_socket.get(image_node.inputs[0]).node
             u_wrap = int(vector_node.u_type)
             v_wrap = int(vector_node.v_type)
-            reflection = vector_node.inputs["Reflection Vector"].default_value
             uv_offset = get_list(vector_node.inputs["UV Offset"])
             uv_offset = uv_offset[0], -uv_offset[1]
             lod_bias, max_mip_map_level, interp_min, interp_mag = 0, 0, 0, 0
@@ -950,8 +949,10 @@ def get_materials(self):
             elif v_wrap == 2:
                 texture_flags |= 1 << 21
 
-            if reflection:
+            if vector_node.transform_mode == "1":
                 texture_flags |= 1 << 13
+            elif vector_node.transform_mode == "2":
+                texture_flags |= 1 << 12
             else:
                 uv_map = 0
                 for child in self.mesh_list:
