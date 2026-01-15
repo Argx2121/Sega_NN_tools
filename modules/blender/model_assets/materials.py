@@ -219,7 +219,9 @@ def material_accurate(self):
 
         material.show_transparent_back = False
         material.use_backface_culling = True
-        tree.nodes.remove(tree.nodes["Principled BSDF"])
+        for node in tree.nodes:
+            if node.bl_idname == "ShaderNodeBsdfPrincipled":
+                tree.nodes.remove(node)
 
         mat_flags = m.mat_flags
         # defaults
@@ -558,7 +560,9 @@ def material_complex(self):
         material.use_backface_culling = True
         # show_transparent_back is usually needed off however if used on shadows 06 model it messes up the normals
         # if black means transparent and the image has gradients, separate hsv -> image input, v output
-        tree.nodes.remove(tree.nodes["Principled BSDF"])
+        for node in tree.nodes:
+            if node.bl_idname == "ShaderNodeBsdfPrincipled":
+                tree.nodes.remove(node)
 
         colour = False
         alpha = 1
@@ -674,7 +678,10 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
         material.blend_method = m.transparency
 
         colour = False
-        diffuse = tree.nodes["Principled BSDF"]
+
+        for node in tree.nodes:
+            if node.bl_idname == "ShaderNodeBsdfPrincipled":
+                diffuse = node
 
         for t_index in range(m_texture_count):
             m_tex = m.texture[t_index]
