@@ -224,7 +224,7 @@ def material_accurate(self):
         mat_flags = m.mat_flags
         # defaults
         v_col, disable_fog, unlit, buff_comp, buff_update, callback, no_uv_transform = False, False, False, True, True, False, False
-        backface_off, has_spec = True, True
+        backface_off, has_spec, hide = True, True, False
 
         if model_end == "G":
             shader = tree.nodes.new('ShaderNodeGNOShader')
@@ -232,14 +232,19 @@ def material_accurate(self):
 
             v_col = mat_flags >> 0 & 1
             backface_off = mat_flags >> 1 & 1
+            vertex_tex_emu = mat_flags >> 2 & 1  # do you even DO anything ??
             disable_fog = mat_flags >> 5 & 1
             unlit = mat_flags >> 8 & 1
+            hide = mat_flags >> 9 & 1
+            # if i chop you up and i put you in a meat grinder and the only thing that comes out is your eye
+            # youre- youre probably dead!!
             buff_comp = not mat_flags >> 16 & 1
             buff_update = not mat_flags >> 17 & 1
             comp_after = mat_flags >> 18 & 1  # needed for clip
             # normally would be used for shaders but gamecube......... so only purpose is cutout........
-            # (compare z buff after)
+            # (compare z buff after texture)
             has_spec = mat_flags >> 24 & 1
+            has_spec_texture = (mat_flags >> 24 & 1) and (mat_flags >> 25 & 1)  # verified
             callback = mat_flags >> 31 & 1
 
             shader.blend_type = str(m.render.blend)  # setting the values of these changes no calculations
@@ -260,11 +265,13 @@ def material_accurate(self):
             m_render = m.render
             colour_init.inputs["Emission"].default_value = m_col.emission
 
+            hide = mat_flags >> 0 & 1
             backface_off = mat_flags >> 1 & 1
             unlit = mat_flags >> 2 & 1
             disable_fog = mat_flags >> 3 & 1
             v_col = mat_flags >> 4 & 1  # seems most likely
             no_uv_transform = mat_flags >> 5 & 1
+            two_sided_lighting = mat_flags >> 6 & 1
             has_spec = mat_flags >> 24 & 1
             callback = mat_flags >> 31 & 1
             buff_comp = m_render.z_compare
