@@ -969,6 +969,7 @@ class ShaderNodeXNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         self.inputs["V"].hide = True
         self.inputs["UV Rotation"].hide = True
         self.inputs["UV Scale"].hide = True
+        self.inputs["Normal Map"].hide = True
 
 
 classes = (
