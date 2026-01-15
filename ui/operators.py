@@ -78,7 +78,7 @@ def convert_materials(operator, context, settings):
         image.label = "Reflection Texture"
         vector = tree.nodes.new(type='ShaderNode' + model_end + 'NOVector')
         vector.location = (-1440, -50)
-        vector.inputs["Reflection Vector"].default_value = True
+        vector.transform_mode = "2"
         mix_node = tree.nodes.new('ShaderNode' + model_end + 'NOMixRGB')
         mix_node.location = (-770, 410)
         mix_node.blend_type = '.GNO_MULTI'

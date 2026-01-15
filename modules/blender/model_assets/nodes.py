@@ -796,6 +796,15 @@ class ShaderNodeGNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_idname = "ShaderNodeGNOVector"
     bl_width_default = 180
 
+    def transform_modes(self, context):
+        mix_types = (
+            ('0', "UV Only", "UV Transform without a transform matrix"),
+            ('1', "UV Matrix", ""),
+            ('2', "Normal", ""),
+            ('3', "Position", ""),
+        )
+        return mix_types
+
     def u_types(self, context):
         wrap_types = (
             ('0', "Clamp U", ""),
@@ -818,6 +827,27 @@ class ShaderNodeGNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     def free(self):
         pass  # defining this so blender doesn't try to remove the group
 
+    def update_mode(self, context):
+        if not self.transform_mode:
+            self.transform_mode = self.transform_modes(context)[0][0]
+        mix_types = {
+            "0": '.NN_VECTOR_UV',
+            "1": '.NN_VECTOR_UV',
+            "2": '.NN_VECTOR_NORMAL',
+            "3": '.NN_VECTOR_POSITION',
+        }
+        self.node_tree = bpy.data.node_groups[mix_types[self.transform_mode]]
+
+        if self.transform_mode == '0':
+            self.inputs["UV Offset"].hide = True
+        else:
+            self.inputs["UV Offset"].hide = False
+
+        if self.transform_mode in {'2', '3'}:
+            self.inputs["UV Map"].hide = True
+        else:
+            self.inputs["UV Map"].hide = False
+
     def update_u(self, context):
         if not self.u_type:
             self.u_type = self.u_types(context)[1][0]
@@ -832,13 +862,17 @@ class ShaderNodeGNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     u_type: EnumProperty(name="U Wrapping", update=update_u, items=u_types)
     v_type: EnumProperty(name="V Wrapping", update=update_v, items=v_types)
+    transform_mode: EnumProperty(name="Transform Mode", update=update_mode, items=transform_modes)
 
     def init(self, context):
-        self.node_tree = bpy.data.node_groups['.NN_VECTOR']
+        self.node_tree = bpy.data.node_groups['.NN_VECTOR_UV']
+        self.transform_mode = self.transform_modes(context)[0][0]
         self.u_type = self.u_types(context)[1][0]
         self.v_type = self.v_types(context)[1][0]
         self.inputs["U"].hide = True
         self.inputs["V"].hide = True
+        self.inputs["UV Rotation"].hide = True
+        self.inputs["UV Scale"].hide = True
 
 
 class ShaderNodeXNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
@@ -846,6 +880,15 @@ class ShaderNodeXNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_idname = "ShaderNodeXNOVector"
     bl_width_default = 180
 
+    def transform_modes(self, context):
+        mix_types = (
+            ('0', "UV Only", "UV Transform without a transform matrix"),
+            ('1', "UV Matrix", ""),
+            ('2', "Normal", ""),
+            ('3', "Position", ""),
+        )
+        return mix_types
+
     def u_types(self, context):
         wrap_types = (
             ('0', "Clamp U", ""),
@@ -868,6 +911,27 @@ class ShaderNodeXNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     def free(self):
         pass  # defining this so blender doesn't try to remove the group
 
+    def update_mode(self, context):
+        if not self.transform_mode:
+            self.transform_mode = self.transform_modes(context)[0][0]
+        mix_types = {
+            "0": '.NN_VECTOR_UV',
+            "1": '.NN_VECTOR_UV',
+            "2": '.NN_VECTOR_NORMAL',
+            "3": '.NN_VECTOR_POSITION',
+        }
+        self.node_tree = bpy.data.node_groups[mix_types[self.transform_mode]]
+
+        if self.transform_mode == '0':
+            self.inputs["UV Offset"].hide = True
+        else:
+            self.inputs["UV Offset"].hide = False
+
+        if self.transform_mode in {'2', '3'}:
+            self.inputs["UV Map"].hide = True
+        else:
+            self.inputs["UV Map"].hide = False
+
     def update_u(self, context):
         if not self.u_type:
             self.u_type = self.u_types(context)[1][0]
@@ -882,6 +946,7 @@ class ShaderNodeXNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     u_type: EnumProperty(name="U Wrapping", update=update_u, items=u_types)
     v_type: EnumProperty(name="V Wrapping", update=update_v, items=v_types)
+    transform_mode: EnumProperty(name="Transform Mode", update=update_mode, items=transform_modes)
     lod_bias: FloatProperty(name="LOD bias", min=-1, max=1)
     max_mip_map_level: IntProperty(name="Max MipMap Level", min=0)
     custom_filter: BoolProperty(name="Custom interpolation", description='Override texture interpolation',
@@ -910,11 +975,14 @@ class ShaderNodeXNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         items=(('Closest', 'Closest', ""), ('Linear', 'Linear', ""), ('Anisotropic', 'Anisotropic', "XBOX")), options=set())
 
     def init(self, context):
-        self.node_tree = bpy.data.node_groups['.NN_VECTOR']
+        self.node_tree = bpy.data.node_groups['.NN_VECTOR_UV']
+        self.transform_mode = self.transform_modes(context)[0][0]
         self.u_type = self.u_types(context)[1][0]
         self.v_type = self.v_types(context)[1][0]
         self.inputs["U"].hide = True
         self.inputs["V"].hide = True
+        self.inputs["UV Rotation"].hide = True
+        self.inputs["UV Scale"].hide = True
 
 
 classes = (
@@ -928,5 +996,4 @@ classes = (
     ShaderNodeXNOShaderInit,
     ShaderNodeXNOShader,
     ShaderNodeXNOVector,
-    # ShaderNodeXNONormal,
 )

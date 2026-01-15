@@ -387,8 +387,11 @@ def material_accurate(self):
                 min_interp = m_tex.interp_min
                 mag_interp = m_tex.interp_mag
 
-            if not m_mix.ignore_uv_offset:
+            vector_node.transform_mode = "0"
+            if not m_mix.no_uv_transform:
                 vector_node.inputs["UV Offset"].default_value = (m_tex.offset[0], - m_tex.offset[1], 0.0)
+                vector_node.inputs["UV Scale"].default_value = (m_tex.scale[0], m_tex.scale[1], 0.0)
+                vector_node.transform_mode = "1"
 
             if m_mix.clampu:
                 vector_node.inputs["U"].default_value = 0
@@ -422,7 +425,9 @@ def material_accurate(self):
                 vector_node.interp_mag = mag_interp
 
             if m_mix.reflection:
-                vector_node.inputs["Reflection Vector"].default_value = True
+                vector_node.transform_mode = "2"
+            elif m_mix.position:
+                vector_node.transform_mode = "3"
             else:
                 node = tree.nodes.new(type="ShaderNodeUVMap")
                 node.location = (x_loc - 500, y_loc - 1100)

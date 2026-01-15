@@ -65,6 +65,7 @@ class Read:
         offset: tuple
         uv: int
         texture_flags: Flag
+        scale: tuple = (1.0, 1.0)
         lod_bias: float = 0
         max_mip_map_level: int = 0
         interp_min: str = ''
@@ -507,7 +508,8 @@ class Read:
 
                 class TextureFlags(Flag):
                     # byte 1
-                    ignore_uv_offset = texture_flags >> 30 & 1
+                    callback = texture_flags >> 31 & 1  # do not the
+                    no_uv_transform = texture_flags >> 30 & 1
 
                     # byte 2
                     # uv wrapping modes
@@ -520,8 +522,9 @@ class Read:
 
                     # byte 3
                     # vector type (reflection or uv map - multiple cannot be set)
-                    # bump map is >> 14 but doesnt seem to do anything
+                    bump = texture_flags >> 14 & 1
                     reflection = texture_flags >> 13 & 1
+                    position = texture_flags >> 12 & 1
                     uv4 = texture_flags >> 11 & 1
                     uv3 = texture_flags >> 10 & 1
                     uv2 = texture_flags >> 9 & 1
@@ -844,12 +847,13 @@ class Read:
                         specular2 = bool(tex_type == 8)
                         add = bool(tex_type == 9)
                         subtract = bool(tex_type == 10)
-                        # normal = bool(tex_type == 11) doesnt seem to be supported
+                        normal = bool(tex_type == 11)
 
                         # byte 2
                         # vector type (reflection or uv map - multiple cannot be set)
-                        # bump map is >> 14 but doesnt seem to do anything
+                        bump = texture_flags >> 14 & 1
                         reflection = texture_flags >> 13 & 1
+                        position = texture_flags >> 12 & 1
                         uv4 = texture_flags >> 11 & 1
                         uv3 = texture_flags >> 10 & 1
                         uv2 = texture_flags >> 9 & 1
@@ -868,7 +872,8 @@ class Read:
                         custom_filter = texture_flags >> 25 & 1
                         lod_bias = texture_flags >> 26 & 1
                         max_mip_map_level = texture_flags >> 27 & 1
-                        ignore_uv_offset = texture_flags >> 30 & 1
+                        no_uv_transform = texture_flags >> 30 & 1
+                        callback = texture_flags >> 31 & 1
 
                     t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
                     t_index = read_int(f)
