@@ -798,10 +798,9 @@ class ShaderNodeGNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     def transform_modes(self, context):
         mix_types = (
-            ('0', "UV Only", "UV Transform without a transform matrix"),
-            ('1', "UV Matrix", ""),
-            ('2', "Normal", ""),
-            ('3', "Position", ""),
+            ('0', "UV", ""),
+            ('1', "Normal", ""),
+            ('2', "Position", ""),
         )
         return mix_types
 
@@ -832,16 +831,10 @@ class ShaderNodeGNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
             self.transform_mode = self.transform_modes(context)[0][0]
         mix_types = {
             "0": '.NN_VECTOR_UV',
-            "1": '.NN_VECTOR_UV',
-            "2": '.NN_VECTOR_NORMAL',
-            "3": '.NN_VECTOR_POSITION',
+            "1": '.NN_VECTOR_NORMAL',
+            "2": '.NN_VECTOR_POSITION',
         }
         self.node_tree = bpy.data.node_groups[mix_types[self.transform_mode]]
-
-        if self.transform_mode == '0':
-            self.inputs["UV Offset"].hide = True
-        else:
-            self.inputs["UV Offset"].hide = False
 
         if self.transform_mode in {'2', '3'}:
             self.inputs["UV Map"].hide = True
@@ -882,10 +875,9 @@ class ShaderNodeXNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     def transform_modes(self, context):
         mix_types = (
-            ('0', "UV Only", "UV Transform without a transform matrix"),
-            ('1', "UV Matrix", ""),
-            ('2', "Normal", ""),
-            ('3', "Position", ""),
+            ('0', "UV", ""),
+            ('1', "Normal", ""),
+            ('2', "Position", ""),
         )
         return mix_types
 
@@ -916,16 +908,10 @@ class ShaderNodeXNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
             self.transform_mode = self.transform_modes(context)[0][0]
         mix_types = {
             "0": '.NN_VECTOR_UV',
-            "1": '.NN_VECTOR_UV',
-            "2": '.NN_VECTOR_NORMAL',
-            "3": '.NN_VECTOR_POSITION',
+            "1": '.NN_VECTOR_NORMAL',
+            "2": '.NN_VECTOR_POSITION',
         }
         self.node_tree = bpy.data.node_groups[mix_types[self.transform_mode]]
-
-        if self.transform_mode == '0':
-            self.inputs["UV Offset"].hide = True
-        else:
-            self.inputs["UV Offset"].hide = False
 
         if self.transform_mode in {'2', '3'}:
             self.inputs["UV Map"].hide = True

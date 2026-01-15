@@ -613,7 +613,7 @@ class Animation:
                 self.anim_var(anim_flag.level, anim_data, anim_interp, action, data_path)
             elif anim_flag.off_u or anim_flag.off_v:
                 vect = nodes.get('vector' + str(texture_index))
-                data_path = 'nodes["' + vect + '"].inputs[2].default_value'
+                data_path = 'nodes["' + vect + '"].inputs[1].default_value'
                 self.anim_uv([anim_flag.off_u, anim_flag.off_v], anim_data, anim_interp, action, data_path)
             elif anim_flag.index:
                 img = nodes.get('img' + str(texture_index))
