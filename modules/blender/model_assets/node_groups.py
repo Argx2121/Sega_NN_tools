@@ -138,53 +138,53 @@ class MakeGroups:
 
         # Group inputs
         var = tree.interface.new_socket(name='UV Map', in_out='INPUT', socket_type='NodeSocketVector')
-        var.default_value = (0.0, 0.0, 0.0)
-        var.min_value = -3.4028234663852886e+38
-        var.hide_value = True
         var.max_value = 3.4028234663852886e+38
+        var.default_value = (0.0, 0.0, 0.0)
+        var.hide_value = True
+        var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='UV Offset', in_out='INPUT', socket_type='NodeSocketVector')
-        var.default_value = (0.0, 0.0, 0.0)
-        var.min_value = -3.4028234663852886e+38
-        var.hide_value = False
         var.max_value = 3.4028234663852886e+38
+        var.default_value = (0.0, 0.0, 0.0)
+        var.hide_value = False
+        var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='UV Rotation', in_out='INPUT', socket_type='NodeSocketVector')
-        var.default_value = (0.0, 0.0, 0.0)
-        var.min_value = -3.4028234663852886e+38
-        var.hide_value = False
         var.max_value = 3.4028234663852886e+38
+        var.default_value = (0.0, 0.0, 0.0)
+        var.hide_value = False
+        var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='UV Scale', in_out='INPUT', socket_type='NodeSocketVector')
-        var.default_value = (1.0, 1.0, 1.0)
-        var.min_value = -3.4028234663852886e+38
-        var.hide_value = False
         var.max_value = 3.4028234663852886e+38
+        var.default_value = (1.0, 1.0, 1.0)
+        var.hide_value = False
+        var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='U', in_out='INPUT', socket_type='NodeSocketInt')
-        var.default_value = 0
-        var.min_value = 0
-        var.hide_value = False
         var.max_value = 2
+        var.default_value = 0
+        var.hide_value = False
+        var.min_value = 0
 
         var = tree.interface.new_socket(name='V', in_out='INPUT', socket_type='NodeSocketInt')
-        var.default_value = 0
-        var.min_value = 0
-        var.hide_value = False
         var.max_value = 2
+        var.default_value = 0
+        var.hide_value = False
+        var.min_value = 0
 
         var = tree.interface.new_socket(name='Normal Map', in_out='INPUT', socket_type='NodeSocketVector')
-        var.default_value = (5.0, 5.0, 5.0)
-        var.min_value = -3.4028234663852886e+38
-        var.hide_value = True
         var.max_value = 3.4028234663852886e+38
+        var.default_value = (5.0, 5.0, 5.0)
+        var.hide_value = True
+        var.min_value = -3.4028234663852886e+38
 
         # Group outputs
         var = tree.interface.new_socket(name='Image Vector', in_out='OUTPUT', socket_type='NodeSocketVector')
-        var.default_value = (0.0, 0.0, 0.0)
-        var.min_value = -3.4028234663852886e+38
-        var.hide_value = False
         var.max_value = 3.4028234663852886e+38
+        var.default_value = (0.0, 0.0, 0.0)
+        var.hide_value = False
+        var.min_value = -3.4028234663852886e+38
 
         # Group Nodes
         var = tree.nodes.new(type='NodeGroupOutput')
@@ -195,7 +195,7 @@ class MakeGroups:
 
         var = tree.nodes.new(type='NodeGroupInput')
         var.name = 'Group Input'
-        var.location = (-3035.48583984375, -391.02630615234375)
+        var.location = (-3336.397705078125, -375.6051025390625)
         var.outputs[0].default_value = (0.0, 0.0, 0.0)
         var.outputs[1].default_value = (0.0, 0.0, 0.0)
         var.outputs[2].default_value = (0.0, 0.0, 0.0)
@@ -220,8 +220,8 @@ class MakeGroups:
         var.inputs[1].default_value = 1.0
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'PINGPONG'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeSeparateXYZ')
         var.name = 'Separate XYZ'
@@ -246,8 +246,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.0
         var.inputs[2].default_value = 0.0
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'COMPARE'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.002'
@@ -256,8 +256,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'MULTIPLY'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.003'
@@ -266,8 +266,8 @@ class MakeGroups:
         var.inputs[1].default_value = 2.0
         var.inputs[2].default_value = 0.0
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'COMPARE'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.004'
@@ -276,8 +276,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'MULTIPLY'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.005'
@@ -286,8 +286,8 @@ class MakeGroups:
         var.inputs[1].default_value = 1.0
         var.inputs[2].default_value = 0.0
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'COMPARE'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.006'
@@ -296,8 +296,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'MULTIPLY'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.007'
@@ -306,8 +306,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'ADD'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.008'
@@ -316,8 +316,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'ADD'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeClamp')
         var.name = 'Clamp.001'
@@ -335,8 +335,8 @@ class MakeGroups:
         var.inputs[1].default_value = 1.0
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'PINGPONG'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.010'
@@ -345,8 +345,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.0
         var.inputs[2].default_value = 0.0
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'COMPARE'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.011'
@@ -355,8 +355,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'MULTIPLY'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.012'
@@ -365,8 +365,8 @@ class MakeGroups:
         var.inputs[1].default_value = 2.0
         var.inputs[2].default_value = 0.0
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'COMPARE'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.013'
@@ -375,8 +375,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'MULTIPLY'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.014'
@@ -385,8 +385,8 @@ class MakeGroups:
         var.inputs[1].default_value = 1.0
         var.inputs[2].default_value = 0.0
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'COMPARE'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.015'
@@ -395,8 +395,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'MULTIPLY'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.016'
@@ -405,8 +405,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'ADD'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.017'
@@ -415,8 +415,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'ADD'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMapping')
         var.name = 'Mapping'
@@ -450,6 +450,42 @@ class MakeGroups:
         var.outputs[1].default_value = 0.0
         var.operation = 'ADD'
 
+        var = tree.nodes.new(type='ShaderNodeSeparateXYZ')
+        var.name = 'Separate XYZ.001'
+        var.location = (-3048.33203125, 56.45307540893555)
+        var.inputs[0].default_value = (0.0, 0.0, 0.0)
+        var.outputs[0].default_value = 0.0
+        var.outputs[1].default_value = 0.0
+        var.outputs[2].default_value = 0.0
+
+        var = tree.nodes.new(type='ShaderNodeCombineXYZ')
+        var.name = 'Combine XYZ.001'
+        var.location = (-2599.334716796875, 116.958740234375)
+        var.inputs[0].default_value = 0.0
+        var.inputs[1].default_value = 0.0
+        var.inputs[2].default_value = 0.0
+        var.outputs[0].default_value = (0.0, 0.0, 0.0)
+
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math.018'
+        var.location = (-2803.10107421875, 18.493255615234375)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.outputs[0].default_value = 0.0
+        var.operation = 'SUBTRACT'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math.019'
+        var.location = (-591.6944580078125, -189.5094757080078)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.outputs[0].default_value = 0.0
+        var.operation = 'SUBTRACT'
+        var.use_clamp = False
+
         # Group Node links
         tree.links.new(tree.nodes["Separate XYZ"].outputs[0], tree.nodes["Math"].inputs[0])
         tree.links.new(tree.nodes["Separate XYZ"].outputs[0], tree.nodes["Clamp"].inputs[0])
@@ -482,7 +518,6 @@ class MakeGroups:
         tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Math.010"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Math.012"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Math.014"].inputs[0])
-        tree.links.new(tree.nodes["Math.017"].outputs[0], tree.nodes["Combine XYZ"].inputs[1])
         tree.links.new(tree.nodes["Combine XYZ"].outputs[0], tree.nodes["Group Output"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Mapping"].inputs[2])
         tree.links.new(tree.nodes["Vector Math.001"].outputs[0], tree.nodes["Separate XYZ"].inputs[0])
@@ -490,7 +525,13 @@ class MakeGroups:
         tree.links.new(tree.nodes["Vector Math"].outputs[0], tree.nodes["Mapping"].inputs[0])
         tree.links.new(tree.nodes["Mapping"].outputs[0], tree.nodes["Vector Math.001"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Vector Math.001"].inputs[1])
-        tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Vector Math"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Separate XYZ.001"].inputs[0])
+        tree.links.new(tree.nodes["Separate XYZ.001"].outputs[1], tree.nodes["Math.018"].inputs[1])
+        tree.links.new(tree.nodes["Math.018"].outputs[0], tree.nodes["Combine XYZ.001"].inputs[1])
+        tree.links.new(tree.nodes["Separate XYZ.001"].outputs[0], tree.nodes["Combine XYZ.001"].inputs[0])
+        tree.links.new(tree.nodes["Combine XYZ.001"].outputs[0], tree.nodes["Vector Math"].inputs[0])
+        tree.links.new(tree.nodes["Math.017"].outputs[0], tree.nodes["Math.019"].inputs[1])
+        tree.links.new(tree.nodes["Math.019"].outputs[0], tree.nodes["Combine XYZ"].inputs[1])
 
     @staticmethod
     def _nn_pos():
@@ -499,53 +540,53 @@ class MakeGroups:
 
         # Group inputs
         var = tree.interface.new_socket(name='UV Map', in_out='INPUT', socket_type='NodeSocketVector')
-        var.default_value = (0.0, 0.0, 0.0)
-        var.min_value = -3.4028234663852886e+38
-        var.hide_value = True
         var.max_value = 3.4028234663852886e+38
+        var.default_value = (0.0, 0.0, 0.0)
+        var.hide_value = True
+        var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='UV Offset', in_out='INPUT', socket_type='NodeSocketVector')
-        var.default_value = (0.0, 0.0, 0.0)
-        var.min_value = -3.4028234663852886e+38
-        var.hide_value = False
         var.max_value = 3.4028234663852886e+38
+        var.default_value = (0.0, 0.0, 0.0)
+        var.hide_value = False
+        var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='UV Rotation', in_out='INPUT', socket_type='NodeSocketVector')
-        var.default_value = (0.0, 0.0, 0.0)
-        var.min_value = -3.4028234663852886e+38
-        var.hide_value = False
         var.max_value = 3.4028234663852886e+38
+        var.default_value = (0.0, 0.0, 0.0)
+        var.hide_value = False
+        var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='UV Scale', in_out='INPUT', socket_type='NodeSocketVector')
-        var.default_value = (1.0, 1.0, 1.0)
-        var.min_value = -3.4028234663852886e+38
-        var.hide_value = False
         var.max_value = 3.4028234663852886e+38
+        var.default_value = (1.0, 1.0, 1.0)
+        var.hide_value = False
+        var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='U', in_out='INPUT', socket_type='NodeSocketInt')
-        var.default_value = 0
-        var.min_value = 0
-        var.hide_value = False
         var.max_value = 2
+        var.default_value = 0
+        var.hide_value = False
+        var.min_value = 0
 
         var = tree.interface.new_socket(name='V', in_out='INPUT', socket_type='NodeSocketInt')
-        var.default_value = 0
-        var.min_value = 0
-        var.hide_value = False
         var.max_value = 2
+        var.default_value = 0
+        var.hide_value = False
+        var.min_value = 0
 
         var = tree.interface.new_socket(name='Normal Map', in_out='INPUT', socket_type='NodeSocketVector')
-        var.default_value = (5.0, 5.0, 5.0)
-        var.min_value = -3.4028234663852886e+38
-        var.hide_value = True
         var.max_value = 3.4028234663852886e+38
+        var.default_value = (5.0, 5.0, 5.0)
+        var.hide_value = True
+        var.min_value = -3.4028234663852886e+38
 
         # Group outputs
         var = tree.interface.new_socket(name='Image Vector', in_out='OUTPUT', socket_type='NodeSocketVector')
-        var.default_value = (0.0, 0.0, 0.0)
-        var.min_value = -3.4028234663852886e+38
-        var.hide_value = False
         var.max_value = 3.4028234663852886e+38
+        var.default_value = (0.0, 0.0, 0.0)
+        var.hide_value = False
+        var.min_value = -3.4028234663852886e+38
 
         # Group Nodes
         var = tree.nodes.new(type='NodeGroupOutput')
@@ -581,8 +622,8 @@ class MakeGroups:
         var.inputs[1].default_value = 1.0
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'PINGPONG'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeSeparateXYZ')
         var.name = 'Separate XYZ'
@@ -607,8 +648,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.0
         var.inputs[2].default_value = 0.0
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'COMPARE'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.002'
@@ -617,8 +658,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'MULTIPLY'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.003'
@@ -627,8 +668,8 @@ class MakeGroups:
         var.inputs[1].default_value = 2.0
         var.inputs[2].default_value = 0.0
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'COMPARE'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.004'
@@ -637,8 +678,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'MULTIPLY'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.005'
@@ -647,8 +688,8 @@ class MakeGroups:
         var.inputs[1].default_value = 1.0
         var.inputs[2].default_value = 0.0
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'COMPARE'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.006'
@@ -657,8 +698,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'MULTIPLY'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.007'
@@ -667,8 +708,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'ADD'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.008'
@@ -677,8 +718,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'ADD'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeClamp')
         var.name = 'Clamp.001'
@@ -696,8 +737,8 @@ class MakeGroups:
         var.inputs[1].default_value = 1.0
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'PINGPONG'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.010'
@@ -706,8 +747,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.0
         var.inputs[2].default_value = 0.0
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'COMPARE'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.011'
@@ -716,8 +757,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'MULTIPLY'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.012'
@@ -726,8 +767,8 @@ class MakeGroups:
         var.inputs[1].default_value = 2.0
         var.inputs[2].default_value = 0.0
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'COMPARE'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.013'
@@ -736,8 +777,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'MULTIPLY'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.014'
@@ -746,8 +787,8 @@ class MakeGroups:
         var.inputs[1].default_value = 1.0
         var.inputs[2].default_value = 0.0
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'COMPARE'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.015'
@@ -756,8 +797,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'MULTIPLY'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.016'
@@ -766,8 +807,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'ADD'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math.017'
@@ -776,8 +817,8 @@ class MakeGroups:
         var.inputs[1].default_value = 0.5
         var.inputs[2].default_value = 0.5
         var.outputs[0].default_value = 0.0
-        var.use_clamp = False
         var.operation = 'ADD'
+        var.use_clamp = False
 
         var = tree.nodes.new(type='ShaderNodeMapping')
         var.name = 'Mapping'
@@ -813,7 +854,7 @@ class MakeGroups:
 
         var = tree.nodes.new(type='ShaderNodeNewGeometry')
         var.name = 'Geometry'
-        var.location = (-3617.669189453125, -17.144872665405273)
+        var.location = (-4143.07666015625, -339.3970031738281)
         var.outputs[0].default_value = (0.0, 0.0, 0.0)
         var.outputs[1].default_value = (0.0, 0.0, 0.0)
         var.outputs[2].default_value = (0.0, 0.0, 0.0)
@@ -826,7 +867,7 @@ class MakeGroups:
 
         var = tree.nodes.new(type='ShaderNodeObjectInfo')
         var.name = 'Object Info'
-        var.location = (-3428.51416015625, -139.15231323242188)
+        var.location = (-3953.921142578125, -461.4044494628906)
         var.outputs[0].default_value = (0.0, 0.0, 0.0)
         var.outputs[1].default_value = (0.800000011920929, 0.800000011920929, 0.800000011920929, 1.0)
         var.outputs[2].default_value = 0.0
@@ -836,7 +877,7 @@ class MakeGroups:
 
         var = tree.nodes.new(type='ShaderNodeVectorMath')
         var.name = 'Vector Math.002'
-        var.location = (-3205.318603515625, -20.1943359375)
+        var.location = (-3730.725830078125, -342.44647216796875)
         var.inputs[0].default_value = (0.0, 0.0, 0.0)
         var.inputs[1].default_value = (0.0, 0.0, 0.0)
         var.inputs[2].default_value = (0.0, 0.0, 0.0)
@@ -844,6 +885,42 @@ class MakeGroups:
         var.outputs[0].default_value = (0.0, 0.0, 0.0)
         var.outputs[1].default_value = 0.0
         var.operation = 'SUBTRACT'
+
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math.018'
+        var.location = (-691.346435546875, -205.9686279296875)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.outputs[0].default_value = 0.0
+        var.operation = 'SUBTRACT'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeSeparateXYZ')
+        var.name = 'Separate XYZ.001'
+        var.location = (-3559.875, -164.35301208496094)
+        var.inputs[0].default_value = (0.0, 0.0, 0.0)
+        var.outputs[0].default_value = 0.0
+        var.outputs[1].default_value = 0.0
+        var.outputs[2].default_value = 0.0
+
+        var = tree.nodes.new(type='ShaderNodeCombineXYZ')
+        var.name = 'Combine XYZ.001'
+        var.location = (-3110.87744140625, -103.84733581542969)
+        var.inputs[0].default_value = 0.0
+        var.inputs[1].default_value = 0.0
+        var.inputs[2].default_value = 0.0
+        var.outputs[0].default_value = (0.0, 0.0, 0.0)
+
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math.019'
+        var.location = (-3314.643798828125, -202.31283569335938)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.outputs[0].default_value = 0.0
+        var.operation = 'SUBTRACT'
+        var.use_clamp = False
 
         # Group Node links
         tree.links.new(tree.nodes["Separate XYZ"].outputs[0], tree.nodes["Math"].inputs[0])
@@ -877,7 +954,6 @@ class MakeGroups:
         tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Math.010"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Math.012"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[5], tree.nodes["Math.014"].inputs[0])
-        tree.links.new(tree.nodes["Math.017"].outputs[0], tree.nodes["Combine XYZ"].inputs[1])
         tree.links.new(tree.nodes["Combine XYZ"].outputs[0], tree.nodes["Group Output"].inputs[0])
         tree.links.new(tree.nodes["Group Input"].outputs[2], tree.nodes["Mapping"].inputs[2])
         tree.links.new(tree.nodes["Vector Math.001"].outputs[0], tree.nodes["Separate XYZ"].inputs[0])
@@ -887,7 +963,13 @@ class MakeGroups:
         tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Vector Math.001"].inputs[1])
         tree.links.new(tree.nodes["Object Info"].outputs[0], tree.nodes["Vector Math.002"].inputs[1])
         tree.links.new(tree.nodes["Geometry"].outputs[0], tree.nodes["Vector Math.002"].inputs[0])
-        tree.links.new(tree.nodes["Vector Math.002"].outputs[0], tree.nodes["Vector Math"].inputs[0])
+        tree.links.new(tree.nodes["Math.017"].outputs[0], tree.nodes["Math.018"].inputs[1])
+        tree.links.new(tree.nodes["Math.018"].outputs[0], tree.nodes["Combine XYZ"].inputs[1])
+        tree.links.new(tree.nodes["Separate XYZ.001"].outputs[1], tree.nodes["Math.019"].inputs[1])
+        tree.links.new(tree.nodes["Math.019"].outputs[0], tree.nodes["Combine XYZ.001"].inputs[1])
+        tree.links.new(tree.nodes["Separate XYZ.001"].outputs[0], tree.nodes["Combine XYZ.001"].inputs[0])
+        tree.links.new(tree.nodes["Vector Math.002"].outputs[0], tree.nodes["Separate XYZ.001"].inputs[0])
+        tree.links.new(tree.nodes["Combine XYZ.001"].outputs[0], tree.nodes["Vector Math"].inputs[0])
 
     @staticmethod
     def _nn_normal():
@@ -898,52 +980,52 @@ class MakeGroups:
         # Group inputs
         var = tree.interface.new_socket(name='UV Map', in_out='INPUT', socket_type='NodeSocketVector')
         var.max_value = 3.4028234663852886e+38
-        var.min_value = -3.4028234663852886e+38
         var.default_value = (0.0, 0.0, 0.0)
         var.hide_value = True
+        var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='UV Offset', in_out='INPUT', socket_type='NodeSocketVector')
         var.max_value = 3.4028234663852886e+38
-        var.min_value = -3.4028234663852886e+38
         var.default_value = (0.0, 0.0, 0.0)
         var.hide_value = False
+        var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='UV Rotation', in_out='INPUT', socket_type='NodeSocketVector')
         var.max_value = 3.4028234663852886e+38
-        var.min_value = -3.4028234663852886e+38
         var.default_value = (0.0, 0.0, 0.0)
         var.hide_value = False
+        var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='UV Scale', in_out='INPUT', socket_type='NodeSocketVector')
         var.max_value = 3.4028234663852886e+38
-        var.min_value = -3.4028234663852886e+38
         var.default_value = (1.0, 1.0, 1.0)
         var.hide_value = False
+        var.min_value = -3.4028234663852886e+38
 
         var = tree.interface.new_socket(name='U', in_out='INPUT', socket_type='NodeSocketInt')
         var.max_value = 2
-        var.min_value = 0
         var.default_value = 0
         var.hide_value = False
+        var.min_value = 0
 
         var = tree.interface.new_socket(name='V', in_out='INPUT', socket_type='NodeSocketInt')
         var.max_value = 2
-        var.min_value = 0
         var.default_value = 0
         var.hide_value = False
+        var.min_value = 0
 
         var = tree.interface.new_socket(name='Normal Map', in_out='INPUT', socket_type='NodeSocketVector')
         var.max_value = 3.4028234663852886e+38
-        var.min_value = -3.4028234663852886e+38
         var.default_value = (5.0, 5.0, 5.0)
         var.hide_value = True
+        var.min_value = -3.4028234663852886e+38
 
         # Group outputs
         var = tree.interface.new_socket(name='Image Vector', in_out='OUTPUT', socket_type='NodeSocketVector')
         var.max_value = 3.4028234663852886e+38
-        var.min_value = -3.4028234663852886e+38
         var.default_value = (0.0, 0.0, 0.0)
         var.hide_value = False
+        var.min_value = -3.4028234663852886e+38
 
         # Group Nodes
         var = tree.nodes.new(type='ShaderNodeNewGeometry')
@@ -987,9 +1069,9 @@ class MakeGroups:
         var.location = (-2525.01611328125, -195.9341278076172)
         var.inputs[0].default_value = (0.5, 0.5, 0.5)
         var.outputs[0].default_value = (0.0, 0.0, 0.0)
-        var.vector_type = 'NORMAL'
         var.convert_from = 'WORLD'
         var.convert_to = 'CAMERA'
+        var.vector_type = 'NORMAL'
 
         var = tree.nodes.new(type='ShaderNodeMath')
         var.name = 'Math'
@@ -1378,11 +1460,47 @@ class MakeGroups:
         var.outputs[0].default_value = 0.0
         var.outputs[1].default_value = (0.0, 0.0, 0.0)
         var.outputs[2].default_value = (0.800000011920929, 0.800000011920929, 0.800000011920929, 1.0)
-        var.factor_mode = 'UNIFORM'
-        var.blend_type = 'MIX'
         var.clamp_result = False
-        var.data_type = 'VECTOR'
+        var.blend_type = 'MIX'
+        var.factor_mode = 'UNIFORM'
         var.clamp_factor = True
+        var.data_type = 'VECTOR'
+
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math.020'
+        var.location = (1385.3624267578125, -190.83688354492188)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.outputs[0].default_value = 0.0
+        var.operation = 'SUBTRACT'
+        var.use_clamp = False
+
+        var = tree.nodes.new(type='ShaderNodeSeparateXYZ')
+        var.name = 'Separate XYZ.003'
+        var.location = (-3228.24609375, 340.2164611816406)
+        var.inputs[0].default_value = (0.0, 0.0, 0.0)
+        var.outputs[0].default_value = 0.0
+        var.outputs[1].default_value = 0.0
+        var.outputs[2].default_value = 0.0
+
+        var = tree.nodes.new(type='ShaderNodeCombineXYZ')
+        var.name = 'Combine XYZ.002'
+        var.location = (-2779.248779296875, 400.7221374511719)
+        var.inputs[0].default_value = 0.0
+        var.inputs[1].default_value = 0.0
+        var.inputs[2].default_value = 0.0
+        var.outputs[0].default_value = (0.0, 0.0, 0.0)
+
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math.021'
+        var.location = (-2983.01513671875, 302.25665283203125)
+        var.inputs[0].default_value = 1.0
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.outputs[0].default_value = 0.0
+        var.operation = 'SUBTRACT'
+        var.use_clamp = False
 
         # Group Node links
         tree.links.new(tree.nodes["Vector Transform"].outputs[0], tree.nodes["Vector Math.001"].inputs[0])
@@ -1430,7 +1548,6 @@ class MakeGroups:
         tree.links.new(tree.nodes["Group Input.001"].outputs[5], tree.nodes["Math.011"].inputs[0])
         tree.links.new(tree.nodes["Group Input.001"].outputs[5], tree.nodes["Math.013"].inputs[0])
         tree.links.new(tree.nodes["Group Input.001"].outputs[5], tree.nodes["Math.015"].inputs[0])
-        tree.links.new(tree.nodes["Math.018"].outputs[0], tree.nodes["Combine XYZ.001"].inputs[1])
         tree.links.new(tree.nodes["Combine XYZ.001"].outputs[0], tree.nodes["Group Output.001"].inputs[0])
         tree.links.new(tree.nodes["Group Input.001"].outputs[2], tree.nodes["Mapping"].inputs[2])
         tree.links.new(tree.nodes["Group Input.001"].outputs[3], tree.nodes["Vector Math.002"].inputs[1])
@@ -1444,7 +1561,13 @@ class MakeGroups:
         tree.links.new(tree.nodes["Math.019"].outputs[0], tree.nodes["Mix"].inputs[0])
         tree.links.new(tree.nodes["Group Input.001"].outputs[6], tree.nodes["Mix"].inputs[4])
         tree.links.new(tree.nodes["Geometry.001"].outputs[1], tree.nodes["Mix"].inputs[5])
-        tree.links.new(tree.nodes["Mix"].outputs[1], tree.nodes["Vector Math.002"].inputs[0])
+        tree.links.new(tree.nodes["Math.018"].outputs[0], tree.nodes["Math.020"].inputs[1])
+        tree.links.new(tree.nodes["Math.020"].outputs[0], tree.nodes["Combine XYZ.001"].inputs[1])
+        tree.links.new(tree.nodes["Separate XYZ.003"].outputs[1], tree.nodes["Math.021"].inputs[1])
+        tree.links.new(tree.nodes["Math.021"].outputs[0], tree.nodes["Combine XYZ.002"].inputs[1])
+        tree.links.new(tree.nodes["Separate XYZ.003"].outputs[0], tree.nodes["Combine XYZ.002"].inputs[0])
+        tree.links.new(tree.nodes["Mix"].outputs[1], tree.nodes["Separate XYZ.003"].inputs[0])
+        tree.links.new(tree.nodes["Combine XYZ.002"].outputs[0], tree.nodes["Vector Math.002"].inputs[0])
 
     @staticmethod
     def _gno_shader():
