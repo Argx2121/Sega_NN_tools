@@ -213,8 +213,6 @@ def material_accurate(self):
         m_col = m.colour
         material.use_nodes = True
         tree = material.node_tree
-
-        material.blend_method = m.transparency
         # material.surface_render_method = 'BLENDED'
 
         material.show_transparent_back = False
@@ -293,6 +291,8 @@ def material_accurate(self):
             shader.z_mode = str(m_render.z_mode)
             shader.buff_comp = buff_comp
             shader.buff_update = buff_update
+
+        shader.nn_blend_method = m.transparency
 
         colour_init.inputs["Material Color"].default_value = m_col.diffuse
         colour_init.inputs["Material Alpha"].default_value = m_col.diffuse[-1]
@@ -1012,7 +1012,6 @@ def get_materials(self):
             image_stage += 1
 
         # not texture stuff
-        blend_method = material.blend_method
         backface_off = material.use_backface_culling
 
         diffuse = get_list(start_node.inputs["Material Color"])
@@ -1039,6 +1038,7 @@ def get_materials(self):
         user = int(get_value(nn_shader.inputs["User"]))
         callback = get_value(nn_shader.inputs["Callback"])
         dis_fog = get_value(nn_shader.inputs["Disable Fog"])
+        blend_method = nn_shader.nn_blend_method
 
         if self.settings.over_texture:
             texture_list = dict()

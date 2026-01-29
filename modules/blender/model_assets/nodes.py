@@ -114,7 +114,6 @@ def _shader_ui_common(self, ignore, layout, pad_ind):
         row.prop(self, 'advanced', emboss=False)
     layout.separator(factor=0.3)
     material = _get_material(self)
-    layout.prop(material, 'blend_method', text='')
     layout.prop(material, 'use_backface_culling', text='Backface Culling')
 
 
@@ -361,6 +360,14 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         )
         return alpha_ops
 
+    def nn_blend_methods(self, context):
+        nn_blend_methods = (
+            ('OPAQUE', "Opaque", ""),
+            ('BLEND', "Alpha Blend", ""),
+            ('CLIP', "Alpha Clip", ""),
+        )
+        return nn_blend_methods
+
     def update_blend_type(self, context):
         if not self.blend_type:
             self.blend_type = self.blend_types(context)[1][0]
@@ -393,9 +400,21 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         if not self.alpha_op:
             self.alpha_op = self.alpha_ops(context)[0][0]
 
+    def update_nn_blend(self, context):
+        if not self.nn_blend_method:
+            self.nn_blend_method = self.nn_blend_methods(context)[0][0]
+        if self.nn_blend_method == "OPAQUE":
+            _get_material(self).blend_method = "OPAQUE"
+        elif self.nn_blend_method == "BLEND":
+            _get_material(self).blend_method = "BLEND"
+        elif self.nn_blend_method == "CLIP":
+            _get_material(self).blend_method = "CLIP"
+
     def draw_buttons(self, context, layout):
-        ignore = {'Advanced'}
+        ignore = {'Advanced', "Blend Mode"}
         _shader_ui_common(self, ignore, layout, {5, 8})
+
+        layout.prop(self, 'nn_blend_method', text='')
 
     blend_type: EnumProperty(name="Blend Mode", update=update_blend_type, items=blend_types, options=set())
     source_fact: EnumProperty(name="Source Factor", update=update_source_fact, items=source_facts, options=set())
@@ -411,6 +430,9 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     buff_comp: BoolProperty(name="Z Buff Compare", default=True, options=set())
     z_mode: EnumProperty(name="Z Mode", update=update_z_mode, items=z_modes, options=set())
     buff_update: BoolProperty(name="Z Buff Update", default=True, options=set())
+
+    nn_blend_method: EnumProperty(name="Blend Mode", update=update_nn_blend, items=nn_blend_methods, options=set())
+    # okay guys im sorry but im worried about calling it blend method ................
 
     advanced: BoolProperty(name="Advanced", default=False, options=set())
 
@@ -481,6 +503,14 @@ class ShaderNodeXNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
             ('516', 'Greater', ''), ('517', 'Not Equal', ''), ('518', 'Greater Equal', ''), ('519', 'Always', ''))
         return test_modes
 
+    def nn_blend_methods(self, context):
+        nn_blend_methods = (
+            ('OPAQUE', "Opaque", ""),
+            ('BLEND', "Alpha Blend", ""),
+            ('CLIP', "Alpha Clip", ""),
+        )
+        return nn_blend_methods
+
     def update_blend_logic(self, context):
         if not self.blend_logic:
             self.blend_logic = self.blend_logics(context)[0][0]
@@ -505,10 +535,21 @@ class ShaderNodeXNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         if not self.test_mode:
             self.test_mode = self.test_modes(context)[4][0]
 
+    def update_nn_blend(self, context):
+        if not self.nn_blend_method:
+            self.nn_blend_method = self.nn_blend_methods(context)[0][0]
+        if self.nn_blend_method == "OPAQUE":
+            _get_material(self).blend_method = "OPAQUE"
+        elif self.nn_blend_method == "BLEND":
+            _get_material(self).blend_method = "BLEND"
+        elif self.nn_blend_method == "CLIP":
+            _get_material(self).blend_method = "CLIP"
+
     def draw_buttons(self, context, layout):
-        ignore = {'Advanced', "Shader File", "Shader Name"}
+        ignore = {'Advanced', "Shader File", "Shader Name", "Blend Mode"}
         _shader_ui_common(self, ignore, layout, {5, 8})
 
+        layout.prop(self, 'nn_blend_method', text='')
         row = layout.row(align=True)
         row.label(text='Shader Name:')
         row.prop(self, 'shader_name', text='')
@@ -534,6 +575,8 @@ class ShaderNodeXNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     shader_file: StringProperty(name="Shader File")
     shader_name: StringProperty(name="Shader Name")
+
+    nn_blend_method: EnumProperty(name="Blend Mode", update=update_nn_blend, items=nn_blend_methods, options=set())
 
     advanced: BoolProperty(name="Advanced", default=False, options=set())
 
