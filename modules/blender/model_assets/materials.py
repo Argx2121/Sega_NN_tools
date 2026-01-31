@@ -499,7 +499,7 @@ def material_accurate(self):
 
             if model_end == "G" and m_mix.multiply_shading:
                 mix_node.multi_shading = True
-            mix_node.inputs["Color 2 Multiplier"].default_value = m_tex.blend
+            mix_node.inputs["Factor"].default_value = m_tex.blend
 
         if not spec_mix:
             # forced to add to make specular be mixed in
@@ -973,7 +973,7 @@ def get_materials(self):
             # now mixing node data
             multiply_shading = mix_node.multi_shading
             mix_type = mix_node.blend_type
-            col_2_multi = get_value(mix_node.inputs["Color 2 Multiplier"])
+            col_2_multi = get_value(mix_node.inputs["Factor"])
             if model_end == 'G':
                 if multiply_shading:
                     texture_flags |= 1 << 6
