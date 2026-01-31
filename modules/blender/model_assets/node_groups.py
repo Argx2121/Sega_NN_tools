@@ -1580,10 +1580,10 @@ class MakeGroups:
         var.default_value = (0.7529413104057312, 0.7529413104057312, 0.7529413104057312, 1.0)
 
         var = tree.interface.new_socket(name='Alpha', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.min_value = 0.0
         var.hide_value = False
         var.max_value = 1.0
         var.default_value = 1.0
-        var.min_value = 0.0
 
         var = tree.interface.new_socket(name='Disable Fog', in_out='INPUT', socket_type='NodeSocketBool')
         var.hide_value = False
@@ -1593,11 +1593,15 @@ class MakeGroups:
         var.hide_value = False
         var.default_value = False
 
+        var = tree.interface.new_socket(name='Hide', in_out='INPUT', socket_type='NodeSocketBool')
+        var.hide_value = False
+        var.default_value = False
+
         var = tree.interface.new_socket(name='User', in_out='INPUT', socket_type='NodeSocketInt')
+        var.min_value = -2147483648
         var.hide_value = False
         var.max_value = 2147483647
         var.default_value = 0
-        var.min_value = -2147483648
 
         # Group outputs
         var = tree.interface.new_socket(name='BSDF', in_out='OUTPUT', socket_type='NodeSocketShader')
@@ -1631,13 +1635,28 @@ class MakeGroups:
         var.name = 'Group Input'
         var.width = 177.6005859375
         var.location = (-2370.643310546875, -15.456640243530273)
+        var.outputs[0].default_value = (0.7529413104057312, 0.7529413104057312, 0.7529413104057312, 1.0)
+        var.outputs[1].default_value = 1.0
+        var.outputs[5].default_value = 0
+
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math'
+        var.location = (-2031.972412109375, 173.82437133789062)
+        var.inputs[0].default_value = 0.5
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.outputs[0].default_value = 0.0
+        var.use_clamp = True
+        var.operation = 'SUBTRACT'
 
         # Group Node links
         tree.links.new(tree.nodes["Transparent BSDF"].outputs[0], tree.nodes["Mix Shader"].inputs[1])
         tree.links.new(tree.nodes["Mix Shader"].outputs[0], tree.nodes["Group Output"].inputs[0])
         tree.links.new(tree.nodes["Emission"].outputs[0], tree.nodes["Mix Shader"].inputs[2])
         tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Emission"].inputs[0])
-        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Mix Shader"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Math"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Math"].inputs[0])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix Shader"].inputs[0])
 
     @staticmethod
     def _xno_shader():
@@ -1650,10 +1669,10 @@ class MakeGroups:
         var.default_value = (0.7529413104057312, 0.7529413104057312, 0.7529413104057312, 1.0)
 
         var = tree.interface.new_socket(name='Alpha', in_out='INPUT', socket_type='NodeSocketFloat')
+        var.min_value = 0.0
         var.hide_value = False
         var.max_value = 1.0
         var.default_value = 1.0
-        var.min_value = 0.0
 
         var = tree.interface.new_socket(name='Disable Fog', in_out='INPUT', socket_type='NodeSocketBool')
         var.hide_value = False
@@ -1663,11 +1682,15 @@ class MakeGroups:
         var.hide_value = False
         var.default_value = False
 
+        var = tree.interface.new_socket(name='Hide', in_out='INPUT', socket_type='NodeSocketBool')
+        var.hide_value = False
+        var.default_value = False
+
         var = tree.interface.new_socket(name='User', in_out='INPUT', socket_type='NodeSocketInt')
+        var.min_value = -2147483648
         var.hide_value = False
         var.max_value = 2147483647
         var.default_value = 0
-        var.min_value = -2147483648
 
         # Group outputs
         var = tree.interface.new_socket(name='BSDF', in_out='OUTPUT', socket_type='NodeSocketShader')
@@ -1701,13 +1724,28 @@ class MakeGroups:
         var.name = 'Group Input'
         var.width = 177.6005859375
         var.location = (-2370.643310546875, -15.456640243530273)
+        var.outputs[0].default_value = (0.7529413104057312, 0.7529413104057312, 0.7529413104057312, 1.0)
+        var.outputs[1].default_value = 1.0
+        var.outputs[5].default_value = 0
+
+        var = tree.nodes.new(type='ShaderNodeMath')
+        var.name = 'Math'
+        var.location = (-2031.972412109375, 173.82437133789062)
+        var.inputs[0].default_value = 0.5
+        var.inputs[1].default_value = 0.5
+        var.inputs[2].default_value = 0.5
+        var.outputs[0].default_value = 0.0
+        var.use_clamp = True
+        var.operation = 'SUBTRACT'
 
         # Group Node links
         tree.links.new(tree.nodes["Transparent BSDF"].outputs[0], tree.nodes["Mix Shader"].inputs[1])
         tree.links.new(tree.nodes["Mix Shader"].outputs[0], tree.nodes["Group Output"].inputs[0])
         tree.links.new(tree.nodes["Emission"].outputs[0], tree.nodes["Mix Shader"].inputs[2])
         tree.links.new(tree.nodes["Group Input"].outputs[0], tree.nodes["Emission"].inputs[0])
-        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Mix Shader"].inputs[0])
+        tree.links.new(tree.nodes["Group Input"].outputs[4], tree.nodes["Math"].inputs[1])
+        tree.links.new(tree.nodes["Group Input"].outputs[1], tree.nodes["Math"].inputs[0])
+        tree.links.new(tree.nodes["Math"].outputs[0], tree.nodes["Mix Shader"].inputs[0])
 
     @staticmethod
     def _gno_shader_init_flat():  # ''gno'' ehe

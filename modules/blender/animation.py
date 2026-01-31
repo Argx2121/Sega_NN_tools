@@ -605,11 +605,13 @@ class Animation:
             action = material_actions[material_index]
             nodes = material_nodes[material_index]
 
-            if anim_flag.hide or anim_flag.user_uint32:
+            if anim_flag.hide:
                 shader = nodes.get('shader')
-                if anim_flag.hide:
-                    raise NotImplementedError('Hide not implemented')
-                data_path = 'nodes["' + shader + '"].inputs[8].default_value'
+                data_path = 'nodes["' + shader + '"].inputs[4].default_value'
+                self.anim_var(anim_flag.level, anim_data, anim_interp, action, data_path)
+            elif anim_flag.user_uint32:
+                shader = nodes.get('shader')
+                data_path = 'nodes["' + shader + '"].inputs[5].default_value'
                 self.anim_var(anim_flag.level, anim_data, anim_interp, action, data_path)
             elif anim_flag.off_u or anim_flag.off_v:
                 vect = nodes.get('vector' + str(texture_index))
