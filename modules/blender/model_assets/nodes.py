@@ -174,7 +174,7 @@ class ShaderNodeGNOMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
             self["texture_2"] = value
 
     blend_type: EnumProperty(name="Blend", update=update_props, items=blend_types, options=set())
-    multi_shading: BoolProperty(name="Apply Shading", update=update_shading, default=False, options=set())
+    multi_shading: BoolProperty(name="Mix-in Shading", update=update_shading, default=False, options=set())
     texture_2: IntProperty(name="Image Index", default=-1, min=-1, max=255,
                            get=get_texture_2, set=set_texture_2, update=update_texture_2)
 
@@ -240,7 +240,7 @@ class ShaderNodeXNOMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
             self["texture_2"] = value
 
     blend_type: EnumProperty(name="Blend", update=update_props, items=blend_types, options=set())
-    multi_shading: BoolProperty(name="Apply Shading", update=update_shading, default=False, options=set())
+    multi_shading: BoolProperty(name="Mix-in Shading", update=update_shading, default=False, options=set())
     texture_2: IntProperty(name="Image Index", default=-1, min=-1, max=255,
                            get=get_texture_2, set=set_texture_2, update=update_texture_2)
 
@@ -721,7 +721,7 @@ class ShaderNodeGNOSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustom
 
     connect_init: EnumProperty(name="Find Init", update=update_init, items=find_init, options=set())
     blend_type: EnumProperty(name="Blend", update=update_props, items=blend_types, options=set())
-    multi_shading: BoolProperty(name="Apply Shading", update=update_shading, default=False, options=set())
+    multi_shading: BoolProperty(name="Mix-in Shading", update=update_shading, default=False, options=set())
     texture_2: IntProperty(name="Image Index", default=-1, min=-1, max=255,
                            get=get_texture_2, set=set_texture_2, update=update_texture_2)
 
@@ -793,7 +793,7 @@ class ShaderNodeXNOSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustom
 
     connect_init: EnumProperty(name="Find Init", update=update_init, items=find_init, options=set())
     blend_type: EnumProperty(name="Blend", update=update_props, items=blend_types, options=set())
-    multi_shading: BoolProperty(name="Apply Shading", update=update_shading, default=False, options=set())
+    multi_shading: BoolProperty(name="Mix-in Shading", update=update_shading, default=False, options=set())
     texture_2: IntProperty(name="Image Index", default=-1, min=-1, max=255,
                            get=get_texture_2, set=set_texture_2, update=update_texture_2)
 
