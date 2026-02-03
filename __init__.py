@@ -61,7 +61,7 @@ classes = [
     operators.SyncNNTextures, operators.GetNNMaterials, operators.CopyNNTextures,  # operators.NNObjectSpawner,
     operators.SetNNBones, operators.GuessNNBones, operators.ShowNNBones, operators.ReorderNNItem,
     operators.GetNNTextures, operators.AssignNNTexturesIndices,
-    custom_nn.NNTexture, custom_nn.NNMaterial, custom_nn.NNMesh,
+    custom_nn.NNTexture, custom_nn.NNMaterial, custom_nn.NNMesh, custom_nn.NNTextureNodeSetup,
 ]
 
 classes += classes2

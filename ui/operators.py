@@ -117,10 +117,39 @@ def convert_materials(operator, context, settings):
     tree.links.new(shader.inputs["Alpha"], last_node.outputs[1])
 
 
+def tx2_update(self, context):  # i want to blow the devs up. be for real.
+    # and then we made operator capable of literally NOTHING. ehe ^-^
+    while self.texture_count2 > len(context.window_manager.nn_texture_setups):
+        context.window_manager.nn_texture_setups.add()
+    while self.texture_count2 < len(context.window_manager.nn_texture_setups):
+        context.window_manager.nn_texture_setups.remove(len(context.window_manager.nn_texture_setups)-1)
+
+
+def tx4_update(self, context):
+    while self.texture_count4 > len(context.window_manager.nn_texture_setups):
+        context.window_manager.nn_texture_setups.add()
+    while self.texture_count4 < len(context.window_manager.nn_texture_setups):
+        context.window_manager.nn_texture_setups.remove(len(context.window_manager.nn_texture_setups)-1)
+
+
+def tx8_update(self, context):
+    while self.texture_count8 > len(context.window_manager.nn_texture_setups):
+        context.window_manager.nn_texture_setups.add()
+    while self.texture_count8 < len(context.window_manager.nn_texture_setups):
+        context.window_manager.nn_texture_setups.remove(len(context.window_manager.nn_texture_setups)-1)
+
+
+def tx16_update(self, context):
+    while self.texture_count16 > len(context.window_manager.nn_texture_setups):
+        context.window_manager.nn_texture_setups.add()
+    while self.texture_count16 < len(context.window_manager.nn_texture_setups):
+        context.window_manager.nn_texture_setups.remove(len(context.window_manager.nn_texture_setups)-1)
+
+
 class NodeNNSetup(bpy.types.Operator):
     """Spawn in a NN node set up"""
     bl_idname = "node.nn_operator"
-    bl_label = "NN Node Operator"
+    bl_label = "NN Node Setup"
 
     nn_format: EnumProperty(
         name="Format",
@@ -145,11 +174,6 @@ class NodeNNSetup(bpy.types.Operator):
         description="Has a reflection texture",
     )
 
-    vertex_color: BoolProperty(
-        name="Vertex colors",
-        description="Use vertex colors",
-    )
-
     existing_diffuse: BoolProperty(
         name="Use existing diffuse",
         description="Use the existing texture as the diffuse texture",
@@ -168,22 +192,94 @@ class NodeNNSetup(bpy.types.Operator):
         default=False,
     )
 
+    texture_count2: IntProperty(
+        name="Texture Count",
+        description="Amount of textures to use",
+        default=0,
+        min=0,
+        max=2,
+        update=tx2_update
+    )
+
+    texture_count4: IntProperty(
+        name="Texture Count",
+        description="Amount of textures to use",
+        default=0,
+        min=0,
+        max=4,
+        update=tx4_update
+    )
+
+    texture_count8: IntProperty(
+        name="Texture Count",
+        description="Amount of textures to use",
+        default=0,
+        min=0,
+        max=8,
+        update=tx8_update
+    )
+
+    texture_count16: IntProperty(
+        name="Texture Count",
+        description="Amount of textures to use",
+        default=0,
+        min=0,
+        max=16,
+        update=tx16_update
+    )
+    unshaded: bpy.props.BoolProperty("Unshaded", default=False)
+    use_specular: bpy.props.BoolProperty("Use Specular", default=True)
+    vertex_color: bpy.props.BoolProperty("Vertex colors", default=False)
+    backface: bpy.props.BoolProperty("Backface Culling", default=True)
+    blend_mode: EnumProperty(
+        name="Blend Mode", items=(('OPAQUE', "Opaque", ""), ('BLEND', "Alpha Blend", ""), ('CLIP', "Alpha Clip", "")))
+
     def invoke(self, context, event):
+        tree = context.space_data.node_tree
+        textures = []
+        for node in tree.nodes:
+            if node.bl_idname == "ShaderNodeTexImage" and node.image:
+                textures.append(node.image)
+
+        self.texture_count2 = len(textures)
+        self.texture_count4 = len(textures)
+        self.texture_count8 = len(textures)
+        self.texture_count16 = len(textures)
+        for i, image in enumerate(textures):
+            context.window_manager.nn_texture_setups[i].texture = image
         return context.window_manager.invoke_props_dialog(self, width=240)
 
     def draw(self, context):
         layout = self.layout
-        layout.label(text="NN Node Setup")
+        layout.prop(self, "nn_format")
+        row = layout.row()
+        row.label(text="Texture settings:", icon="KEYFRAME_HLT")
+        if self.nn_format in {"G", "X"}:
+            row.prop(self, "texture_count4", expand=False, text="Count")
+        elif self.nn_format in {"Z", "E"}:  # i think eno goes here
+            row.prop(self, "texture_count16")
+
+        for i in range(len(context.window_manager.nn_texture_setups)):
+            this_image = context.window_manager.nn_texture_setups[i]
+            box = layout.box()
+            row = box.row(align=True)
+            row.prop(this_image, "texture", text="")
+            row = box.row()
+            mix_prop = 'mix_' + self.nn_format.lower()
+            row.prop(this_image, mix_prop, text="")
+            row.prop(this_image, "multi_shading", text="Mix-in Shading")
+            row = box.row()
+            row.prop(this_image, "vector", text="")
+            row.prop(this_image, "u_wrap", text="")
+            row.prop(this_image, "v_wrap", text="")
+
+        layout.label(text="Material settings:", icon="KEYFRAME_HLT")
         box = layout.box()
-        box.prop(self, "nn_format")
-        box.label(text="Texture settings:", icon="KEYFRAME_HLT")
-        box.prop(self, "diffuse")
-        box.prop(self, "specular")
-        box.prop(self, "reflection")
-        box.prop(self, "vertex_color")
-        box.label(text="Advanced settings:", icon="KEYFRAME_HLT")
-        box.prop(self, "existing_diffuse")
-        box.prop(self, "remove_existing")
+        box.prop(self, "unshaded", text="Unshaded")
+        box.prop(self, "use_specular", text="Use Specular")
+        box.prop(self, "vertex_color", text="Vertex Color")
+        box.prop(self, "backface", text="Backface Culling")
+        box.prop(self, "blend_mode", text="")
 
     @classmethod
     def poll(cls, context):

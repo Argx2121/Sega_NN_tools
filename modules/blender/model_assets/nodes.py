@@ -7,6 +7,48 @@ from bpy.types import ShaderNodeCustomGroup
 # blender crashing after reloading script is an issue with custom nodes
 #  https://projects.blender.org/blender/blender/issues/72833
 
+# fuck it we global
+gno_mix = (
+            ('.GNO_MULTI', "Multiply", ""),
+            ('.GNO_DECAL', "Decal", ""),
+            ('.GNO_REPLACE', "Replace", ""),
+            ('.GNO_BLEND', "Blend", ""),
+            ('.GNO_PASSCOLOR', "Pass Color", ""),
+            ('.GNO_ALPHATEX', "Alpha Texture", ""),
+            ('.GNO_DECAL2', "Decal 2", ""),
+            ('.GNO_SUB', "Subtract", "If you use Subtract as the first mixing type, you can only have 3 textures"),
+            ('.GNO_ADD', "Add", ""),
+        )
+
+xno_mix = (
+            ('.GNO_MULTI', "Multiply", ""),
+            ('.GNO_DECAL', "Decal", ""),
+            ('.GNO_REPLACE', "Replace", ""),
+            ('.GNO_BLEND', "Blend", ""),
+            ('.GNO_DECAL2', "Decal 2", ""),
+            ('.GNO_ADD', "Add", ""),
+            ('.GNO_SUB', "Subtract", ""),
+        )
+spec_mix = (
+            ('.GNO_SPEC', "Specular", ""),
+            ('.GNO_SPEC2', "Specular 2", ""),
+        )
+vector_mix = (
+        ('0', "UV", ""),
+        ('1', "Normal", ""),
+        ('2', "Position", ""),
+    )
+u_wrap_mix = (
+        ('0', "Clamp U", ""),
+        ('1', "Repeat U", ""),
+        ('2', "Mirror U", ""),
+    )
+v_wrap_mix = (
+        ('0', "Clamp V", ""),
+        ('1', "Repeat V", ""),
+        ('2', "Mirror V", ""),
+    )
+
 
 class CustomNodetreeNodeBaseNN:
     def copy(self, node):
@@ -123,19 +165,7 @@ class ShaderNodeGNOMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_width_default = 180
 
     def blend_types(self, context):
-        # Enum items list
-        mix_types = (
-            ('.GNO_MULTI', "Multiply", ""),
-            ('.GNO_DECAL', "Decal", ""),
-            ('.GNO_REPLACE', "Replace", ""),
-            ('.GNO_BLEND', "Blend", ""),
-            ('.GNO_PASSCOLOR', "Pass Color", ""),
-            ('.GNO_ALPHATEX', "Alpha Texture", ""),
-            ('.GNO_DECAL2', "Decal 2", ""),
-            ('.GNO_SUB', "Subtract", "If you use Subtract as the first mixing type, you can only have 3 textures"),
-            ('.GNO_ADD', "Add", ""),
-        )
-        return mix_types
+        return gno_mix
 
     def copy(self, node):
         self.node_tree = node.node_tree
@@ -191,17 +221,7 @@ class ShaderNodeXNOMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_width_default = 180
 
     def blend_types(self, context):
-        # Enum items list
-        mix_types = (
-            ('.GNO_MULTI', "Multiply", ""),
-            ('.GNO_DECAL', "Decal", ""),
-            ('.GNO_REPLACE', "Replace", ""),
-            ('.GNO_BLEND', "Blend", ""),
-            ('.GNO_DECAL2', "Decal 2", ""),
-            ('.GNO_ADD', "Add", ""),
-            ('.GNO_SUB', "Subtract", ""),
-        )
-        return mix_types
+        return xno_mix
 
     def copy(self, node):
         self.node_tree = node.node_tree
@@ -676,12 +696,7 @@ class ShaderNodeGNOSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustom
     )
 
     def blend_types(self, context):
-        # Enum items list
-        mix_types = (
-            ('.GNO_SPEC', "Specular", ""),
-            ('.GNO_SPEC2', "Specular 2", ""),
-        )
-        return mix_types
+        return spec_mix
 
     def copy(self, node):
         self.node_tree = node.node_tree
@@ -748,12 +763,7 @@ class ShaderNodeXNOSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustom
     )
 
     def blend_types(self, context):
-        # Enum items list
-        mix_types = (
-            ('.GNO_SPEC', "Specular", ""),
-            ('.GNO_SPEC2', "Specular 2", ""),
-        )
-        return mix_types
+        return spec_mix
 
     def copy(self, node):
         self.node_tree = node.node_tree
@@ -840,28 +850,13 @@ class ShaderNodeGNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_width_default = 180
 
     def transform_modes(self, context):
-        mix_types = (
-            ('0', "UV", ""),
-            ('1', "Normal", ""),
-            ('2', "Position", ""),
-        )
-        return mix_types
+        return vector_mix
 
     def u_types(self, context):
-        wrap_types = (
-            ('0', "Clamp U", ""),
-            ('1', "Repeat U", ""),
-            ('2', "Mirror U", ""),
-        )
-        return wrap_types
+        return u_wrap_mix
 
     def v_types(self, context):
-        wrap_types = (
-            ('0', "Clamp V", ""),
-            ('1', "Repeat V", ""),
-            ('2', "Mirror V", ""),
-        )
-        return wrap_types
+        return v_wrap_mix
 
     def copy(self, node):
         self.node_tree = node.node_tree
@@ -917,28 +912,13 @@ class ShaderNodeXNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_width_default = 180
 
     def transform_modes(self, context):
-        mix_types = (
-            ('0', "UV", ""),
-            ('1', "Normal", ""),
-            ('2', "Position", ""),
-        )
-        return mix_types
+        return vector_mix
 
     def u_types(self, context):
-        wrap_types = (
-            ('0', "Clamp U", ""),
-            ('1', "Repeat U", ""),
-            ('2', "Mirror U", ""),
-        )
-        return wrap_types
+        return u_wrap_mix
 
     def v_types(self, context):
-        wrap_types = (
-            ('0', "Clamp V", ""),
-            ('1', "Repeat V", ""),
-            ('2', "Mirror V", ""),
-        )
-        return wrap_types
+        return v_wrap_mix
 
     def copy(self, node):
         self.node_tree = node.node_tree

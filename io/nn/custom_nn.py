@@ -1,4 +1,5 @@
 import bpy
+from ...modules.blender.model_assets.nodes import gno_mix, xno_mix, spec_mix, vector_mix, u_wrap_mix, v_wrap_mix
 
 
 # UTIL
@@ -59,6 +60,8 @@ def custom_reg():
     # LIGHTS
     bpy.types.Light.nn_falloff_start = bpy.props.FloatProperty(name="Falloff Start", default=0.1)
     bpy.types.Light.nn_inner_size = bpy.props.FloatProperty(name="Inner Size", default=0.1)
+    # UI
+    bpy.types.WindowManager.nn_texture_setups = bpy.props.CollectionProperty(type=NNTextureNodeSetup)
 
 
 def custom_unreg():
@@ -101,6 +104,8 @@ def custom_unreg():
     # LIGHTS
     del bpy.types.Light.nn_falloff_start
     del bpy.types.Light.nn_inner_size
+    # UI
+    del bpy.types.WindowManager.nn_texture_setups
 
 
 def update_material_count(self, context):
@@ -152,6 +157,28 @@ class NNTexture(bpy.types.PropertyGroup):
     interp_mag: bpy.props.EnumProperty(
         name="Interpolation Mag", description="Texture interpolation when close",
         items=(('Closest', 'Closest', ""), ('Linear', 'Linear', ""), ('Anisotropic', 'Anisotropic', "XBOX")))
+
+
+class NNTextureNodeSetup(bpy.types.PropertyGroup):
+    texture: bpy.props.PointerProperty(name="Texture", type=bpy.types.Image)
+    mix_g: bpy.props.EnumProperty(
+        name="Texture Blending", description="How images should be mixed",
+        items=tuple(list(gno_mix) + list(spec_mix)))
+    mix_x: bpy.props.EnumProperty(
+        name="Texture Blending", description="How images should be mixed",
+        items=tuple(list(xno_mix) + list(spec_mix)))
+    vector: bpy.props.EnumProperty(
+        name="Image Vector", description="How to map images",
+        items=vector_mix)
+    u_wrap: bpy.props.EnumProperty(
+        name="U Wrap", description="How to wrap U",
+        items=u_wrap_mix)
+    v_wrap: bpy.props.EnumProperty(
+        name="U Wrap", description="How to wrap V",
+        items=v_wrap_mix)
+    multi_shading: bpy.props.BoolProperty("Mix-in Shading", default=False)
+    # trying to put the most generic ones in here.., dont intend to do this for all formats, i think..?
+    # might make it more confusing for people though..
 
 
 class NNMesh(bpy.types.PropertyGroup):
