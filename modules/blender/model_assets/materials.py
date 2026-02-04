@@ -964,7 +964,7 @@ def get_materials(self):
                 uv_map = 0
                 for child in self.mesh_list:
                     if child.active_material.name == name:
-                        uv_node = to_socket_from_socket.get(vector_node.inputs[1]).node
+                        uv_node = to_socket_from_socket.get(vector_node.inputs[0]).node
                         uv_names = [uv.name for uv in child.data.uv_layers]
                         if uv_node.uv_map in uv_names:
                             uv_map = uv_names.index(uv_node.uv_map)
