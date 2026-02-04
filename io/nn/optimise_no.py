@@ -204,8 +204,8 @@ class OptimiseSegaNO(bpy.types.Operator):
                     context.space_data.node_tree = mat.node_tree
                     # sorry blender i dont trust you
                     # ive tried to run operators modal in the past and you have ...... had issues
-                    from ...ui.operators import convert_materials, SetGno
-                    convert_materials(None, context, SetGno(game[-1], True, False, False, False, True, True, True))
+                    from ...ui.operators import convert_materials
+                    convert_materials(None, context, (game[-1], True))
             context.area.ui_type = before
             test_mesh.select_set(False)
             bpy.context.view_layer.objects.active = None

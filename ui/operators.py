@@ -6,14 +6,23 @@ from ..modules.util import get_bpy_meshes
 from dataclasses import dataclass
 
 
-def convert_materials(operator, context, settings):
+def convert_materials(operator, context, checkma):
     tree = context.space_data.node_tree
     MakeGroups().execute()
-    model_end = settings.nn_format
-    existing_diffuse = None
-    checkma = settings.checkma  # this means make sure there is an existing texture
+    settings = operator
+    if checkma:
+        model_end = checkma[0]
+        checkma = checkma[1]
+    else:
+        model_end = settings.nn_format
+    spec_mix = False  # as specular is mixed in a node, we need to make sure that node gets spawned in
+    # if it isnt spawned in during the image node loop we will add it at the end
 
-    if settings.existing_diffuse:
+    existing_diffuse = None
+    # using a separate toggle for when its called elsewhere because running modal can mess up, that means other texture
+    #  data may be missed, shrug
+
+    if checkma:
         node = tree.nodes.get("Image Texture")  # blender wants node name w/e
         if node and node.image:
             existing_diffuse = node.image
@@ -22,99 +31,143 @@ def convert_materials(operator, context, settings):
                 if node.bl_idname == "ShaderNodeTexImage" and node.image:
                     existing_diffuse = node.image
 
-    if settings.remove_existing:
-        for node in tree.nodes:
-            tree.nodes.remove(node)
+    for node in tree.nodes:
+        tree.nodes.remove(node)
 
-    shader = tree.nodes.new('ShaderNode' + model_end + 'NOShader')
-    shader.location = (10, 310)
-    colour_init = tree.nodes.new('ShaderNode' + model_end + 'NOShaderInit')
-    colour_init.location = (-1970, 450)
+    end_node = tree.nodes.new("ShaderNodeOutputMaterial")
+    shader = tree.nodes.new('ShaderNodeGNOShader')
+    colour_init = tree.nodes.new('ShaderNodeGNOShaderInit')
+    x_loc = -400
+    y_loc = 300
+    colour_init.location = (x_loc, y_loc)
+
+    if not checkma:
+        shader.nn_blend_method = settings.blend_mode
+        colour_init.unshaded = settings.unshaded
+        colour_init.use_specular = settings.use_specular
+        shader.use_backface_culling = settings.backface
+
+        if settings.vertex_color:
+            node = tree.nodes.new(type="ShaderNodeVertexColor")
+            tree.links.new(colour_init.inputs["Vertex Color"], node.outputs[0])
+            tree.links.new(colour_init.inputs["Vertex Alpha"], node.outputs[1])
+            node.location = (x_loc - 200, y_loc)
+
+    tree.links.new(end_node.inputs[0], shader.outputs[0])
     last_node = colour_init
 
-    node = tree.nodes.get("Material Output")
-    if node:
-        tree.links.new(node.inputs[0], shader.outputs[0])
-    else:
-        node = tree.nodes.new("ShaderNodeOutputMaterial")
-        tree.links.new(node.inputs[0], shader.outputs[0])
-    node.location = (300, 300)
+    if checkma:
+        if existing_diffuse:
+            vector_node = tree.nodes.new(type="ShaderNode" + model_end + "NOVector")
+            image_node = tree.nodes.new(type="ShaderNodeTexImage")
+            image_node.image = existing_diffuse
+            tree.links.new(image_node.inputs["Vector"], vector_node.outputs["Image Vector"])
 
-    if settings.vertex_color:
-        vertex_color = tree.nodes.new(type="ShaderNodeVertexColor")
-        vertex_color.location = (-2260, 260)
-        tree.links.new(colour_init.inputs["Vertex Color"], vertex_color.outputs[0])
-        tree.links.new(colour_init.inputs["Vertex Alpha"], vertex_color.outputs[1])
+            node = tree.nodes.new(type="ShaderNodeUVMap")
+            node.location = (x_loc - 500, y_loc - 1100)
+            tree.links.new(vector_node.inputs["UV Map"], node.outputs[0])
 
-    if settings.diffuse:
-        if checkma and not existing_diffuse:
-            pass
-        else:
-            image = tree.nodes.new(type="ShaderNodeTexImage")
-            image.location = (-1640, 250)
-            image.label = "Diffuse Texture"
-            vector = tree.nodes.new(type='ShaderNode' + model_end + 'NOVector')
-            vector.location = (-1940, 10)
-            uv = tree.nodes.new(type="ShaderNodeUVMap")
-            uv.location = (-2170, -120)
+            image_node.location = (x_loc, y_loc - 450)
+            vector_node.location = (x_loc - 300, y_loc - 800)
             mix_node = tree.nodes.new('ShaderNode' + model_end + 'NOMixRGB')
-            mix_node.location = (-1250, 500)
-            mix_node.blend_type = '.GNO_MULTI'
-
-            if existing_diffuse:
-                image.image = existing_diffuse
+            x_loc += 400
+            mix_node.location = (x_loc, y_loc)
 
             tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
             tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
-            tree.links.new(mix_node.inputs["Color 2"], image.outputs[0])
-            tree.links.new(mix_node.inputs["Alpha 2"], image.outputs[1])
-            tree.links.new(image.inputs["Vector"], vector.outputs["Image Vector"])
-            tree.links.new(vector.inputs["UV Map"], uv.outputs[0])
+            tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
+            tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
             last_node = mix_node
 
-    if settings.reflection:
-        image = tree.nodes.new(type="ShaderNodeTexImage")
-        image.location = (-1160, 160)
-        image.label = "Reflection Texture"
-        vector = tree.nodes.new(type='ShaderNode' + model_end + 'NOVector')
-        vector.location = (-1440, -50)
-        vector.transform_mode = "1"
-        mix_node = tree.nodes.new('ShaderNode' + model_end + 'NOMixRGB')
-        mix_node.location = (-770, 410)
-        mix_node.blend_type = '.GNO_MULTI'
+        # forced to add to make specular be mixed in
+        mix_type = '.GNO_SPEC'
+        mix_node = tree.nodes.new('ShaderNode' + model_end + 'NOSpecular')
+        mix_node.blend_type = mix_type
+        x_loc += 400
+        mix_node.location = (x_loc, y_loc)
 
-        tree.links.new(image.inputs["Vector"], vector.outputs["Image Vector"])
+        tree.links.new(mix_node.inputs["Specular"], colour_init.outputs["Specular"])
         tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
         tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
-        tree.links.new(mix_node.inputs["Color 2"], image.outputs[0])
-        tree.links.new(mix_node.inputs["Alpha 2"], image.outputs[1])
         last_node = mix_node
 
-    mix_node = tree.nodes.new('ShaderNode' + model_end + 'NOSpecular')
-    mix_node.location = (-320, 320)
-    mix_node.blend_type = '.GNO_SPEC'
+        tree.links.new(shader.inputs["Color"], last_node.outputs[0])
+        tree.links.new(shader.inputs["Alpha"], last_node.outputs[1])
+        x_loc += 400
+        shader.location = (x_loc, y_loc)
+        x_loc += 400
+        end_node.location = (x_loc, y_loc)
+        return
 
-    tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
-    tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
-    tree.links.new(mix_node.inputs["Specular"], colour_init.outputs["Specular"])
-    last_node = mix_node
+    for tex in context.window_manager.nn_texture_setups:
+        vector_node = tree.nodes.new(type="ShaderNode" + model_end + "NOVector")
+        image_node = tree.nodes.new(type="ShaderNodeTexImage")
+        image_node.image = tex.texture
+        tree.links.new(image_node.inputs["Vector"], vector_node.outputs["Image Vector"])
 
-    if settings.specular:
-        image = tree.nodes.new(type="ShaderNodeTexImage")
-        image.location = (-700, 70)
-        image.label = "Specular Texture"
-        vector = tree.nodes.new(type='ShaderNode' + model_end + 'NOVector')
-        vector.location = (-940, -140)
-        uv = tree.nodes.new(type="ShaderNodeUVMap")
-        uv.location = (-1150, -260)
+        image_node.location = (x_loc, y_loc - 450)
+        vector_node.location = (x_loc - 300, y_loc - 800)
 
-        tree.links.new(mix_node.inputs["Color 2"], image.outputs[0])
-        tree.links.new(mix_node.inputs["Alpha 2"], image.outputs[1])
-        tree.links.new(image.inputs["Vector"], vector.outputs["Image Vector"])
-        tree.links.new(vector.inputs["UV Map"], uv.outputs[0])
+        vector_node.transform_mode = tex.vector
+        vector_node.u_type = tex.u_wrap
+        vector_node.v_type = tex.v_wrap
+        if model_end == 'G':
+            mix_type = tex.mix_g
+        elif model_end == 'X':
+            mix_type = tex.mix_x
+
+        if tex.vector == "0":
+            node = tree.nodes.new(type="ShaderNodeUVMap")
+            node.location = (x_loc - 500, y_loc - 1100)
+            tree.links.new(vector_node.inputs["UV Map"], node.outputs[0])
+
+        if 'SPEC' in mix_type:
+            spec_mix = True
+            mix_node = tree.nodes.new('ShaderNode' + model_end + 'NOSpecular')
+            mix_node.blend_type = mix_type
+            x_loc += 400
+            mix_node.location = (x_loc, y_loc)
+
+            tree.links.new(mix_node.inputs["Specular"], colour_init.outputs["Specular"])
+            tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
+            tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
+            tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
+            tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
+            last_node = mix_node
+        else:
+            mix_node = tree.nodes.new('ShaderNode' + model_end + 'NOMixRGB')
+            mix_node.blend_type = mix_type
+            x_loc += 400
+            mix_node.location = (x_loc, y_loc)
+
+            tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
+            tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
+            tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
+            tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
+            last_node = mix_node
+
+        if tex.multi_shading:
+            mix_node.multi_shading = True
+
+    if not spec_mix:
+        # forced to add to make specular be mixed in
+        mix_type = '.GNO_SPEC'
+        mix_node = tree.nodes.new('ShaderNode' + model_end + 'NOSpecular')
+        mix_node.blend_type = mix_type
+        x_loc += 400
+        mix_node.location = (x_loc, y_loc)
+
+        tree.links.new(mix_node.inputs["Specular"], colour_init.outputs["Specular"])
+        tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
+        tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
+        last_node = mix_node
 
     tree.links.new(shader.inputs["Color"], last_node.outputs[0])
     tree.links.new(shader.inputs["Alpha"], last_node.outputs[1])
+    x_loc += 400
+    shader.location = (x_loc, y_loc)
+    x_loc += 400
+    end_node.location = (x_loc, y_loc)
 
 
 def tx2_update(self, context):  # i want to blow the devs up. be for real.
@@ -156,34 +209,6 @@ class NodeNNSetup(bpy.types.Operator):
         description="*no variant",
         items=no_export_list,
         default=no_export_list[0][0],
-    )
-
-    diffuse: BoolProperty(
-        name="Diffuse texture",
-        description="Has a diffuse texture",
-        default=True,
-    )
-
-    specular: BoolProperty(
-        name="Specular texture",
-        description="Has a specular texture",
-    )
-
-    reflection: BoolProperty(
-        name="Reflection texture",
-        description="Has a reflection texture",
-    )
-
-    existing_diffuse: BoolProperty(
-        name="Use existing diffuse",
-        description="Use the existing texture as the diffuse texture",
-        default=True,
-    )
-
-    remove_existing: BoolProperty(
-        name="Remove existing",
-        description="Remove existing nodes from the tree",
-        default=True,
     )
 
     checkma: BoolProperty(
@@ -252,6 +277,15 @@ class NodeNNSetup(bpy.types.Operator):
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "nn_format")
+
+        layout.label(text="Material settings:", icon="KEYFRAME_HLT")
+        box = layout.box()
+        box.prop(self, "unshaded", text="Unshaded")
+        box.prop(self, "use_specular", text="Use Specular")
+        box.prop(self, "vertex_color", text="Vertex Color")
+        box.prop(self, "backface", text="Backface Culling")
+        box.prop(self, "blend_mode", text="")
+
         row = layout.row()
         row.label(text="Texture settings:", icon="KEYFRAME_HLT")
         if self.nn_format in {"G", "X"}:
@@ -273,35 +307,13 @@ class NodeNNSetup(bpy.types.Operator):
             row.prop(this_image, "u_wrap", text="")
             row.prop(this_image, "v_wrap", text="")
 
-        layout.label(text="Material settings:", icon="KEYFRAME_HLT")
-        box = layout.box()
-        box.prop(self, "unshaded", text="Unshaded")
-        box.prop(self, "use_specular", text="Use Specular")
-        box.prop(self, "vertex_color", text="Vertex Color")
-        box.prop(self, "backface", text="Backface Culling")
-        box.prop(self, "blend_mode", text="")
-
     @classmethod
     def poll(cls, context):
         return context.area.ui_type == 'ShaderNodeTree'
 
     def execute(self, context):
-        settings = SetGno(self.nn_format, self.diffuse, self.specular, self.reflection, self.vertex_color,
-                          self.existing_diffuse, self.remove_existing, self.checkma)
-        convert_materials(self, context, settings)
+        convert_materials(self, context, False)
         return {'FINISHED'}
-
-
-@dataclass
-class SetGno:
-    nn_format: bool
-    diffuse: bool
-    specular: bool
-    reflection: bool
-    vertex_color: bool
-    existing_diffuse: bool
-    remove_existing: bool
-    checkma: bool
 
 
 class SetFCurves(bpy.types.Operator):
