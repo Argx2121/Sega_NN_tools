@@ -172,10 +172,10 @@ class NNTextureNodeSetup(bpy.types.PropertyGroup):
         items=vector_mix)
     u_wrap: bpy.props.EnumProperty(
         name="U Wrap", description="How to wrap U",
-        items=u_wrap_mix)
+        items=u_wrap_mix, default="1")
     v_wrap: bpy.props.EnumProperty(
         name="U Wrap", description="How to wrap V",
-        items=v_wrap_mix)
+        items=v_wrap_mix, default="1")
     multi_shading: bpy.props.BoolProperty("Mix-in Shading", default=False)
     # trying to put the most generic ones in here.., dont intend to do this for all formats, i think..?
     # might make it more confusing for people though..
