@@ -141,6 +141,10 @@ class Write:
     def le(self):
         f = self.f
         textures = self.textures
+        tex_format = ".xvr"
+        if self.format_type == 'Sonic2006_X':
+            tex_format = ".dds"
+        textures = [a.rsplit(".")[0] + tex_format for a in textures]
         nof0_offsets = self.nof0_offsets
         start_block = f.tell()
         block_name = "N" + self.format_type[-1] + "TL"
@@ -179,6 +183,8 @@ class Write:
     def be(self):
         f = self.f
         textures = self.textures
+        tex_format = ".gvr"
+        textures = [a.rsplit(".")[0] + tex_format for a in textures]
         nof0_offsets = self.nof0_offsets
         start_block = f.tell()
         block_name = "N" + self.format_type[-1] + "TL"
