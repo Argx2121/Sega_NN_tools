@@ -1318,6 +1318,7 @@ class Read:
 
                 var = read_byte_tuple(f, 4)
                 for _ in range(var[0]):
+                    # this shit is so ass dog
                     v_type = read_byte_tuple(f, 4)
                     if v_type[0] == v_type[1] == v_type[2] == 0 and v_type[3] == 32:
                         f.seek(4, 1)
@@ -1452,6 +1453,38 @@ class Read:
                         v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                     ))
 
+        def type_49():
+            while final_pos > f.tell():
+                v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], [[], []]
+                v_bones, v_norms2_list, v_norms3_list = [], [], []
+
+                var = read_int(f)
+                while var != 16778244:
+                    var = read_int(f)
+                f.seek(12, 1)
+
+                vertex_count = read_int(f)
+                if vertex_count == 0:
+                    break
+                f.seek(28, 1)
+                for _ in range(vertex_count):
+                    v_positions.append(read_float_tuple(f, 3))
+                    b1, b2 = read_short_tuple(f, 2)
+                    b1 = b1 // 4
+                    b2 = b2 // 4
+                    v_normals.append(read_float_tuple(f, 3))
+                    w1 = read_float(f)
+                    v_uvs.append((read_float(f), - read_float(f) + 1))
+                    w2 = 1 - w1
+                    v_weights.append((w1, w2))
+                    v_bones.append((b1, b2))
+                    f.seek(8, 1)
+
+                v_data.append(
+                    VertexData(
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                    ))
+
         def type_273():
             while final_pos > f.tell():
                 v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], [[], []]
@@ -1487,7 +1520,7 @@ class Read:
 
         f = self.f
         post_info = self.start
-        d_type_list = {1: type_1, 2: type_2, 17: type_17, 33: type_33, 273: type_273}
+        d_type_list = {1: type_1, 2: type_2, 17: type_17, 33: type_33, 49: type_49, 273: type_273}
         vertex_data = []
         mesh_info = []
 
