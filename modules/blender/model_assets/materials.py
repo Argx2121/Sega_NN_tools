@@ -901,6 +901,7 @@ def get_materials(self):
         mix_node = from_socket_to_socket.get(start_node.outputs[0]).node
         image_stage = 0  # chat im already using image index
         no_uv_transform = True
+        spec_texture = False
 
         # texture stuff
         while mix_node.bl_idname != "ShaderNode" + model_end + "NOShader":
@@ -984,6 +985,8 @@ def get_materials(self):
                         '.GNO_MULTI': 1, '.GNO_DECAL': 2, '.GNO_REPLACE': 3, '.GNO_BLEND': 4,
                         '.GNO_PASSCOLOR': 5, '.GNO_ALPHATEX': 6, '.GNO_DECAL2': 7, '.GNO_SPEC': 9,
                         '.GNO_SPEC2': 10, '.GNO_ADD': 11, '.GNO_SUB': 12}
+                    if mix_type in {'.GNO_SPEC', '.GNO_SPEC2'}:
+                        spec_texture = True
                     mix_number = mix_types[mix_type]
                 texture_flags |= mix_number
             elif model_end == 'X':
@@ -1075,6 +1078,7 @@ def get_materials(self):
             if blend_method == "CLIP":  # cutout
                 mat_flags |= 1 << 18
             mat_flags |= has_spec << 24
+            mat_flags |= spec_texture << 25
             mat_flags |= callback << 31
             material_list.append(MegaShader(
                 name, blend_method, diffuse, alpha, mat_flags,
