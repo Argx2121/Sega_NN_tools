@@ -192,10 +192,7 @@ def morph_import(filepath, settings):
                 print("Making Morphs-------------------------------------")
                 message = "Making" + " " + nn.name
                 start_time = console_out_pre(message)
-                if block[1] in {"G"}:
-                    Morph(nn, settings).replace_morph()
-                else:
-                    Morph(nn, settings).add_morph()
+                Morph(nn, settings).morph()
                 console_out_post(start_time)
         else:
             show_not_read("NN Morph Importer")
@@ -216,10 +213,7 @@ def morph_import(filepath, settings):
                 print("Making Morphs-------------------------------------")
                 message = "Making" + " " + nn.name
                 start_time = console_out_pre(message)
-                if block[1] in {"G"}:
-                    Morph(nn, settings).replace_morph()
-                else:
-                    Morph(nn, settings).add_morph()
+                Morph(nn, settings).morph()
                 console_out_post(start_time)
             settings.format = "Match__"
         else:

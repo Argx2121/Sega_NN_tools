@@ -226,10 +226,7 @@ def model_import(filepath, settings):
             if nn.model:
                 Model(nn, file_path, settings).execute()
             if nn.morphs:
-                if settings.format[-1] in {"G"}:
-                    Morph(nn, settings).replace_morph()
-                else:
-                    Morph(nn, settings).add_morph()
+                Morph(nn, settings).morph()
             if nn.animation:
                 Animation(nn, settings).node_animation()
         else:
@@ -253,10 +250,7 @@ def model_import(filepath, settings):
             if nn.model:
                 Model(nn, file_path, settings).execute()
             if nn.morphs:
-                if settings.format[-1] in {"G"}:
-                    Morph(nn, settings).replace_morph()
-                else:
-                    Morph(nn, settings).add_morph()
+                Morph(nn, settings).morph()
             if nn.animation:
                 Animation(nn, settings).node_animation()
             settings.format = "Match__"

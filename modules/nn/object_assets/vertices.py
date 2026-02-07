@@ -7,7 +7,7 @@ from ...util import *
 
 @dataclass
 class VertexData:
-    __slots__ = ["positions", "weights", "bone_list_indices", "normals", "uvs", "wxs", "colours"]
+    __slots__ = ["positions", "weights", "bone_list_indices", "normals", "uvs", "wxs", "colours", "morph_relative"]
     positions: list
     weights: list
     bone_list_indices: list
@@ -15,6 +15,7 @@ class VertexData:
     uvs: list
     wxs: list
     colours: list
+    morph_relative: bool
 
 
 @dataclass
@@ -274,7 +275,7 @@ class Read:
             vert_block()
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                 ))
         return vertex_data, self.mesh_info
 
@@ -503,6 +504,8 @@ class Read:
                 # U(uv half float) 8 (skip 4 and skip 8, ? also skips 4)
                 # 2 is UV and WX
 
+                # no rel support?
+
                 position = block_type >> 1 & 1
                 weights = block_type >> 3 & 1
                 weight_indices = block_type >> 12 & 1
@@ -534,7 +537,7 @@ class Read:
             vert_block()
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                 ))
         return vertex_data, self.mesh_info
 
@@ -567,22 +570,22 @@ class Read:
                                 bone_type, bone_total, bone_offset, data_bone_type, data_bone_total, data_bone_offset))
             elif t == 2:
                 # btw this means its probably actually morph flag, data type flag by default but idc
-                _, vert_type = read_byte_tuple(f, 2, ">")
+                vert_type = read_short(f, ">")
                 vert_count = read_short(f, ">")
                 vert_offset = read_int(f, ">")
-                _, norm_type = read_byte_tuple(f, 2, ">")
+                norm_type = read_short(f, ">")
                 norm_total = read_short(f, ">")
                 norm_offset = read_int(f, ">")
-                _, col_type = read_byte_tuple(f, 2, ">")
+                col_type = read_short(f, ">")
                 col_total = read_short(f, ">")
                 col_offset = read_int(f, ">")
-                _, uv_type = read_byte_tuple(f, 2, ">")
+                uv_type = read_short(f, ">")
                 uv_total = read_short(f, ">")
                 uv_offset = read_int(f, ">")
-                _, uv2_type = read_byte_tuple(f, 2, ">")
+                uv2_type = read_short(f, ">")
                 uv2_total = read_short(f, ">")
                 uv2_offset = read_int(f, ">")
-                _, uv3_type = read_byte_tuple(f, 2, ">")
+                uv3_type = read_short(f, ">")
                 uv3_total = read_short(f, ">")
                 uv3_offset = read_int(f, ">")
 
@@ -759,7 +762,9 @@ class Read:
 
         for t, m in zip(self.vert_info_flag, self.mesh_info):  # for all sub meshes
             v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours, v_bones = [], [], [], [], [], [[], []], []
-            if t in {1, 2, 16}:
+            morph_rel = True
+            # look man if you mix and match that's your issue
+            if t in {1, 16}:
                 if m.vertex_offset:
                     f.seek(m.vertex_offset + self.start)
                     get_verts(m.vertex_type, m.vertex_count)
@@ -781,6 +786,32 @@ class Read:
                 if m.bone_offset:
                     f.seek(m.bone_offset + self.start)
                     get_bones(m.bone_type, m.bone_count, m.data_bone_count, m.data_bone_offset)
+            elif t == 2:
+                if m.vertex_offset:
+                    f.seek(m.vertex_offset + self.start)
+                    get_verts(m.vertex_type & 255, m.vertex_count)
+                    if m.vertex_type >> 8 & 1:
+                        morph_rel = False
+                    if m.vertex_type >> 9 & 1:
+                        morph_rel = True
+                if m.norm_offset:
+                    f.seek(m.norm_offset + self.start)
+                    get_norms(m.norm_type & 255, m.norm_count)
+                if m.col_offset:
+                    f.seek(m.col_offset + self.start)
+                    get_colours(m.col_type & 255, m.col_count)
+                if m.uv_offset:
+                    f.seek(m.uv_offset + self.start)
+                    v_uvs = [get_uvs(m.uv_type & 255, m.uv_count), ]
+                if m.uv2_offset:
+                    f.seek(m.uv2_offset + self.start)
+                    v_uvs.append(get_uvs(m.uv2_type & 255, m.uv2_count))
+                if m.uv3_offset:
+                    f.seek(m.uv3_offset + self.start)
+                    v_uvs.append(get_uvs(m.uv3_type & 255, m.uv3_count))
+                if m.bone_offset:
+                    f.seek(m.bone_offset + self.start)
+                    get_bones(m.bone_type & 255, m.bone_count, m.data_bone_count, m.data_bone_offset)
             elif t == 65536:
                 for info in m:
                     vertex_count = info.vertex_count
@@ -797,7 +828,7 @@ class Read:
                 pass
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, [], v_colours
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, [], v_colours, morph_rel
                 ))
         return vertex_data, self.mesh_info
 
@@ -975,7 +1006,7 @@ class Read:
             vert_block()
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                 ))
         return vertex_data, self.mesh_info
 
@@ -1141,7 +1172,7 @@ class Read:
 
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours,
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                 ))
         return vertex_data, self.mesh_info
 
@@ -1211,8 +1242,8 @@ class Read:
 
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours,
-                ))
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                ))  # cba they probably dont support rel anyway
         return vertex_data, self.mesh_info
 
     def _sno_info(self):
@@ -1303,7 +1334,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours,
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                     ))
 
         def type_1():
@@ -1328,7 +1359,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours,
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                     ))
 
         def type_2():
@@ -1353,7 +1384,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours,
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                     ))
 
         def type_17():
@@ -1384,7 +1415,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours,
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                     ))
 
         def type_33():
@@ -1418,7 +1449,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours,
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                     ))
 
         def type_273():
@@ -1451,7 +1482,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours,
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                     ))
 
         f = self.f
@@ -1590,7 +1621,7 @@ class Read:
             vert_block()
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                 ))
         return vertex_data, self.mesh_info
 
@@ -1810,6 +1841,8 @@ class Read:
                 # 00000001 00000000 00000011 00000000 00000010 00000011 00000000 00000000 s4e1
                 # p, uw,
 
+                # i dont think they can do rel??
+
                 uv = block_type >> 16 & 1
                 position = block_type >> 25 & 1
                 normal = block_type >> 28 & 1
@@ -1834,7 +1867,7 @@ class Read:
             vert_block()
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                 ))
         return vertex_data, self.mesh_info
 
@@ -2051,7 +2084,7 @@ class Read:
             vert_block()
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                 ))
         return vertex_data, self.mesh_info
 
