@@ -110,6 +110,10 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         name="Hide Null bones",
         description="Hides Null Group bones from view",
         default=False)
+    shade_smooth: BoolProperty(
+        name="Shade Smooth",
+        description="Turn this off if the normals look weird (sno)",
+        default=True)
     loose_verts: BoolProperty(
         name="Import loose vertices",
         description="Import verts that aren't tied to faces. May be needed for shapekeys.",
@@ -152,6 +156,7 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         box.row().prop(self, "simple_mat")
         box.row().prop(self, "pose")
         box.row().prop(self, "bone")
+        box.row().prop(self, "shade_smooth")
         box.row().prop(self, "loose_verts")
         if preferences.dev_mode:
             box = layout.box()
@@ -167,7 +172,7 @@ class ImportSegaNO(bpy.types.Operator, ImportHelper):
         settings = Settings(
             "", 0, self.debug, self.recursive_textures, self.load_incomplete,
             self.batch, self.clean, self.simple_mat,
-            preferences.max_len, self.bone, self.loose_verts, self.pose
+            preferences.max_len, self.bone, self.shade_smooth, self.loose_verts, self.pose
         )
         nn_format = self.nn_format  # "Match__", "E" etc
         nn_format = getattr(self, nn_format, nn_format)
@@ -207,6 +212,7 @@ class Settings:
     simple_materials: bool
     max_bone_length: float
     hide_null_bones: bool
+    shade_smooth: bool
     loose_verts: bool
     pose: bool
 

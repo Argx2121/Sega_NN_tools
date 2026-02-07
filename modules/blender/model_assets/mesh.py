@@ -78,7 +78,8 @@ def make_mesh(self):
                 col_layer.data[v_index + 2].color = col_data[face_index[2]]
 
         def make_normals():
-            mesh.shade_smooth()
+            if self.settings.shade_smooth:
+                mesh.shade_smooth()
             mesh.normals_split_custom_set_from_vertices(norm_short_hand)
 
         def make_normals_face():
@@ -87,7 +88,9 @@ def make_mesh(self):
                 norm_new.append(norm_short_hand[f_i[0]])
                 norm_new.append(norm_short_hand[f_i[1]])
                 norm_new.append(norm_short_hand[f_i[2]])
-            mesh.shade_smooth()  # im so embarrassed man
+            if self.settings.shade_smooth:
+                mesh.shade_smooth()
+                # i am NOT embarrassed it was removed for a reason i had forgot
             mesh.normals_split_custom_set(norm_new)
 
         def make_weights_complex():
