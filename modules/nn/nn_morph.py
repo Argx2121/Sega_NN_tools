@@ -15,13 +15,14 @@ class MorphData:
 
 
 class Read:
-    __slots__ = ["f", "post_info", "format_type", "debug"]
+    __slots__ = ["f", "post_info", "format_type", "debug", "mesh_counts"]
 
-    def __init__(self, f: BinaryIO, post_info: int, format_type: str, debug):
+    def __init__(self, f: BinaryIO, post_info: int, format_type: str, debug, mesh_counts):
         self.f = f
         self.post_info = post_info
         self.format_type = format_type
         self.debug = debug
+        self.mesh_counts = mesh_counts
 
     def le(self):
         return self.read("<")
@@ -47,6 +48,7 @@ class Read:
         for v_i_count, off in morph_vs:
             f.seek(post_info + off)
             v_read = vertices.Read((self.f, post_info, self.format_type, self.debug), v_i_count)
+            v_read.vertex_index_counts = self.mesh_counts
             vert_func = getattr(v_read, self.format_type[-1].lower()+"no")
             verts, _ = vert_func()
             morph_list.append(verts)

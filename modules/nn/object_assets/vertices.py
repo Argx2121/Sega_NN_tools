@@ -73,7 +73,8 @@ class MeshDataGno:
 class Read:
     __slots__ = [
         "f", "start", "format_type", "debug",
-        "vertex_buffer_count", "vert_info_offset", "vert_info_flag", "vertex_mesh_offset", "mesh_info"
+        "vertex_buffer_count", "vert_info_offset", "vert_info_flag", "vertex_mesh_offset", "mesh_info",
+        "vertex_index_counts"
     ]
 
     def __init__(self, var, vertex_buffer_count: int):
@@ -83,6 +84,7 @@ class Read:
         self.vert_info_flag = []
         self.vertex_mesh_offset = []
         self.mesh_info = []
+        self.vertex_index_counts = {}  # ps2.........
 
     def _be_offsets(self):
         var = read_int_tuple(self.f, self.vertex_buffer_count * 2, ">")
@@ -1247,9 +1249,14 @@ class Read:
         return vertex_data, self.mesh_info
 
     def _sno_info(self):
-        for offset in self.vert_info_offset:
+        for offset, off_flag in zip(self.vert_info_offset, self.vert_info_flag):
             self.f.seek(offset + self.start)
-            self.vertex_mesh_offset.append(read_int_tuple(self.f, 5))
+            if off_flag == 48:
+                self.vertex_mesh_offset.append((0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+            elif off_flag == 16:
+                self.vertex_mesh_offset.append(read_int_tuple(self.f, 11))
+            else:
+                self.vertex_mesh_offset.append(read_int_tuple(self.f, 5))
 
     def _sno_vertices(self):
         def type_common():
@@ -1419,6 +1426,23 @@ class Read:
                         v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
                     ))
 
+        def type_keyshape():
+            _, pos_t, pos_off, norm_t, norm_off, norm_t, norm_off, col_t, col_off, uv_t, uv_off = info
+            # mostly guesses
+            v_count = self.vertex_index_counts[mesh_index]
+            # this format was scientifically engineered to piss me off
+            v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], [[], []]
+            v_bones, v_norms2_list, v_norms3_list = [], [], []
+            if pos_off:
+                f.seek(pos_off + post_info)
+                pos_floats = read_float_tuple(f, 4 * v_count)
+                v_positions = [pos_floats[a*4:a*4+3] for a in range(v_count)]
+
+            vertex_data.append(
+                VertexData(
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                ))
+
         def type_33():
             while final_pos > f.tell():
                 v_positions, v_normals, v_uvs, v_wxs, v_weights, v_colours = [], [], [], [], [], [[], []]
@@ -1524,22 +1548,28 @@ class Read:
         vertex_data = []
         mesh_info = []
 
-        for info in self.vertex_mesh_offset:
-            d_type, v_len, fpos, bone_count_complex, b_off = info
-            f.seek(b_off + post_info)
-            bone_list_complex = read_int_tuple(f, bone_count_complex)
-            fpos = fpos + post_info
-            f.seek(fpos)
-            final_pos = v_len * 16 + fpos - 32
+        for mesh_index, info in enumerate(self.vertex_mesh_offset):
             v_data = []
-            if d_type in {5, 6, 9, 10, 265}:
-                type_common()
-            elif d_type in d_type_list:
-                d_type_list[d_type]()
+            if len(info) == 11:
+                # im KILLING you
+                type_keyshape()
+                mesh_info.append(
+                    MeshData(None, None, 0, None, 0, ()))
+            else:
+                d_type, v_len, fpos, bone_count_complex, b_off = info
+                f.seek(b_off + post_info)
+                bone_list_complex = read_int_tuple(f, bone_count_complex)
+                fpos = fpos + post_info
+                f.seek(fpos)
+                final_pos = v_len * 16 + fpos - 32
+                if d_type in {5, 6, 9, 10, 265}:
+                    type_common()
+                elif d_type in d_type_list:
+                    d_type_list[d_type]()
 
-            mesh_info.append(
-                MeshData(None, None, 0, None, bone_count_complex, bone_list_complex))
-            vertex_data.append(v_data)
+                mesh_info.append(
+                    MeshData(None, None, 0, None, bone_count_complex, bone_list_complex))
+                vertex_data.append(v_data)
         return vertex_data, mesh_info
 
     def _uno_info(self):

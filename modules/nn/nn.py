@@ -120,7 +120,6 @@ class ReadNn:
                 self.read_bone_names()
             if not self.nn.effect:
                 self.read_effect_names()
-        if self.nn.morphs:
             if not self.nn.morph_names:
                 self.read_morph_names()
         if self.nn.name == "Unnamed_File":
@@ -434,10 +433,34 @@ class ReadNn:
         self.nn.light = nn_light.Read(self.f).type_2()
 
     def _morph_1(self):
-        self.nn.morphs = nn_morph.Read(self.f, self.nn.start, self.format_type, self.debug).le()
+        mesh_counts = {}
+        if self.nn.model:
+            for i, mesh in enumerate(self.nn.model.vertices):
+                mesh_counts.update([(i, len(mesh.positions))])
+        else:
+            if not bpy.context.active_object:
+                pass
+            else:
+                blend_meshes = get_bpy_meshes(bpy.context, bpy.context.active_object, no_poly_test=True)
+                for mesh in blend_meshes:
+                    mesh_counts.update([(mesh.data.nn_vertex_index, len(mesh.data.vertices))])
+                del blend_meshes
+        self.nn.morphs = nn_morph.Read(self.f, self.nn.start, self.format_type, self.debug, mesh_counts).le()
 
     def _morph_2(self):
-        self.nn.morphs = nn_morph.Read(self.f, self.nn.start, self.format_type, self.debug).be()
+        mesh_counts = {}
+        if self.nn.model:
+            for i, mesh in enumerate(self.nn.model.vertices):
+                mesh_counts.update([(i, len(mesh.positions))])
+        else:
+            if not bpy.context.active_object:
+                pass
+            else:
+                blend_meshes = get_bpy_meshes(bpy.context, bpy.context.active_object, no_poly_test=True)
+                for mesh in blend_meshes:
+                    mesh_counts.update([(mesh.data.nn_vertex_index, len(mesh.data.vertices))])
+                del blend_meshes
+        self.nn.morphs = nn_morph.Read(self.f, self.nn.start, self.format_type, self.debug, mesh_counts).be()
 
     def _nmot_1(self):
         self.nn.animation = nn_motion.Read(self.f, self.nn.start).le()
