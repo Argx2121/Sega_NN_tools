@@ -37,6 +37,7 @@ def implicit_faces_fix_mesh_size(vertex_info):
             list(chain.from_iterable([info.uvs for info in data])),
             list(chain.from_iterable([info.wxs for info in data])),
             list(chain.from_iterable([info.colours for info in data])),
+            False
         ))  # flat list
     return face_mesh, vertex_list
 
