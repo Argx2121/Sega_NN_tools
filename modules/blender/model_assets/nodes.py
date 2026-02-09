@@ -207,6 +207,7 @@ class ShaderNodeGNOMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     multi_shading: BoolProperty(name="Mix-in Shading", update=update_shading, default=False, options=set())
     texture_2: IntProperty(name="Image Index", default=-1, min=-1, max=255,
                            get=get_texture_2, set=set_texture_2, update=update_texture_2)
+    callback: BoolProperty(name="Callback", default=False, options=set())
 
     def init(self, context):
         self.node_tree = bpy.data.node_groups['.GNO_MULTI']
@@ -263,6 +264,7 @@ class ShaderNodeXNOMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     multi_shading: BoolProperty(name="Mix-in Shading", update=update_shading, default=False, options=set())
     texture_2: IntProperty(name="Image Index", default=-1, min=-1, max=255,
                            get=get_texture_2, set=set_texture_2, update=update_texture_2)
+    callback: BoolProperty(name="Callback", default=False, options=set())
 
     def init(self, context):
         self.node_tree = bpy.data.node_groups['.GNO_MULTI']
@@ -451,6 +453,8 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     z_mode: EnumProperty(name="Z Mode", update=update_z_mode, items=z_modes, options=set())
     buff_update: BoolProperty(name="Z Buff Update", default=True, options=set())
 
+    vcol_tex_emu: BoolProperty(name="Vertex Color Texture Emulate", default=False, options=set())
+
     nn_blend_method: EnumProperty(name="Blend Mode", update=update_nn_blend, items=nn_blend_methods, options=set())
     # okay guys im sorry but im worried about calling it blend method ................
 
@@ -592,6 +596,8 @@ class ShaderNodeXNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     buff_comp: BoolProperty(name="Z Buff Compare", default=True, options=set())
     z_mode: EnumProperty(name="Z Mode", update=update_z_mode, items=z_modes, options=set())
     buff_update: BoolProperty(name="Z Buff Update", default=True, options=set())
+
+    two_sided_lighting: BoolProperty(name="Two Sided Lighting", default=False, options=set())
 
     shader_file: StringProperty(name="Shader File")
     shader_name: StringProperty(name="Shader Name")
@@ -739,6 +745,7 @@ class ShaderNodeGNOSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustom
     multi_shading: BoolProperty(name="Mix-in Shading", update=update_shading, default=False, options=set())
     texture_2: IntProperty(name="Image Index", default=-1, min=-1, max=255,
                            get=get_texture_2, set=set_texture_2, update=update_texture_2)
+    callback: BoolProperty(name="Callback", default=False, options=set())
 
     def init(self, context):
         self.node_tree = bpy.data.node_groups['.GNO_SPEC']
@@ -806,6 +813,7 @@ class ShaderNodeXNOSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustom
     multi_shading: BoolProperty(name="Mix-in Shading", update=update_shading, default=False, options=set())
     texture_2: IntProperty(name="Image Index", default=-1, min=-1, max=255,
                            get=get_texture_2, set=set_texture_2, update=update_texture_2)
+    callback: BoolProperty(name="Callback", default=False, options=set())
 
     def init(self, context):
         self.node_tree = bpy.data.node_groups['.GNO_SPEC']

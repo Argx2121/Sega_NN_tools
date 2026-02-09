@@ -259,6 +259,7 @@ def material_accurate(self):
             shader.alpha_op = str(m.render.alpha)
             shader.buff_comp = buff_comp
             shader.buff_update = buff_update
+            shader.vcol_tex_emu = vertex_tex_emu
         elif model_end == "X":
             shader = tree.nodes.new('ShaderNodeXNOShader')
             colour_init = tree.nodes.new('ShaderNodeXNOShaderInit')
@@ -291,6 +292,7 @@ def material_accurate(self):
             shader.z_mode = str(m_render.z_mode)
             shader.buff_comp = buff_comp
             shader.buff_update = buff_update
+            shader.two_sided_lighting = two_sided_lighting
 
         shader.nn_blend_method = m.transparency
 
@@ -326,6 +328,7 @@ def material_accurate(self):
         colour_init.inputs["Specular Level"].default_value = m_col.specular_value
 
         shader.inputs["User"].default_value = m.user
+        shader.inputs["Hide"].default_value = hide
         tree.links.new(tree.nodes["Material Output"].inputs[0], shader.outputs[0])
         last_node = colour_init
 
@@ -353,6 +356,7 @@ def material_accurate(self):
             custom_filter = False
             min_interp = False
             mag_interp = False
+            callback = False
 
             m_specular, m_specular2 = False, False
             m_multiply, m_decal, m_replace, m_blend = False, False, False, False
@@ -374,6 +378,7 @@ def material_accurate(self):
                 m_pass_color = m_mix.pass_color
                 m_alpha_tex = m_mix.alpha_tex
                 no_uv_transform = bool(m_mix.no_uv_transform)
+                callback = bool(m_mix.callback)
             elif model_end == "X":
                 m_specular = m_mix.specular
                 m_specular2 = m_mix.specular2
@@ -390,6 +395,7 @@ def material_accurate(self):
                 min_interp = m_tex.interp_min
                 mag_interp = m_tex.interp_mag
                 no_uv_transform = bool(m_mix.no_uv_transform)
+                callback = bool(m_mix.callback)
 
             vector_node.transform_mode = "0"
             if not no_uv_transform:
@@ -456,6 +462,8 @@ def material_accurate(self):
                 mix_node = tree.nodes.new('ShaderNode' + model_end + 'NOSpecular')
                 mix_node.blend_type = mix_type
                 mix_node.texture_2 = m_tex_index
+                if callback:
+                    mix_node.callback = callback
                 x_loc += 400
                 mix_node.location = (x_loc, y_loc)
 
@@ -490,6 +498,8 @@ def material_accurate(self):
                     mix_type = '.GNO_ADD'
                 mix_node.blend_type = mix_type
                 mix_node.texture_2 = m_tex_index
+                if callback:
+                    mix_node.callback = callback
 
                 tree.links.new(mix_node.inputs["Color 1"], last_node.outputs[0])
                 tree.links.new(mix_node.inputs["Alpha 1"], last_node.outputs[1])
@@ -976,6 +986,8 @@ def get_materials(self):
             mix_type = mix_node.blend_type
             col_2_multi = get_value(mix_node.inputs["Factor"])
             if model_end == 'G':
+                if mix_node.callback:
+                    texture_flags |= 1 << 31
                 if multiply_shading:
                     texture_flags |= 1 << 6
                 if mix_type == '.GNO_SUB' and image_stage == 0:
@@ -1001,6 +1013,8 @@ def get_materials(self):
                 if multiply_shading:
                     xno_stupid = texture_flags
                     xno_stupid |= mix_number
+                    if mix_node.callback:
+                        xno_stupid |= 1 << 31
                     m_texture_list.append(
                         NNTexture(image_node, image_index, xno_stupid, uv_offset, col_2_multi, lod_bias,
                                   max_mip_map_level, interp_min, interp_mag))
@@ -1041,6 +1055,7 @@ def get_materials(self):
         user = int(get_value(nn_shader.inputs["User"]))
         callback = get_value(nn_shader.inputs["Callback"])
         dis_fog = get_value(nn_shader.inputs["Disable Fog"])
+        hide = get_value(nn_shader.inputs["Hide"])
         blend_method = nn_shader.nn_blend_method
 
         if self.settings.over_texture:
@@ -1064,6 +1079,7 @@ def get_materials(self):
             comp0 = int(nn_shader.alpha_comp0)
             comp1 = int(nn_shader.alpha_comp1)
             alpha_op = int(nn_shader.alpha_op)
+            vertex_tex_emu = nn_shader.vcol_tex_emu
 
             if v_col == 0:
                 mat_flags |= 1 << 0
@@ -1071,8 +1087,10 @@ def get_materials(self):
                 # value is set if material is doublesided
                 mat_flags |= 1 << 1
             # if value is true it will equate to 1, if its false itll be 0 no need for if statement
+            mat_flags |= vertex_tex_emu << 2
             mat_flags |= dis_fog << 5
             mat_flags |= unlit << 8
+            mat_flags |= hide << 9
             mat_flags |= buff_comp << 16
             mat_flags |= buff_update << 17
             if blend_method == "CLIP":  # cutout
@@ -1101,7 +1119,9 @@ def get_materials(self):
             buff_update = nn_shader.buff_update
             shader_file = nn_shader.shader_file
             shader_name = nn_shader.shader_name
+            two_sided_lighting = nn_shader.two_sided_lighting
 
+            mat_flags |= hide << 0
             if not backface_off:
                 # value is set if material is doublesided
                 mat_flags |= 1 << 1
@@ -1110,6 +1130,7 @@ def get_materials(self):
             if v_col >= 0:
                 mat_flags |= 1 << 4
             mat_flags |= no_uv_transform << 5
+            mat_flags |= two_sided_lighting << 6
             mat_flags |= has_spec << 24
             mat_flags |= callback << 31
             material_list.append(MegaShader(
