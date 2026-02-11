@@ -261,7 +261,7 @@ class NN_PT_About(GENERIC_panel, bpy.types.Panel):
             layout.label(text=latest_ver)
         else:
             layout.label(text="You're not on the latest version!", icon="ERROR")
-            layout.operator("wm.url_open", text="Latest Release Link: " + str(latest_ver)).url = \
+            layout.operator("wm.url_open", text="Open Latest Release: " + str(latest_ver)).url = \
                 "https://github.com/Argx2121/Sega_NN_tools/releases/latest"
         blender_version = (4, 1, 1)
         if bpy.app.version != blender_version:
