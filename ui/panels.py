@@ -266,6 +266,8 @@ class NN_PT_About(GENERIC_panel, bpy.types.Panel):
         blender_version = (4, 1, 1)
         if bpy.app.version != blender_version:
             layout.label(text='Please use Blender version ' + str(blender_version), icon='ERROR')
+        layout.operator("wm.url_open", text="Open the Wiki").url = \
+            "https://github.com/Argx2121/Sega_NN_tools/wiki"
         layout.label(text="NN tools by Arg!!")
         box = layout.box()
         box.scale_y = 0.6
