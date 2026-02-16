@@ -9,44 +9,44 @@ from bpy.types import ShaderNodeCustomGroup
 
 # fuck it we global
 gno_mix = (
-            ('.GNO_MULTI', "Multiply", ""),
-            ('.GNO_DECAL', "Decal", ""),
-            ('.GNO_REPLACE', "Replace", ""),
-            ('.GNO_BLEND', "Blend", ""),
-            ('.GNO_PASSCOLOR', "Pass Color", ""),
-            ('.GNO_ALPHATEX', "Alpha Texture", ""),
-            ('.GNO_DECAL2', "Decal 2", ""),
-            ('.GNO_SUB', "Subtract", "If you use Subtract as the first mixing type, you can only have 3 textures"),
-            ('.GNO_ADD', "Add", ""),
+            ('.GNO_MULTI', "Multiply", "Multiply both images together"),
+            ('.GNO_DECAL', "Decal", "Overlay the 2nd image over the first, using the 2nds transparency"),
+            ('.GNO_REPLACE', "Replace", "Replace the previous image with the 2nd image"),
+            ('.GNO_BLEND', "Blend", "Blend between both of the images based on the color of the 2nd image"),
+            ('.GNO_PASSCOLOR', "Pass Color", "Only use the first image, don't do anything with the 2nd image"),
+            ('.GNO_ALPHATEX', "Alpha Texture", "Alpha for the next texture"),
+            ('.GNO_DECAL2', "Decal 2", "Overlay the 2nd image over the first, using the 2nds transparency, calculates alpha differently"),
+            ('.GNO_SUB', "Subtract", "Subtract the 2nd image from the first image"),
+            ('.GNO_ADD', "Add", "Add both images together"),
         )
 
 xno_mix = (
-            ('.GNO_MULTI', "Multiply", ""),
-            ('.GNO_DECAL', "Decal", ""),
-            ('.GNO_REPLACE', "Replace", ""),
-            ('.GNO_BLEND', "Blend", ""),
-            ('.GNO_DECAL2', "Decal 2", ""),
-            ('.GNO_ADD', "Add", ""),
-            ('.GNO_SUB', "Subtract", ""),
+            ('.GNO_MULTI', "Multiply", "Multiply both images together"),
+            ('.GNO_DECAL', "Decal", "Overlay the 2nd image over the first, using the 2nds transparency"),
+            ('.GNO_REPLACE', "Replace", "Replace the previous image with the 2nd image"),
+            ('.GNO_BLEND', "Blend", "Blend between both of the images based on the color of the 2nd image"),
+            ('.GNO_DECAL2', "Decal 2", "Overlay the 2nd image over the first, using the 2nds transparency, calculates alpha differently"),
+            ('.GNO_ADD', "Add", "Add both images together"),
+            ('.GNO_SUB', "Subtract", "Subtract the 2nd image from the first image"),
         )
 spec_mix = (
             ('.GNO_SPEC', "Specular", ""),
-            ('.GNO_SPEC2', "Specular 2", ""),
+            ('.GNO_SPEC2', "Specular 2", "Specular but with different alpha math"),
         )
 vector_mix = (
-        ('0', "UV", ""),
-        ('1', "Normal", ""),
-        ('2', "Position", ""),
+        ('0', "UV", "Uv map"),
+        ('1', "Normal", "Use normals to make Reflections"),
+        ('2', "Position", "Use the position in 3d space to make Image mapping"),
     )
 u_wrap_mix = (
-        ('0', "Clamp U", ""),
-        ('1', "Repeat U", ""),
-        ('2', "Mirror U", ""),
+        ('0', "Clamp U", "Wrap to 0 to 1"),
+        ('1', "Repeat U", "Repeat after it goes out of the 0 to 1 bounds"),
+        ('2', "Mirror U", "Mirror after it goes out of the 0 to 1 bounds"),
     )
 v_wrap_mix = (
-        ('0', "Clamp V", ""),
-        ('1', "Repeat V", ""),
-        ('2', "Mirror V", ""),
+        ('0', "Clamp V", "Wrap to 0 to 1"),
+        ('1', "Repeat V", "Repeat after it goes out of the 0 to 1 bounds"),
+        ('2', "Mirror V", "Mirror after it goes out of the 0 to 1 bounds"),
     )
 
 
@@ -384,9 +384,9 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     def nn_blend_methods(self, context):
         nn_blend_methods = (
-            ('OPAQUE', "Opaque", ""),
-            ('BLEND', "Alpha Blend", ""),
-            ('CLIP', "Alpha Clip", ""),
+            ('OPAQUE', "Opaque", "Solid"),
+            ('BLEND', "Alpha Blend", "Transparent"),
+            ('CLIP', "Alpha Clip", "Cutout transparent and non transparent parts"),
         )
         return nn_blend_methods
 
@@ -529,9 +529,9 @@ class ShaderNodeXNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     def nn_blend_methods(self, context):
         nn_blend_methods = (
-            ('OPAQUE', "Opaque", ""),
-            ('BLEND', "Alpha Blend", ""),
-            ('CLIP', "Alpha Clip", ""),
+            ('OPAQUE', "Opaque", "Solid"),
+            ('BLEND', "Alpha Blend", "Transparent"),
+            ('CLIP', "Alpha Clip", "Cutout transparent and non transparent parts"),
         )
         return nn_blend_methods
 
