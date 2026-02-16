@@ -230,7 +230,7 @@ class NN_PT_Extract(GENERIC_panel, bpy.types.Panel):
         layout.operator("bnk.extract", text="Bank file .bnk")
         layout.operator("pkg.extract", text="Sega Superstars .DIR and .PKG")
         layout.operator("srgc.extract", text="Sonic Riders GC (NO EXTENSION)")
-        layout.operator("srpc.extract", text="Sonic Riders PC (NO EXTENSION)")
+        layout.operator("srpc.extract", text="Sonic Riders PC / XBOX (NO EXTENSION)")
         layout.operator("srzg.extract", text="Sonic Riders Zero Gravity .pack")
         layout.operator("sfr.extract", text="Sonic Free Riders .pac / .pas")
         layout.operator("sms.extract", text="Bleach: Shattered Blade .sms")

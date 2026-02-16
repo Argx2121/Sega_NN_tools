@@ -202,7 +202,7 @@ from bpy.types import Operator
 
 
 class SonicRPCTools(Operator, ImportHelper):
-    """Extract files from an uncompressed Sonic Riders PC Archive"""
+    """Extract files from an uncompressed Sonic Riders PC / XBOX Archive"""
     bl_idname = "srpc.extract"
     bl_label = "Extract Files"
     filename_ext = "*"
@@ -224,7 +224,7 @@ class SonicRPCTools(Operator, ImportHelper):
     def draw(self, context):
         layout = self.layout
         box = layout.box()
-        box.label(text="Sonic Riders PC Extractor Settings:", icon="KEYFRAME_HLT")
+        box.label(text="Sonic Riders PC / XBOX Extractor Settings:", icon="KEYFRAME_HLT")
         box.row().prop(self, "set_batch", expand=True)
 
     def execute(self, context):
