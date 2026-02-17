@@ -138,6 +138,8 @@ def make_bone_pose(self):
             pose_b.nn_reset_scale_y = True
         if nn_b.flags.reset_scale_z:
             pose_b.nn_reset_scale_z = True
+        if nn_b.flags.inherit_pos_only:
+            pose_b.nn_inherit_pos_only = True
 
         if nn_b.flags.ik_effector:
             pose_b.nn_ik_effector = True
@@ -239,6 +241,8 @@ def get_bones(self):
             if euler not in {'XYZ', 'XZY', 'ZXY'}:
                 euler = 'XZY'
         flags = {"XYZ": 0, "XZY": 256, "ZXY": 1024}[euler]
+        if pose_b.nn_inherit_pos_only:
+            flags |= 1 << 12
         if pose_b.nn_reset_scale_x:
             flags |= 1 << 18
         if pose_b.nn_reset_scale_y:

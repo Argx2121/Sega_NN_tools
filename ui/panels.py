@@ -66,6 +66,7 @@ class NN_PT_Data(ITEM_panel, bpy.types.Panel):
                 layout.prop(bone, "nn_reset_scale_x")
                 layout.prop(bone, "nn_reset_scale_y")
                 layout.prop(bone, "nn_reset_scale_z")
+                layout.prop(bone, "nn_inherit_pos_only")
         elif context.object.type == "CAMERA":
             obj = context.object
             layout.prop(obj, "nn_user_int")

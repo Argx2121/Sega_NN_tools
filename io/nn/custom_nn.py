@@ -33,6 +33,8 @@ def custom_reg():
         bpy.props.BoolProperty(name="Reset scale y", description="Reset inherited y scale", default=False))
     bpy.types.PoseBone.nn_reset_scale_z = (
         bpy.props.BoolProperty(name="Reset scale z", description="Reset inherited z scale", default=False))
+    bpy.types.PoseBone.nn_inherit_pos_only = (
+        bpy.props.BoolProperty(name="Inherit pos only", description="Only inherit position from parent", default=False))
 
     bpy.types.PoseBone.nn_ik_effector = bpy.props.BoolProperty(name="IK Effector", default=False)
     bpy.types.PoseBone.nn_ik_minus_z = bpy.props.BoolProperty(name="IK Prefer rot -z", default=False)
@@ -84,6 +86,7 @@ def custom_unreg():
     del bpy.types.PoseBone.nn_reset_scale_x
     del bpy.types.PoseBone.nn_reset_scale_y
     del bpy.types.PoseBone.nn_reset_scale_z
+    del bpy.types.PoseBone.nn_inherit_pos_only
     del bpy.types.PoseBone.nn_ik_effector
     del bpy.types.PoseBone.nn_ik_minus_z
     del bpy.types.PoseBone.nn_ik_1bone_joint1
