@@ -463,10 +463,10 @@ class ReadNn:
         self.nn.morphs = nn_morph.Read(self.f, self.nn.start, self.format_type, self.debug, mesh_counts).be()
 
     def _nmot_1(self):
-        self.nn.animation = nn_motion.Read(self.f, self.nn.start).le()
+        self.nn.animation = nn_motion.Read(self.f, self.nn.start, self.format_type).le()
 
     def _nmot_2(self):
-        self.nn.animation = nn_motion.Read(self.f, self.nn.start).be()
+        self.nn.animation = nn_motion.Read(self.f, self.nn.start, self.format_type).be()
 
     def _node_1(self):
         self.nn.bones = nn_node_names.Read(self.f, self.nn.start).le()

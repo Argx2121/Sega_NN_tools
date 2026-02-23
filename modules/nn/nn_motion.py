@@ -163,11 +163,12 @@ def material_flags(sub_flags):
 
 
 class Read:
-    __slots__ = ["f", "post_info"]
+    __slots__ = ["f", "post_info", "format_type"]
 
-    def __init__(self, f: BinaryIO, post_info: int):
+    def __init__(self, f: BinaryIO, post_info: int, format_type:str):
         self.f = f
         self.post_info = post_info
+        self.format_type = format_type
 
     def le(self):
         return self.read("<")
@@ -244,7 +245,11 @@ class Read:
                 sub_index = read_int(f, endian)
             sub_start, sub_stop = read_float_tuple(f, 2, endian)
             sub_key_start, sub_key_stop = read_float_tuple(f, 2, endian)
-            key_count, key_len, key_offset = read_int_tuple(f, 3, endian)
+            if self.format_type == "SonicTheHedgehog4EpisodeI_I":
+                key_count, key_len = read_int_tuple(f, 2, endian)
+                key_offset = unpack(endian + "Q", f.read(8))[0]
+            else:
+                key_count, key_len, key_offset = read_int_tuple(f, 3, endian)
             sub_info.append(
                 AnimSub(SubFlags, SubInterp, sub_index, sub_start, sub_stop, sub_key_start, sub_key_stop,
                         key_count, key_len, key_offset, []))
