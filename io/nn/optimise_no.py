@@ -384,6 +384,27 @@ def mesh_index_weight_check(obj):
     else:
         return False
 
+def cleanup_meshes(mesh_before, old_obj):
+    mesh_after = [ob for ob in bpy.data.objects if ob.type == 'MESH']
+
+    bpy.ops.object.select_all(action='DESELECT')
+
+    for i in mesh_before:
+        mesh_after.remove(i)
+
+    bpy.context.view_layer.objects.active = None
+    for obj in mesh_after:
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        normals_return(obj)
+        bpy.context.view_layer.objects.active = None
+        obj.select_set(False)
+        remove_extra_bones(obj)
+
+    old_obj.select_set(True)
+    bpy.context.view_layer.objects.active = old_obj
+    bpy.ops.object.delete(use_global=False, confirm=False)
+
 
 def model_simple_split(context, old_obj):
     import bpy
@@ -458,25 +479,7 @@ def model_simple_split(context, old_obj):
             bpy.ops.mesh.separate(type='SELECTED')
             bpy.ops.object.mode_set(mode='OBJECT')
 
-        mesh_after = [ob for ob in bpy.data.objects if ob.type == 'MESH']
-
-        bpy.ops.object.select_all(action='DESELECT')
-
-        for i in mesh_before:
-            mesh_after.remove(i)
-
-        bpy.context.view_layer.objects.active = None
-        for obj in mesh_after:
-            obj.select_set(True)
-            bpy.context.view_layer.objects.active = obj
-            normals_return(obj)
-            bpy.context.view_layer.objects.active = None
-            obj.select_set(False)
-            remove_extra_bones(obj)
-
-        old_obj.select_set(True)
-        bpy.context.view_layer.objects.active = old_obj
-        bpy.ops.object.delete(use_global=False, confirm=False)
+        cleanup_meshes(mesh_before, old_obj)
 
     if test_funct():
         main_funct()
@@ -539,25 +542,7 @@ def model_complex_split_gno(context, old_obj):
             bpy.ops.mesh.separate(type='SELECTED')
             bpy.ops.object.mode_set(mode='OBJECT')
 
-        mesh_after = [ob for ob in bpy.data.objects if ob.type == 'MESH']
-
-        bpy.ops.object.select_all(action='DESELECT')
-
-        for i in mesh_before:
-            mesh_after.remove(i)
-
-        bpy.context.view_layer.objects.active = None
-        for obj in mesh_after:
-            obj.select_set(True)
-            bpy.context.view_layer.objects.active = obj
-            normals_return(obj)
-            bpy.context.view_layer.objects.active = None
-            obj.select_set(False)
-            remove_extra_bones(obj)
-
-        old_obj.select_set(True)
-        bpy.context.view_layer.objects.active = old_obj
-        bpy.ops.object.delete(use_global=False, confirm=False)
+        cleanup_meshes(mesh_before, old_obj)
 
     if test_funct():
         main_funct()
@@ -668,25 +653,7 @@ def model_complex_split(context, old_obj):
     for group in group_4:
         split_meshes(group)
 
-    mesh_after = [ob for ob in bpy.data.objects if ob.type == 'MESH']
-
-    bpy.ops.object.select_all(action='DESELECT')
-
-    for i in mesh_before:
-        mesh_after.remove(i)
-
-    bpy.context.view_layer.objects.active = None
-    for obj in mesh_after:
-        obj.select_set(True)
-        bpy.context.view_layer.objects.active = obj
-        normals_return(obj)
-        bpy.context.view_layer.objects.active = None
-        obj.select_set(False)
-        remove_extra_bones(obj)
-
-    old_obj.select_set(True)
-    bpy.context.view_layer.objects.active = old_obj
-    bpy.ops.object.delete(use_global=False, confirm=False)
+    cleanup_meshes(mesh_before, old_obj)
 
 
 def model_material_split(context, old_obj):
@@ -749,24 +716,6 @@ def model_face_split(context, old_obj):
             bpy.ops.mesh.separate(type='SELECTED')
             bpy.ops.object.mode_set(mode='OBJECT')
 
-        mesh_after = [ob for ob in bpy.data.objects if ob.type == 'MESH']
-
-        bpy.ops.object.select_all(action='DESELECT')
-
-        for i in mesh_before:
-            mesh_after.remove(i)
-
-        bpy.context.view_layer.objects.active = None
-        for obj in mesh_after:
-            obj.select_set(True)
-            bpy.context.view_layer.objects.active = obj
-            normals_return(obj)
-            bpy.context.view_layer.objects.active = None
-            obj.select_set(False)
-            remove_extra_bones(obj)
-
-        old_obj.select_set(True)
-        bpy.context.view_layer.objects.active = old_obj
-        bpy.ops.object.delete(use_global=False, confirm=False)
+        cleanup_meshes(mesh_before, old_obj)
 
     main_funct()
