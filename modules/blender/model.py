@@ -98,6 +98,8 @@ class ModelInfo:
 
     def generic(self):
         arma = self.armature
+        arma.data.pose_position = 'REST'
+
         name = arma.name
         mesh_list = get_bpy_meshes(self.context, arma)
         self.mesh_list = mesh_list
@@ -184,6 +186,7 @@ class ModelInfo:
         self.build_mesh_list()
 
         meshes, geometry = console_out("Generating Geometry...", mesh.get_geometry, (self.meshes, self.settings, self))
+        self.armature.data.pose_position = 'POSE'
 
         return ModelData(
             name, self.center, self.radius, self.bone, self.material, meshes, geometry, self.bone_depth, self.bone_used)
