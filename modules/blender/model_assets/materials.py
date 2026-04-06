@@ -979,6 +979,12 @@ def get_materials(self):
                         uv_names = [uv.name for uv in child.data.uv_layers]
                         if uv_node.uv_map in uv_names:
                             uv_map = uv_names.index(uv_node.uv_map)
+                            break
+                        elif uv_node.uv_map == "" and uv_names:
+                            for layer in child.data.uv_layers:
+                                if layer.active_render:
+                                    uv_map = uv_names.index(layer.name)
+                                    break
                 texture_flags |= 1 << 8 + uv_map
 
             # now mixing node data
