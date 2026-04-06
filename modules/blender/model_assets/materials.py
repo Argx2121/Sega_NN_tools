@@ -1049,13 +1049,16 @@ def get_materials(self):
 
         v_col_node = to_socket_from_socket.get(start_node.inputs["Vertex Color"], False)
         v_col = -1
-        if v_col_node and v_col_node.node.layer_name != "":
-            v_col = v_col_node.node.layer_name
+        if v_col_node:
             for child in self.mesh_list:
                 if child.active_material.name == name:
                     v_col_names = [col_set.name for col_set in child.data.color_attributes]
-                    if v_col in v_col_names:
-                        v_col = v_col_names.index(v_col)
+                    if v_col_node.node.layer_name in v_col_names:
+                        v_col = v_col_names.index(v_col_node.node.layer_name)
+                        break
+                    elif v_col_node.node.layer_name == "" and v_col_names:
+                        v_col = child.data.color_attributes.render_color_index
+                        break
 
         nn_shader = mix_node
         user = int(get_value(nn_shader.inputs["User"]))
