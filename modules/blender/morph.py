@@ -70,3 +70,16 @@ class Morph:
                             # and by the way this value SHALL be the same count as if all the verts were merged by position
                             # you WILL debug for hours and you WILL enjoy it
                             shapekey.points[ind].co = Vector(vert)
+                if m.normals and False:
+                    # been trying to add support for gno normals. because you lose the face indices it seems kinda impossible :(
+                    for mesh in meshes:
+                        gno_moment = mesh.data.corner_normals[::]
+                        gno_moment = [a.vector[::] for a in gno_moment]
+                        mesh_normals_clean = list(dict.fromkeys(gno_moment))
+                        gno_fart = [mesh_normals_clean.index(a) for a in gno_moment]
+                        normal_layer = mesh.data.attributes.new(mesh.data.shape_keys.key_blocks[e+1].name + "_normals", "FLOAT_VECTOR", "CORNER")
+                        print(len(m.normals), len(mesh.data.vertices), len(normal_layer.data), len(mesh_normals_clean), len(m.normals), len(list(dict.fromkeys([Vector(a)[::] for a in m.normals]))), len(list(dict.fromkeys([Vector(a).normalized()[::] for a in m.normals]))))
+                        for norm_ind in range(len(mesh.data.corner_normals)):
+                            normal_layer.data[norm_ind].vector = Vector(v).normalized()
+
+
