@@ -220,6 +220,9 @@ def material_accurate(self):
         for node in tree.nodes:
             if node.bl_idname == "ShaderNodeBsdfPrincipled":
                 tree.nodes.remove(node)
+                continue
+            if node.bl_idname == "ShaderNodeOutputMaterial":
+                end_node = node
 
         mat_flags = m.mat_flags
         # defaults
@@ -329,7 +332,7 @@ def material_accurate(self):
 
         shader.inputs["User"].default_value = m.user
         shader.inputs["Hide"].default_value = hide
-        tree.links.new(tree.nodes["Material Output"].inputs[0], shader.outputs[0])
+        tree.links.new(end_node.inputs[0], shader.outputs[0])
         last_node = colour_init
 
         for t_index in range(m_texture_count):
@@ -529,7 +532,7 @@ def material_accurate(self):
         x_loc += 400
         shader.location = (x_loc, y_loc)
         x_loc += 400
-        tree.nodes["Material Output"].location = (x_loc, y_loc)
+        end_node.location = (x_loc, y_loc)
 
 
 def material_complex(self):
@@ -573,6 +576,9 @@ def material_complex(self):
         for node in tree.nodes:
             if node.bl_idname == "ShaderNodeBsdfPrincipled":
                 tree.nodes.remove(node)
+                continue
+            if node.bl_idname == "ShaderNodeOutputMaterial":
+                end_node = node
 
         colour = False
         alpha = 1
@@ -586,7 +592,7 @@ def material_complex(self):
         n_end = tree.nodes.new(type="ShaderNodeEeveeSpecular")
         n_end.inputs["Roughness"].default_value = 0.5
 
-        tree.links.new(tree.nodes["Material Output"].inputs["Surface"], n_end.outputs["BSDF"])
+        tree.links.new(end_node.inputs["Surface"], n_end.outputs["BSDF"])
 
         for t_index in range(m_texture_count):
             m_tex = m.texture[t_index]
