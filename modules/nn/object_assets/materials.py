@@ -196,7 +196,7 @@ class Read:
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.start)
-            _, _, var1, _, _, var2, var3 = read_int_tuple(f, 7)
+            material_flags, user, var1, render_data, _, var2, var3 = read_int_tuple(f, 7)
             self.colour_offset.append(var1)
             self.texture_count.append(var2)
             self.texture_offset.append(var3)
