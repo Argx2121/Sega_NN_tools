@@ -196,7 +196,7 @@ class Read:
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.start)
-            material_flags, user, var1, render_data, _, var2, var3 = read_int_tuple(f, 7)
+            material_flags, user, var1, render_data, texture_flags, var2, var3 = read_int_tuple(f, 7)
             self.colour_offset.append(var1)
             self.texture_count.append(var2)
             self.texture_offset.append(var3)
@@ -205,7 +205,7 @@ class Read:
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.start)
-            _, _, var1, _, var2, var3 = read_int_tuple(f, 6)
+            material_flags, user, var1, render_data, var2, var3 = read_int_tuple(f, 6)
             self.colour_offset.append(var1)
             self.texture_count.append(var2)
             self.texture_offset.append(var3)
@@ -214,7 +214,7 @@ class Read:
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.start)
-            _, _, var1, _, _, _, var2, var3 = read_int_tuple(f, 8)
+            _, user, var1, _, _, _, var2, var3 = read_int_tuple(f, 8)
             self.colour_offset.append(var1)
             self.texture_count.append(var2)
             self.texture_offset.append(var3)
@@ -231,11 +231,11 @@ class Read:
     def _cno_eno_info(self):
         f = self.f
         for offset in self.info_offset:
-            f.seek(offset + self.start + 8)
-            var = read_int_tuple(f, 5, ">")
-            self.colour_offset.append(var[0])
-            self.texture_count.append(var[-2])
-            self.texture_offset.append(var[-1])
+            f.seek(offset + self.start)
+            material_flags, user, var1, render_data, var2, var3 = read_int_tuple(f, 7, ">")
+            self.colour_offset.append(var1)
+            self.texture_count.append(var2)
+            self.texture_offset.append(var3)
 
     def _xno_flags(self):
         f = self.f
