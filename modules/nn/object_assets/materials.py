@@ -8,7 +8,7 @@ from ...util import *
 class Read:
     __slots__ = [
         "f", "start", "format_type", "debug",
-        "material_count", "texture_count", "info_offset", "colour_offset",
+        "material_count", "texture_count", "info_offset",
         "texture_offset", "colour_list", "texture_list", "mat_set_list", "material_offsets", "render_list"
     ]
 
@@ -17,7 +17,6 @@ class Read:
         self.material_count = material_count
         self.texture_count = []
         self.info_offset = []
-        self.colour_offset = []
         self.texture_offset = []
         self.colour_list = []
         self.texture_list = []
@@ -108,6 +107,25 @@ class Read:
         texture: int
 
     @dataclass
+    class GenericInfoEx:
+        material_flags: int
+        user: int
+        color_offset: int
+        flags_offset: int
+        texture_flags: int
+        texture_count: int
+        texture_offset: int
+
+    @dataclass
+    class GenericInfo:
+        material_flags: int
+        user: int
+        color_offset: int
+        flags_offset: int
+        texture_count: int
+        texture_offset: int
+
+    @dataclass
     class Material:
         __slots__ = ["texture_count", "colour", "texture", "transparency", "mat_flags", "mat_data"]
         texture_count: int
@@ -196,46 +214,25 @@ class Read:
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.start)
-            material_flags, user, var1, render_data, texture_flags, var2, var3 = read_int_tuple(f, 7)
-            self.colour_offset.append(var1)
-            self.texture_count.append(var2)
-            self.texture_offset.append(var3)
+            self.material_offsets.append(self.GenericInfoEx(*read_int_tuple(f, 7)))
 
     def _le_info_3(self):
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.start)
-            material_flags, user, var1, render_data, var2, var3 = read_int_tuple(f, 6)
-            self.colour_offset.append(var1)
-            self.texture_count.append(var2)
-            self.texture_offset.append(var3)
+            self.material_offsets.append(self.GenericInfo(*read_int_tuple(f, 6)))
 
     def _ino_lno_info_2(self):
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.start)
-            _, user, var1, _, _, _, var2, var3 = read_int_tuple(f, 8)
-            self.colour_offset.append(var1)
-            self.texture_count.append(var2)
-            self.texture_offset.append(var3)
-
-    def _ino_lno_info_2_ouya(self):
-        f = self.f
-        for offset in self.info_offset:
-            f.seek(offset + self.start)
-            _, _, var1, _, _, _, var2, var3 = read_int_tuple(f, 8)
-            self.colour_offset.append(var1)
-            self.texture_offset.append(var2)
-            self.texture_count.append(var3)
+            self.material_offsets.append(self.GenericInfo(*read_int_tuple(f, 2), *read_long_tuple(f, 2), read_int(f), read_long(f)))
 
     def _cno_eno_info(self):
         f = self.f
         for offset in self.info_offset:
             f.seek(offset + self.start)
-            material_flags, user, var1, render_data, var2, var3 = read_int_tuple(f, 7, ">")
-            self.colour_offset.append(var1)
-            self.texture_count.append(var2)
-            self.texture_offset.append(var3)
+            self.material_offsets.append(self.GenericInfoEx(*read_int_tuple(f, 7, ">")))
 
     def _xno_flags(self):
         f = self.f
@@ -259,8 +256,8 @@ class Read:
 
     def _cno_eno_colour(self):
         f = self.f
-        for offset in self.colour_offset:
-            f.seek(offset + self.start)
+        for offset in self.material_offsets:
+            f.seek(offset.color_offset + self.start)
             # the material setting here isn't really needed
             # 2 = all data types
             self.colour_list.append(self.Colour2(
@@ -271,8 +268,8 @@ class Read:
 
     def _ino_lno_zno_colour(self):
         f = self.f
-        for offset in self.colour_offset:
-            f.seek(offset + self.start)
+        for offset in self.material_offsets:
+            f.seek(offset.color_offset + self.start)
             self.colour_list.append(self.Colour2(
                 read_int(f),
                 read_float_tuple(f, 4), read_float_tuple(f, 4), read_float_tuple(f, 4),
@@ -299,13 +296,12 @@ class Read:
             "SonicTheHedgehog4EpisodeI_C": house_of_the_dead_4_c, "SonicTheHedgehog4EpisodeII_C": house_of_the_dead_4_c,
         }
         f = self.f
-        material_count = self.material_count
-        for texture_value in range(material_count):
+        for material in self.material_offsets:
             texture_list = []
-            texture_offset = self.texture_offset[texture_value]
+            texture_offset = material.texture_offset
             if texture_offset:
                 f.seek(texture_offset + self.start)
-                for _ in range(self.texture_count[texture_value]):
+                for _ in range(material.texture_count):
                     texture_flags = read_int(f, ">")
 
                     class TextureFlags(Flag):
@@ -364,13 +360,12 @@ class Read:
             "SonicTheHedgehog4EpisodeIPrototype_E": sonic_the_hedgehog_4_episode_i_prototype_e,
         }
         f = self.f
-        material_count = self.material_count
-        for texture_value in range(material_count):
+        for material in self.material_offsets:
             texture_list = []
-            texture_offset = self.texture_offset[texture_value]
+            texture_offset = material.texture_offset
             if texture_offset:
                 f.seek(texture_offset + self.start)
-                for _ in range(self.texture_count[texture_value]):
+                for _ in range(material.texture_count):
                     texture_flags = read_int(f, ">")
 
                     class TextureFlags(Flag):
@@ -581,13 +576,12 @@ class Read:
             "SonicTheHedgehog4EpisodeIPre2016_I": sonic_4_episode_1_i,
         }
         f = self.f
-        material_count = self.material_count
-        for texture_value in range(material_count):
+        for material in self.material_offsets:
             texture_list = []
-            texture_offset = self.texture_offset[texture_value]
+            texture_offset = material.texture_offset
             if texture_offset:
                 f.seek(texture_offset + self.start)
-                for _ in range(self.texture_count[texture_value]):
+                for _ in range(material.texture_count):
                     texture_flags = read_int(f, ">")
 
                     class TextureFlags(Flag):
@@ -647,13 +641,12 @@ class Read:
             "LovingDeadsHouseOfTheDeadEX_L": loving_deads_house_of_the_dead_ex_l,
         }
         f = self.f
-        material_count = self.material_count
-        for texture_value in range(material_count):
+        for material in self.material_offsets:
             texture_list = []
-            texture_offset = self.texture_offset[texture_value]
+            texture_offset = material.texture_offset
             if texture_offset:
                 f.seek(texture_offset + self.start)
-                for _ in range(self.texture_count[texture_value]):
+                for _ in range(material.texture_count):
                     texture_flags = read_int(f, ">")
 
                     class TextureFlags(Flag):
@@ -938,13 +931,12 @@ class Read:
             "SegaGoldenGun_Z": sega_golden_gun_z,
         }
         f = self.f
-        material_count = self.material_count
-        for texture_value in range(material_count):
+        for material in self.material_offsets:
             texture_list = []
-            texture_offset = self.texture_offset[texture_value]
+            texture_offset = material.texture_offset
             if texture_offset:
                 f.seek(texture_offset + self.start)
-                for _ in range(self.texture_count[texture_value]):
+                for _ in range(material.texture_count):
                     texture_flags = read_int(f, ">")
 
                     class TextureFlags(Flag):
@@ -979,10 +971,20 @@ class Read:
         material_list = []
         for i in range(self.material_count):
             material_list.append(self.Material(
-                self.texture_count[i], self.colour_list[i], self.texture_list[i], "OPAQUE", 0, []))
+                self.material_offsets[i].texture_count, self.colour_list[i], self.texture_list[i], "OPAQUE", 0, []))
         return material_list
 
     def _return_data_2(self):
+        material_list = []
+        for i in range(self.material_count):
+            material_list.append(self.Material(
+                self.material_offsets[i].texture_count,
+                self.Colour(
+                    (0.75, 0.75, 0.75, 1), (0.75, 0.75, 0.75, 1), (0.9, 0.9, 0.9, 1), (0, 0, 0, 1), 0.5, 0.5),
+                self.texture_list[i], "OPAQUE", 0, []))
+        return material_list
+
+    def _return_data_3(self):
         material_list = []
         for i in range(self.material_count):
             material_list.append(self.Material(
@@ -1053,7 +1055,7 @@ class Read:
 
     def lno_s4e2ouya(self):
         self._le_offsets()
-        self._ino_lno_info_2_ouya()
+        self._ino_lno_info_2()
         self._ino_lno_zno_colour()
         self._lno_texture()
         return self._return_data_2()
@@ -1061,12 +1063,12 @@ class Read:
     def sno(self):
         self._sno_offsets()
         self._sno_texture()
-        return self._return_data_2()
+        return self._return_data_3()
 
     def uno(self):
         self._uno_offsets()
         self._uno_texture()
-        return self._return_data_2()
+        return self._return_data_3()
 
     def xno(self):
         self._xno_offsets()
