@@ -277,7 +277,7 @@ class Read:
             vert_block()
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                 ))
         return vertex_data, self.mesh_info
 
@@ -539,7 +539,7 @@ class Read:
             vert_block()
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                 ))
         return vertex_data, self.mesh_info
 
@@ -1008,7 +1008,7 @@ class Read:
             vert_block()
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                 ))
         return vertex_data, self.mesh_info
 
@@ -1174,7 +1174,7 @@ class Read:
 
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                 ))
         return vertex_data, self.mesh_info
 
@@ -1244,7 +1244,7 @@ class Read:
 
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                 ))  # cba they probably dont support rel anyway
         return vertex_data, self.mesh_info
 
@@ -1342,7 +1342,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                     ))
 
         def type_1():
@@ -1367,7 +1367,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                     ))
 
         def type_2():
@@ -1392,7 +1392,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                     ))
 
         def type_17():
@@ -1423,7 +1423,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                     ))
 
         def type_keyshape():
@@ -1440,7 +1440,7 @@ class Read:
 
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                 ))
 
         def type_33():
@@ -1474,7 +1474,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                     ))
 
         def type_49():
@@ -1506,7 +1506,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                     ))
 
         def type_273():
@@ -1539,7 +1539,7 @@ class Read:
 
                 v_data.append(
                     VertexData(
-                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                        v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                     ))
 
         f = self.f
@@ -1684,7 +1684,7 @@ class Read:
             vert_block()
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                 ))
         return vertex_data, self.mesh_info
 
@@ -1930,7 +1930,7 @@ class Read:
             vert_block()
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                 ))
         return vertex_data, self.mesh_info
 
@@ -2147,7 +2147,7 @@ class Read:
             vert_block()
             vertex_data.append(
                 VertexData(
-                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, False
+                    v_positions, v_weights, v_bones, v_normals, v_uvs, v_wxs, v_colours, True
                 ))
         return vertex_data, self.mesh_info
 
