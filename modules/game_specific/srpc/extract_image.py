@@ -59,6 +59,24 @@ class ExtractImage:
         f = self.f
         tex_path = self.texture_path
 
+        for texture_index in range(image_count):
+            texture_offset_current = texture_offsets[texture_index]
+            f.seek(texture_start + texture_offset_current + 20)
+            tex_len = read_int(f) + 24
+
+            file_name = tex_path + texture_names[texture_index] + ".xvr"
+            self.texture_files.append(file_name)
+
+            pathlib.Path(file_name).parent.mkdir(parents=True, exist_ok=True)
+            ft = open(file_name, "wb")
+            f.seek(texture_start + texture_offset_current)
+            ft.write(f.read(tex_len))
+            ft.close()
+
+    def make_image_xbox_old(self, texture_start, image_count, texture_offsets, texture_names):
+        f = self.f
+        tex_path = self.texture_path
+
         def dxt(dxt_type, tex_mip=1):
             ft = open(file_name, "wb")
             pathlib.Path(file_name).parent.mkdir(parents=True, exist_ok=True)
