@@ -5,14 +5,14 @@ from ...modules.blender.model_assets.nodes import gno_mix, xno_mix, spec_mix, ve
 # UTIL
 def custom_reg():
     # GENERIC
-    bpy.types.Object.nn_frame_rate = bpy.props.IntProperty(name="Frame Rate", default=30, min=0, max=120, options=set())
+    bpy.types.Object.nn_frame_rate = bpy.props.IntProperty(name="Frame Rate", default=30, min=0, options=set())
     bpy.types.Object.nn_user_int = bpy.props.IntProperty(name="User Int", default=0)
     bpy.types.Object.nn_euler_rotation = bpy.props.EnumProperty(name="Euler Order", items=(
         ("XYZ", "XYZ Euler", "XYZ"), ("XZY", "XZY Euler", "XZY"), ("ZXY", "ZXY Euler", "ZXY")), default="XZY", options=set())
     # MODEL
-    bpy.types.Armature.nn_material_count = bpy.props.IntProperty(name="Material Count", default=0, min=0, max=255, update=update_material_count)
+    bpy.types.Armature.nn_material_count = bpy.props.IntProperty(name="Material Count", default=0, min=0, update=update_material_count)
     bpy.types.Armature.nn_materials = bpy.props.CollectionProperty(type=NNMaterial)
-    bpy.types.Armature.nn_texture_count = bpy.props.IntProperty(name="Texture Count", default=0, min=0, max=255, update=update_texture_count)
+    bpy.types.Armature.nn_texture_count = bpy.props.IntProperty(name="Texture Count", default=0, min=0, update=update_texture_count)
     bpy.types.Armature.nn_textures = bpy.props.CollectionProperty(type=NNTexture)
     # BONES
     bpy.types.PoseBone.nn_user_type = bpy.props.EnumProperty(name="User Type", items=(
@@ -46,7 +46,7 @@ def custom_reg():
     bpy.types.PoseBone.nn_ik_1bone_root = bpy.props.BoolProperty(name="IK 1 Bone Root", description='xsiik', default=False)
     bpy.types.PoseBone.nn_ik_2bone_root = bpy.props.BoolProperty(name="IK 2 Bone Root", description='xsiik', default=False)
 
-    bpy.types.PoseBone.nn_mesh_count = bpy.props.IntProperty(name="Mesh Count", default=0, min=0, max=255, update=update_mesh_count)
+    bpy.types.PoseBone.nn_mesh_count = bpy.props.IntProperty(name="Mesh Count", default=0, min=0, update=update_mesh_count)
     bpy.types.PoseBone.nn_meshes = bpy.props.CollectionProperty(type=NNMesh)
     bpy.types.PoseBone.nn_euler_values = bpy.props.FloatVectorProperty(name="NN Init Euler", subtype='EULER')  # im killing you!!
     bpy.types.PoseBone.nn_scale_values = bpy.props.FloatVectorProperty(name="NN Init Scale", subtype='XYZ')  # im killing you.
