@@ -783,12 +783,23 @@ def make_bpy_textures(file_path: str, texture_names: list, armature, recursive: 
 
     if load_incomplete:
         png_incomp = []
+        dds_incomp = []
         for (t_check, tex) in zip(png_check, path_list_png):
             if t_check:
-                png_incomp.append(bpy.data.images.load(tex[0]))
+                png_incomp.append(tex[0])
             else:
                 png_incomp.append(None)
-        for i, t in enumerate(png_incomp):
+        for (t_check, tex) in zip(dds_check, path_list_dds):
+            if t_check:
+                dds_incomp.append(tex[0])
+            else:
+                dds_incomp.append(None)
+        if len(set(dds_incomp)) > len(set(png_incomp)):
+            cool_images = dds_incomp
+        else:
+            cool_images = png_incomp
+        cool_images = [bpy.data.images.load(a) if a else a for a in cool_images]
+        for i, t in enumerate(cool_images):
             if t:
                 armature.data.nn_textures[i].texture = t
                 armature.data.nn_textures[i].interp_min = tex_interp[i][0]
@@ -796,7 +807,7 @@ def make_bpy_textures(file_path: str, texture_names: list, armature, recursive: 
             else:
                 armature.data.nn_textures[i].interp_min = tex_interp[i][0]
                 armature.data.nn_textures[i].interp_mag = tex_interp[i][1]
-        return png_incomp, tex_interp
+        return cool_images, tex_interp
     for i, t in enumerate(tex_interp):
         armature.data.nn_textures[i].interp_min = tex_interp[i][0]
         armature.data.nn_textures[i].interp_mag = tex_interp[i][1]
