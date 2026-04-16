@@ -778,6 +778,12 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
 
 def make_bpy_textures(file_path: str, texture_names: list, armature, recursive: bool, load_incomplete: bool):
     # Finds textures and imports them to Blender (if applicable)
+    def blender_nn_tex(tex_data):
+        for it, tt in enumerate(tex_data):
+            armature.data.nn_textures[it].texture = tt
+            armature.data.nn_textures[it].interp_min = tex_interp[it][0]
+            armature.data.nn_textures[it].interp_mag = tex_interp[it][1]
+
     path_base = pathlib.Path(pathlib.Path(file_path).parent)
     tex_names = [tex[0].rsplit(".", 1)[0] for tex in texture_names]
     tex_interp = [tex[1] for tex in texture_names]
@@ -793,18 +799,12 @@ def make_bpy_textures(file_path: str, texture_names: list, armature, recursive: 
     dds_check = [bool(a) for a in path_list_dds]
     if False not in dds_check:
         tex = [bpy.data.images.load(tex[0]) for tex in path_list_dds]
-        for i, t in enumerate(tex):
-            armature.data.nn_textures[i].texture = t
-            armature.data.nn_textures[i].interp_min = tex_interp[i][0]
-            armature.data.nn_textures[i].interp_mag = tex_interp[i][1]
+        blender_nn_tex(tex)
         return tex, tex_interp
     png_check = [bool(a) for a in path_list_png]
     if False not in png_check:
         tex = [bpy.data.images.load(tex[0]) for tex in path_list_png]
-        for i, t in enumerate(tex):
-            armature.data.nn_textures[i].texture = t
-            armature.data.nn_textures[i].interp_min = tex_interp[i][0]
-            armature.data.nn_textures[i].interp_mag = tex_interp[i][1]
+        blender_nn_tex(tex)
         return tex, tex_interp
 
     if load_incomplete:
