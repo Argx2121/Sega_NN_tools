@@ -263,6 +263,16 @@ def material_accurate(self):
             shader.buff_comp = buff_comp
             shader.buff_update = buff_update
             shader.vcol_tex_emu = vertex_tex_emu
+        elif model_end == "L":  # incomplete
+            # todo probably gonna put it in a diff section / refactor for lzno
+            shader = tree.nodes.new('ShaderNodeLNOShader')
+            colour_init = tree.nodes.new('ShaderNodeLNOShaderInit')
+            colour_init.inputs["Emission"].default_value = m_col.emission
+
+            backface_off = mat_flags >> 1 & 1
+            unlit = mat_flags >> 2 & 1
+            disable_fog = mat_flags >> 3 & 1
+            callback = mat_flags >> 31 & 1
         elif model_end == "X":
             shader = tree.nodes.new('ShaderNodeXNOShader')
             colour_init = tree.nodes.new('ShaderNodeXNOShaderInit')
@@ -365,6 +375,7 @@ def material_accurate(self):
             m_multiply, m_decal, m_replace, m_blend = False, False, False, False
             m_decal2, m_subtract, m_add = False, False, False
             m_pass_color, m_alpha_tex = False, False
+            m_normal = False
 
             if model_end == "G":
                 m_specular = m_mix.specular
@@ -380,6 +391,13 @@ def material_accurate(self):
                     m_subtract = m_mix.subtract_2
                 m_pass_color = m_mix.pass_color
                 m_alpha_tex = m_mix.alpha_tex
+                no_uv_transform = bool(m_mix.no_uv_transform)
+                callback = bool(m_mix.callback)
+            elif model_end == "L":
+                m_specular = m_mix.specular
+                m_multiply = m_mix.multiply
+                m_decal = m_mix.decal
+                m_normal = m_mix.normal
                 no_uv_transform = bool(m_mix.no_uv_transform)
                 callback = bool(m_mix.callback)
             elif model_end == "X":
@@ -476,6 +494,14 @@ def material_accurate(self):
                 tree.links.new(mix_node.inputs["Color 2"], image_node.outputs[0])
                 tree.links.new(mix_node.inputs["Alpha 2"], image_node.outputs[1])
                 last_node = mix_node
+            elif m_normal: # also needs to be put in reflection nodes
+                image_node.name = "NormalTexture"
+                if image_node.image:
+                    image_node.image.colorspace_settings.name = 'Non-Color'
+                node = tree.nodes.new(type="ShaderNodeNormalMap")
+                tree.links.new(node.inputs["Color"], image_node.outputs["Color"])
+                #node.space = settings.space.upper()
+                tree.links.new(colour_init.inputs["Normal"], node.outputs["Normal"])
             else:
                 mix_node = tree.nodes.new('ShaderNode' + model_end + 'NOMixRGB')
                 mix_type = '.GNO_MULTI'

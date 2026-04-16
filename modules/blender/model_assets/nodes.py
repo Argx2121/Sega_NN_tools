@@ -29,6 +29,14 @@ xno_mix = (
             ('.GNO_ADD', "Add", "Add both images together"),
             ('.GNO_SUB', "Subtract", "Subtract the 2nd image from the first image"),
         )
+lno_mix = (
+            ('.GNO_MULTI', "Multiply", "Multiply both images together"),
+            ('.GNO_DECAL', "Decal", "Overlay the 2nd image over the first, using the 2nds transparency"),
+        )
+zno_mix = (
+            ('.GNO_MULTI', "Multiply", "Multiply both images together"),
+            ('.GNO_DECAL', "Decal", "Overlay the 2nd image over the first, using the 2nds transparency"),
+        )
 spec_mix = (
             ('.GNO_SPEC', "Specular", ""),
             ('.GNO_SPEC2', "Specular 2", "Specular but with different alpha math"),
@@ -240,6 +248,63 @@ class ShaderNodeXNOMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         if self.multi_shading:
             for node in self.id_data.nodes:
                 if node.bl_idname == "ShaderNodeXNOShaderInit":
+                    self.id_data.links.new(node.outputs["Shading"], self.inputs["Shader Init"])
+                    break
+        else:
+            for link in self.id_data.links:
+                if link.to_socket == self.inputs["Shader Init"]:
+                    self.id_data.links.remove(link)
+                    break
+        self.inputs["Shader Init"].hide = True
+
+    def update_texture_2(self, context):
+        _update_texture(self, self.texture_2, "Color 2")
+
+    def get_texture_2(self):
+        return self.get("texture_2", False)
+
+    def set_texture_2(self, value):
+        if self["texture_2"] != value:
+            _update_texture(self, value, "Color 2")
+            self["texture_2"] = value
+
+    blend_type: EnumProperty(name="Blend", update=update_props, items=blend_types, options=set())
+    multi_shading: BoolProperty(name="Mix-in Shading", update=update_shading, default=False, options=set())
+    texture_2: IntProperty(name="Image Index", default=-1, min=-1, max=255,
+                           get=get_texture_2, set=set_texture_2, update=update_texture_2)
+    callback: BoolProperty(name="Callback", default=False, options=set())
+
+    def init(self, context):
+        self.node_tree = bpy.data.node_groups['.GNO_MULTI']
+        self.blend_type = self.blend_types(context)[0][0]
+        self.inputs["Shader Init"].hide = True
+        self["texture_2"] = 0
+
+
+class ShaderNodeLNOMixRGB(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
+    bl_label = "LNO MixRGB"
+    bl_idname = "ShaderNodeLNOMixRGB"
+    bl_width_default = 180
+
+    def blend_types(self, context):
+        return lno_mix
+
+    def copy(self, node):
+        self.node_tree = node.node_tree
+
+    def free(self):
+        pass  # defining this so blender doesn't try to remove the group
+
+    def update_props(self, context):
+        if not self.blend_type:
+            self.blend_type = self.blend_types(context)[0][0]
+
+        self.node_tree = bpy.data.node_groups[self.blend_type]
+
+    def update_shading(self, context):
+        if self.multi_shading:
+            for node in self.id_data.nodes:
+                if node.bl_idname == "ShaderNodeLNOShaderInit":
                     self.id_data.links.new(node.outputs["Shading"], self.inputs["Shader Init"])
                     break
         else:
@@ -621,6 +686,51 @@ class ShaderNodeXNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         self.z_mode = self.z_modes(context)[3][0]
         self.test_mode = self.test_modes(context)[4][0]
 
+class ShaderNodeLNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
+    bl_label = "LNO Shader"
+    bl_idname = "ShaderNodeLNOShader"
+    bl_width_default = 180
+
+    def nn_blend_methods(self, context):
+        nn_blend_methods = (
+            ('OPAQUE', "Opaque", "Solid"),
+            ('BLEND', "Alpha Blend", "Transparent"),
+            ('CLIP', "Alpha Clip", "Cutout transparent and non transparent parts"),
+        )
+        return nn_blend_methods
+
+    def update_nn_blend(self, context):
+        if not self.nn_blend_method:
+            self.nn_blend_method = self.nn_blend_methods(context)[0][0]
+        if self.nn_blend_method == "OPAQUE":
+            _get_material(self).blend_method = "OPAQUE"
+        elif self.nn_blend_method == "BLEND":
+            _get_material(self).blend_method = "BLEND"
+        elif self.nn_blend_method == "CLIP":
+            _get_material(self).blend_method = "CLIP"
+
+    def draw_buttons(self, context, layout):
+        ignore = {'Advanced', "Shader File", "Shader Name", "Blend Mode"}
+        _shader_ui_common(self, ignore, layout, {5, 8})
+
+        layout.prop(self, 'nn_blend_method', text='')
+
+    nn_blend_method: EnumProperty(name="Blend Mode", update=update_nn_blend, items=nn_blend_methods, options=set())
+
+    two_sided_lighting: BoolProperty(name="Two Sided Lighting", default=False, options=set())
+
+    advanced: BoolProperty(name="Advanced", default=False, options=set())
+
+    def copy(self, node):
+        self.node_tree = node.node_tree
+
+    def free(self):
+        pass
+
+    def init(self, context):
+        self.node_tree = bpy.data.node_groups['.XNO_SHADER']
+        self.inputs['Hide'].hide = True
+
 
 class ShaderNodeGNOShaderInit(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_label = "GNO Shader Init"
@@ -683,6 +793,31 @@ class ShaderNodeXNOShaderInit(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     def init(self, context):
         self.node_tree = bpy.data.node_groups['.GNO_SHADER_INIT_ALL']
         self.inputs['Specular Gloss'].hide = True
+        self.inputs['Normal'].hide = True
+
+class ShaderNodeLNOShaderInit(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
+    bl_label = "LNO Shader Init"
+    bl_idname = "ShaderNodeLNOShaderInit"
+    bl_width_default = 180
+
+    def copy(self, node):
+        self.node_tree = node.node_tree
+
+    def free(self):
+        pass
+
+    def update_shading(self, context):
+        if self.unshaded:
+            if self.node_tree != bpy.data.node_groups['.GNO_SHADER_INIT_FLAT']:
+                self.node_tree = bpy.data.node_groups['.GNO_SHADER_INIT_FLAT']
+        else:
+            if self.node_tree != bpy.data.node_groups['.GNO_SHADER_INIT_NO_SPEC']:
+                self.node_tree = bpy.data.node_groups['.GNO_SHADER_INIT_NO_SPEC']
+
+    unshaded: BoolProperty(name="Unshaded", update=update_shading, default=False, options=set())
+
+    def init(self, context):
+        self.node_tree = bpy.data.node_groups['.GNO_SHADER_INIT_ALL']
         self.inputs['Normal'].hide = True
 
 
@@ -818,6 +953,62 @@ class ShaderNodeXNOSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustom
     def init(self, context):
         self.node_tree = bpy.data.node_groups['.GNO_SPEC']
         self.blend_type = self.blend_types(context)[0][0]
+        self.inputs["Shader Init"].hide = True
+        self["texture_2"] = 0
+
+class ShaderNodeLNOSpecular(CustomNodetreeNodeBaseNNExpandLink, ShaderNodeCustomGroup):
+    bl_label = "LNO Specular"
+    bl_idname = "ShaderNodeLNOSpecular"
+    bl_width_default = 180
+
+    def update_init(self, context):
+        for node in self.id_data.nodes:
+            if node.bl_idname == "ShaderNodeLNOShaderInit":
+                self.id_data.links.new(node.outputs["Specular"], self.inputs["Specular"])
+                break
+
+    find_init = (
+        ('find_init', "Find Init", ""),
+    )
+
+    def copy(self, node):
+        self.node_tree = node.node_tree
+
+    def free(self):
+        pass  # defining this so blender doesn't try to remove the group
+
+    def update_shading(self, context):
+        if self.multi_shading:
+            for node in self.id_data.nodes:
+                if node.bl_idname == "ShaderNodeLNOShaderInit":
+                    self.id_data.links.new(node.outputs["Shading"], self.inputs["Shader Init"])
+                    break
+        else:
+            for link in self.id_data.links:
+                if link.to_socket == self.inputs["Shader Init"]:
+                    self.id_data.links.remove(link)
+                    break
+        self.inputs["Shader Init"].hide = True
+
+    def update_texture_2(self, context):
+        _update_texture(self, self.texture_2, "Color 2")
+
+    def get_texture_2(self):
+        return self.get("texture_2", False)
+
+    def set_texture_2(self, value):
+        if self["texture_2"] != value:
+            _update_texture(self, value, "Color 2")
+            self["texture_2"] = value
+
+    connect_init: EnumProperty(name="Find Init", update=update_init, items=find_init, options=set())
+    multi_shading: BoolProperty(name="Mix-in Shading", update=update_shading, default=False, options=set())
+    texture_2: IntProperty(name="Image Index", default=-1, min=-1, max=255,
+                           get=get_texture_2, set=set_texture_2, update=update_texture_2)
+    callback: BoolProperty(name="Callback", default=False, options=set())
+
+    def init(self, context):
+        self.node_tree = bpy.data.node_groups['.GNO_SPEC']
         self.inputs["Shader Init"].hide = True
         self["texture_2"] = 0
 
@@ -1003,12 +1194,107 @@ class ShaderNodeXNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         self.inputs["Normal Map"].hide = True
 
 
+class ShaderNodeLNOVector(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
+    bl_label = "LNO Vector"
+    bl_idname = "ShaderNodeLNOVector"
+    bl_width_default = 180
+
+    def transform_modes(self, context):
+        return vector_mix
+
+    def u_types(self, context):
+        return u_wrap_mix
+
+    def v_types(self, context):
+        return v_wrap_mix
+
+    def copy(self, node):
+        self.node_tree = node.node_tree
+
+    def free(self):
+        pass  # defining this so blender doesn't try to remove the group
+
+    def update_mode(self, context):
+        if not self.transform_mode:
+            self.transform_mode = self.transform_modes(context)[0][0]
+        mix_types = {
+            "0": '.NN_VECTOR_UV',
+            "1": '.NN_VECTOR_NORMAL',
+        }
+        self.node_tree = bpy.data.node_groups[mix_types[self.transform_mode]]
+
+        if self.transform_mode in {'2', '3'}:
+            self.inputs["UV Map"].hide = True
+        else:
+            self.inputs["UV Map"].hide = False
+
+    def update_u(self, context):
+        if not self.u_type:
+            self.u_type = self.u_types(context)[1][0]
+
+        self.inputs["U"].default_value = int(self.u_type)
+
+    def update_v(self, context):
+        if not self.v_type:
+            self.v_type = self.v_types(context)[1][0]
+
+        self.inputs["V"].default_value = int(self.v_type)
+
+    transform_mode: EnumProperty(name="Transform Mode", update=update_mode, items=transform_modes, options=set())
+    u_type: EnumProperty(name="U Wrapping", update=update_u, items=u_types, options=set())
+    v_type: EnumProperty(name="V Wrapping", update=update_v, items=v_types, options=set())
+    lod_bias: FloatProperty(name="LOD bias", min=-1, max=1, options=set())
+    max_mip_map_level: IntProperty(name="Max MipMap Level", min=0, options=set())
+    custom_filter: BoolProperty(name="Custom interpolation", description='Override texture interpolation',
+                                default=False, options=set())
+    interp_min: bpy.props.EnumProperty(
+        name="Interpolation Min", description="Texture interpolation when far",
+        items=(
+            ('Closest', 'Closest', ""),
+            ('Linear', 'Linear', ""),
+            ('Closest MipMap Closest', 'Closest MipMap Closest', ""),
+            ('Closest MipMap Linear', 'Closest MipMap Linear', ""),
+            ('Linear MipMap Closest', 'Linear MipMap Closest', "CNO, ENO, INO, LNO, SNO, UNO, XNO, ZNO STANDARD"),
+            ('Linear MipMap Linear', 'Linear MipMap Linear', "GNO STANDARD"),
+            ('Anisotropic', 'Anisotropic', "Xbox only"),
+            ('Anisotropic MipMap Closest', 'Anisotropic MipMap Closest', "Xbox only"),
+            ('Anisotropic MipMap Linear', 'Anisotropic MipMap Linear', "Xbox only"),
+            ('Anisotropic4', 'Anisotropic4', "Xbox only"),
+            ('Anisotropic4 MipMap Closest', 'Anisotropic4 MipMap Closest', "Xbox only"),
+            ('Anisotropic4 MipMap Linear', 'Anisotropic4 MipMap Linear', "Xbox only"),
+            ('Anisotropic8', 'Anisotropic8', "Xbox only"),
+            ('Anisotropic8 MipMap Closest', 'Anisotropic8 MipMap Closest', "Xbox only"),
+            ('Anisotropic8 MipMap Linear', 'Anisotropic8 MipMap Linear', "Xbox only"),
+        ), options=set())
+    interp_mag: bpy.props.EnumProperty(
+        name="Interpolation Mag", description="Texture interpolation when close",
+        items=(('Closest', 'Closest', ""), ('Linear', 'Linear', ""), ('Anisotropic', 'Anisotropic', "XBOX")), options=set())
+
+    def init(self, context):
+        self.node_tree = bpy.data.node_groups['.NN_VECTOR_UV']
+        self.transform_mode = self.transform_modes(context)[0][0]
+        self.u_type = self.u_types(context)[1][0]
+        self.v_type = self.v_types(context)[1][0]
+        self.inputs["U"].hide = True
+        self.inputs["V"].hide = True
+        self.inputs["UV Rotation"].hide = True
+        self.inputs["UV Scale"].hide = True
+        self.inputs["Normal Map"].hide = True
+
+
+
+
 classes = (
     ShaderNodeGNOMixRGB,
     ShaderNodeGNOShader,
     ShaderNodeGNOShaderInit,
     ShaderNodeGNOSpecular,
     ShaderNodeGNOVector,
+    # ShaderNodeLNOMixRGB,
+    # ShaderNodeLNOSpecular,
+    # ShaderNodeLNOShaderInit,
+    # ShaderNodeLNOShader,
+    # ShaderNodeLNOVector,
     ShaderNodeXNOMixRGB,
     ShaderNodeXNOSpecular,
     ShaderNodeXNOShaderInit,

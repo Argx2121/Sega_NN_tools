@@ -647,9 +647,11 @@ class Read:
             if texture_offset:
                 f.seek(texture_offset + self.start)
                 for _ in range(material.texture_count):
-                    texture_flags = read_int(f, ">")
+                    texture_flags = read_int(f, "<")
 
                     class TextureFlags(Flag):
+                        # sorry guys im using lno to fill in the gaps (basicallyyyyy  the same format anyway)
+
                         # byte 1
                         byte1bit4 = texture_flags >> 27 & 1  # 00001000
                         byte1bit3 = texture_flags >> 26 & 1  # 00000100
@@ -663,17 +665,33 @@ class Read:
                         # byte 3
 
                         # byte 4
+                        use_uv_scale = texture_flags >> 29 & 1
+                        no_uv_transform = texture_flags >> 30 & 1
+                        callback = texture_flags >> 31 & 1  # .
+
+                        # byte 1
+                        unk4 = texture_flags >> 6 & 1
+                        unk3 = texture_flags >> 5 & 1
+                        unk2 = texture_flags >> 4 & 1
+                        specular = texture_flags >> 3 & 1
+                        decal = texture_flags >> 2 & 1
+                        multiply = texture_flags >> 1 & 1
+                        normal = texture_flags >> 0 & 1
+                        # so basically if theres a normal map its in first spot
+
 
                     t_type, t_interp, t_proj, t_ext, t_space = format_dict[self.format_type]()
                     t_index = read_int(f)
-                    f.seek(4, 1)
-                    t_alpha = read_float(f)
-                    f.seek(8, 1)
+                    mapping = read_int(f) # 0 - 3 uv map -1 is spheremap
+
+                    factor = read_float(f)
+                    offset = read_float_tuple(f, 2)
                     t_scale = read_float_tuple(f, 2)
-                    t_uv = len(format(texture_flags >> 8 & 255, "b"))
+                    t_uv = mapping
+                    # 8 int unknowns
 
                     texture_list.append(self.Texture(
-                        t_type, t_interp, t_proj, t_ext, t_space, t_index, t_alpha, t_scale, t_uv, TextureFlags))
+                        t_type, t_interp, t_proj, t_ext, t_space, t_index, factor, offset, t_uv, TextureFlags, scale=t_scale))
                     f.seek(32, 1)
             self.texture_list.append(texture_list)
 
@@ -1001,6 +1019,13 @@ class Read:
                 self.texture_count[i], self.colour_list[i], self.texture_list[i], "OPAQUE", *self.mat_set_list[i]))
         return material_list
 
+    def _return_data_lno(self):
+        material_list = []
+        for i in range(self.material_count):
+            material_list.append(self.GnoMaterial(
+                self.material_offsets[i].texture_count, self.colour_list[i], self.texture_list[i], "OPAQUE", self.material_offsets[i].material_flags, "not researched", self.material_offsets[i].user))
+        return material_list
+
     def _return_data_xno(self):
         material_list = []
         for i in range(self.material_count):
@@ -1044,21 +1069,21 @@ class Read:
         self._lno_zno_info()
         self._ino_lno_zno_colour()
         self._lno_texture()
-        return self._return_data_2()
+        return self._return_data_lno()
 
     def lno_s4e2(self):
         self._le_offsets_4()
         self._ino_lno_info_2()
         self._ino_lno_zno_colour()
         self._lno_texture()
-        return self._return_data_2()
+        return self._return_data_lno()
 
     def lno_s4e2ouya(self):
         self._le_offsets()
         self._ino_lno_info_2()
         self._ino_lno_zno_colour()
         self._lno_texture()
-        return self._return_data_2()
+        return self._return_data_lno()
 
     def sno(self):
         self._sno_offsets()
