@@ -182,6 +182,10 @@ class NN_PT_Texture(ITEM_panel, bpy.types.Panel):
             layout.prop(obj.data, "nn_texture_count")
             for i in range(0, obj.data.nn_texture_count):
                 row = layout.row(align=True)
+                row.alignment = 'LEFT'
+                row.label(text="Source name:")
+                row.label(text=obj.data.nn_textures[i].original_name)
+                row = layout.row(align=True)
                 row.prop(obj.data.nn_textures[i], "texture", text="")
                 up = row.operator("operator.nn_change_index", text="", icon="TRIA_UP")
                 up.index = i

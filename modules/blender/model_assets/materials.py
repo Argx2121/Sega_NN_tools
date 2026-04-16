@@ -783,6 +783,7 @@ def make_bpy_textures(file_path: str, texture_names: list, armature, recursive: 
             armature.data.nn_textures[it].texture = tt
             armature.data.nn_textures[it].interp_min = tex_interp[it][0]
             armature.data.nn_textures[it].interp_mag = tex_interp[it][1]
+            armature.data.nn_textures[it].original_name = tex_names[it]
 
     path_base = pathlib.Path(pathlib.Path(file_path).parent)
     tex_names = [tex[0].rsplit(".", 1)[0] for tex in texture_names]
@@ -830,13 +831,16 @@ def make_bpy_textures(file_path: str, texture_names: list, armature, recursive: 
                 armature.data.nn_textures[i].texture = t
                 armature.data.nn_textures[i].interp_min = tex_interp[i][0]
                 armature.data.nn_textures[i].interp_mag = tex_interp[i][1]
+                armature.data.nn_textures[i].original_name = tex_names[i]
             else:
                 armature.data.nn_textures[i].interp_min = tex_interp[i][0]
                 armature.data.nn_textures[i].interp_mag = tex_interp[i][1]
+                armature.data.nn_textures[i].original_name = tex_names[i]
         return cool_images, tex_interp
     for i, t in enumerate(tex_interp):
         armature.data.nn_textures[i].interp_min = tex_interp[i][0]
         armature.data.nn_textures[i].interp_mag = tex_interp[i][1]
+        armature.data.nn_textures[i].original_name = tex_names[i]
 
     return [None for _ in texture_names], tex_interp
 

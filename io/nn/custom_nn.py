@@ -160,6 +160,7 @@ class NNTexture(bpy.types.PropertyGroup):
     interp_mag: bpy.props.EnumProperty(
         name="Interpolation Mag", description="Texture interpolation when close",
         items=(('Closest', 'Closest', ""), ('Linear', 'Linear', ""), ('Anisotropic', 'Anisotropic', "XBOX")))
+    original_name: bpy.props.StringProperty(name="Original Name")
 
 
 class NNTextureNodeSetup(bpy.types.PropertyGroup):
