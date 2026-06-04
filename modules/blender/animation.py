@@ -253,7 +253,9 @@ class Animation:
         obj_object.animation_data.action = o_action
         o_action.use_frame_range = True
         o_action.frame_start = self.animation.start
+        real_frame_start = self.animation.start
         o_action.frame_end = self.animation.stop
+        real_frame_end = self.animation.stop
         obj = obj_object.pose.bones
         obj2 = obj_object.data.bones
 
@@ -359,6 +361,27 @@ class Animation:
             x_curve = o_action.fcurves.find("pose.bones[" + str(bone_index) + "].rotation_quaternion", index=1)
             y_curve = o_action.fcurves.find("pose.bones[" + str(bone_index) + "].rotation_quaternion", index=2)
             z_curve = o_action.fcurves.find("pose.bones[" + str(bone_index) + "].rotation_quaternion", index=3)
+            p_fix_for_oob = (p_curve_x, p_curve_y, p_curve_z)
+            r_fix_for_oob = (r_curve_x, r_curve_y, r_curve_z)
+            s_fix_for_oob = (s_curve_x, s_curve_y, s_curve_z)
+            p_real_frame_start = int(real_frame_start)
+            p_real_frame_end = int(real_frame_end)
+            r_real_frame_start = int(real_frame_start)
+            r_real_frame_end = int(real_frame_end)
+            s_real_frame_start = int(real_frame_start)
+            s_real_frame_end = int(real_frame_end)
+            p_fix_for_oob = [oob.range() for oob in p_fix_for_oob if oob]
+            r_fix_for_oob = [oob.range() for oob in r_fix_for_oob if oob]
+            s_fix_for_oob = [oob.range() for oob in s_fix_for_oob if oob]
+            if p_fix_for_oob:  # not sure if i should add this to other sections (laugh)
+                p_real_frame_start = int(min(*[oob[0] for oob in p_fix_for_oob], real_frame_start))
+                p_real_frame_end = int(max(*[oob[1] for oob in p_fix_for_oob], real_frame_end)) + 1
+            if r_fix_for_oob:
+                r_real_frame_start = int(min(*[oob[0] for oob in r_fix_for_oob], real_frame_start))
+                r_real_frame_end = int(max(*[oob[1] for oob in r_fix_for_oob], real_frame_end)) + 1
+            if s_fix_for_oob:
+                s_real_frame_start = int(min(*[oob[0] for oob in s_fix_for_oob], real_frame_start))
+                s_real_frame_end = int(max(*[oob[1] for oob in s_fix_for_oob], real_frame_end)) + 1
             if w_curve:
                 for wkf, xkf, ykf, zkf in zip(
                         w_curve.keyframe_points, x_curve.keyframe_points, y_curve.keyframe_points,
@@ -425,7 +448,7 @@ class Animation:
                 if r_curve_z:
                     o_action.fcurves.remove(r_curve_z)
             if p_curve_x or p_curve_y or p_curve_z:
-                for frame in range(int(o_action.frame_start), int(o_action.frame_end) + 1):
+                for frame in range(p_real_frame_start, p_real_frame_end):
                     if p_curve_x:
                         x_value = p_curve_x.evaluate(frame)
                     else:
@@ -450,21 +473,21 @@ class Animation:
                     position_data.append(pos)
                 if p_curve_x:
                     for kf in p_curve_x.keyframe_points:
-                        new_value = position_data[int(kf.co[0]) - int(o_action.frame_start)].x
+                        new_value = position_data[int(kf.co[0]) - p_real_frame_start].x
                         if kf.interpolation == 'BEZIER':
                             kf.handle_left[1] = (kf.handle_left[1] - kf.co[1]) + new_value
                             kf.handle_right[1] = (kf.handle_right[1] - kf.co[1]) + new_value
                         kf.co[1] = new_value
                 if p_curve_y:
                     for kf in p_curve_y.keyframe_points:
-                        new_value = position_data[int(kf.co[0]) - int(o_action.frame_start)].y
+                        new_value = position_data[int(kf.co[0]) - p_real_frame_start].y
                         if kf.interpolation == 'BEZIER':
                             kf.handle_left[1] = (kf.handle_left[1] - kf.co[1]) + new_value
                             kf.handle_right[1] = (kf.handle_right[1] - kf.co[1]) + new_value
                         kf.co[1] = new_value
                 if p_curve_z:
                     for kf in p_curve_z.keyframe_points:
-                        new_value = position_data[int(kf.co[0]) - int(o_action.frame_start)].z
+                        new_value = position_data[int(kf.co[0]) - p_real_frame_start].z
                         if kf.interpolation == 'BEZIER':
                             kf.handle_left[1] = (kf.handle_left[1] - kf.co[1]) + new_value
                             kf.handle_right[1] = (kf.handle_right[1] - kf.co[1]) + new_value
@@ -476,7 +499,7 @@ class Animation:
                 if p_curve_z:
                     p_curve_z.update()
             if s_curve_x or s_curve_y or s_curve_z:
-                for frame in range(int(o_action.frame_start), int(o_action.frame_end) + 1):
+                for frame in range(s_real_frame_start, s_real_frame_end):
                     if s_curve_x:
                         x_value = s_curve_x.evaluate(frame)
                     else:
@@ -496,21 +519,21 @@ class Animation:
                     scale_data.append(pos)
                 if s_curve_x:
                     for kf in s_curve_x.keyframe_points:
-                        new_value = scale_data[int(kf.co[0]) - int(o_action.frame_start)].x
+                        new_value = scale_data[int(kf.co[0]) - s_real_frame_start].x
                         if kf.interpolation == 'BEZIER':
                             kf.handle_left[1] = (kf.handle_left[1] - kf.co[1]) + new_value
                             kf.handle_right[1] = (kf.handle_right[1] - kf.co[1]) + new_value
                         kf.co[1] = new_value
                 if s_curve_y:
                     for kf in s_curve_y.keyframe_points:
-                        new_value = scale_data[int(kf.co[0]) - int(o_action.frame_start)].y
+                        new_value = scale_data[int(kf.co[0]) - s_real_frame_start].y
                         if kf.interpolation == 'BEZIER':
                             kf.handle_left[1] = (kf.handle_left[1] - kf.co[1]) + new_value
                             kf.handle_right[1] = (kf.handle_right[1] - kf.co[1]) + new_value
                         kf.co[1] = new_value
                 if s_curve_z:
                     for kf in s_curve_z.keyframe_points:
-                        new_value = scale_data[int(kf.co[0]) - int(o_action.frame_start)].z
+                        new_value = scale_data[int(kf.co[0]) - s_real_frame_start].z
                         if kf.interpolation == 'BEZIER':
                             kf.handle_left[1] = (kf.handle_left[1] - kf.co[1]) + new_value
                             kf.handle_right[1] = (kf.handle_right[1] - kf.co[1]) + new_value
