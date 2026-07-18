@@ -286,6 +286,43 @@ class ReadNn:
             index += 1
         return file_name, index
 
+    @staticmethod
+    def resolve_shader_data(mesh_stuff, model_info, mesh_index, effect_data):
+        if mesh_stuff:
+            for i, mesh in enumerate(mesh_stuff):
+                mesh_material = model_info.materials.material_list[mesh.material_name]
+                mesh_file = mesh_material.shader_file
+                mesh_name = mesh_material.shader_name
+                effect_data.setdefault((mesh_file, mesh_name), [])
+                effect_data[(mesh_file, mesh_name)].append(mesh_index)
+                mesh_index += 1
+        return effect_data, mesh_index
+
+    def resolve_materials(self, model_info):
+        # resolve materials
+        effect_data = {}
+        meshes = model_info.meshes
+        mesh_index = 0
+        effect_data, mesh_index = self.resolve_shader_data(meshes.simple_opaque, model_info, mesh_index, effect_data)
+        effect_data, mesh_index = self.resolve_shader_data(meshes.complex_opaque, model_info, mesh_index, effect_data)
+        effect_data, mesh_index = self.resolve_shader_data(meshes.simple_alpha, model_info, mesh_index, effect_data)
+        effect_data, mesh_index = self.resolve_shader_data(meshes.complex_alpha, model_info, mesh_index, effect_data)
+        effect_data, mesh_index = self.resolve_shader_data(meshes.simple_clip, model_info, mesh_index, effect_data)
+        effect_data, mesh_index = self.resolve_shader_data(meshes.complex_clip, model_info, mesh_index, effect_data)
+
+        # current state (names, ids) dict
+        shader_files = [a[0] for a in effect_data.keys()]
+        shader_names = [a[1] for a in effect_data.keys()]
+        mesh_shaders = [0] * sum([len(a) for a in tuple(effect_data.values())])
+
+        for i, item in enumerate(effect_data.items()):
+            effect_index = i
+
+            for mesh_index in item[1]:
+                mesh_shaders[mesh_index] = effect_index
+
+        return [shader_files, shader_names, mesh_shaders]
+
     def write_model(self, model_info, settings):
         f = self.f
         format_type = self.format_type
@@ -306,7 +343,15 @@ class ReadNn:
                     f, format_type, model_info.materials.texture_list, nof0_offsets).le()
             block_count += 1
 
-        # NXEF
+        if format_type == 'Sonic2006_X':
+            effect_listing = self.resolve_materials(model_info)
+            if big_endian:
+                nof0_offsets = nn_effects.Write(
+                    f, format_type, effect_listing, nof0_offsets).be()
+            else:
+                nof0_offsets = nn_effects.Write(
+                    f, format_type, effect_listing, nof0_offsets).le()
+            block_count += 1
 
         if settings.bone_block:
             if big_endian:
