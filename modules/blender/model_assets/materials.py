@@ -352,9 +352,12 @@ def material_accurate(self):
             if model_end == "X" and m_mix.light_stage:
                 mix_node.multi_shading = True
                 continue
-            m_tex.interpolation = tex_interp[m_tex_index][1]
-            if m_tex.interpolation == "Anisotropic":  # Nuh uh
+            if skip_textures:
                 m_tex.interpolation = "Linear"
+            else:
+                m_tex.interpolation = tex_interp[m_tex_index][1]
+                if m_tex.interpolation == "Anisotropic":  # Nuh uh
+                    m_tex.interpolation = "Linear"
 
             if skip_textures:
                 vector_node, image_node = _make_image_vect(tree, None, m_tex, model_end)
@@ -729,9 +732,12 @@ def material_simple(self):  # for exporting to fbx etc, so keep it simple.
             m_tex = m.texture[t_index]
             m_tex_type = m_tex.type
             m_tex_index = m_tex.index
-            m_tex.interpolation = tex_interp[m_tex_index][1]
-            if m_tex.interpolation == "Anisotropic":  # Nuh uh
+            if skip_textures:
                 m_tex.interpolation = "Linear"
+            else:
+                m_tex.interpolation = tex_interp[m_tex_index][1]
+                if m_tex.interpolation == "Anisotropic":  # Nuh uh
+                    m_tex.interpolation = "Linear"
 
             if m_tex_type == "none":
                 continue
