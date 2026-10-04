@@ -630,7 +630,7 @@ class Animation:
 
             if anim_flag.hide:
                 shader = nodes.get('shader')
-                data_path = 'nodes["' + shader + '"].inputs[4].default_value'
+                data_path = 'nodes["' + shader + '"].nn_hide'
                 self.anim_var(anim_flag.level, anim_data, anim_interp, action, data_path)
             elif anim_flag.user_uint32:
                 shader = nodes.get('shader')

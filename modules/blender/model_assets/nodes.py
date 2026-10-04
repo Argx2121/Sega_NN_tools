@@ -452,6 +452,7 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
             ('OPAQUE', "Opaque", "Solid"),
             ('BLEND', "Alpha Blend", "Transparent"),
             ('CLIP', "Alpha Clip", "Cutout transparent and non transparent parts"),
+            ('CLIPHIDE', "Hide (internal)", "Hide material uses clip internally"),
         )
         return nn_blend_methods
 
@@ -490,18 +491,35 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     def update_nn_blend(self, context):
         if not self.nn_blend_method:
             self.nn_blend_method = self.nn_blend_methods(context)[0][0]
-        if self.nn_blend_method == "OPAQUE":
-            _get_material(self).blend_method = "OPAQUE"
-        elif self.nn_blend_method == "BLEND":
-            _get_material(self).blend_method = "BLEND"
-        elif self.nn_blend_method == "CLIP":
-            _get_material(self).blend_method = "CLIP"
+        else:
+            if self.nn_blend_method == "OPAQUE":
+                _get_material(self).blend_method = "OPAQUE"
+            elif self.nn_blend_method == "BLEND":
+                _get_material(self).blend_method = "BLEND"
+            elif self.nn_blend_method == "CLIP":
+                _get_material(self).blend_method = "CLIP"
+            elif self.nn_blend_method == "CLIPHIDE":
+                _get_material(self).blend_method = "CLIP"
+
+    def update_nn_blend_last(self, context):
+        if not self.last_blend_state:
+            self.last_blend_state = self.nn_blend_methods(context)[0][0]
+
+    def update_nn_hide(self, context):
+        if self.nn_hide:
+            self.inputs['Hide'].default_value = True
+            self.last_blend_state = str(self.nn_blend_method)
+            self.nn_blend_method = "CLIPHIDE"
+        else:
+            self.inputs['Hide'].default_value = False
+            self.nn_blend_method = str(self.last_blend_state)
 
     def draw_buttons(self, context, layout):
-        ignore = {'Advanced', "Blend Mode"}
+        ignore = {'Advanced', "Blend Mode", "Hide"}
         _shader_ui_common(self, ignore, layout, {5, 8})
 
         layout.prop(self, 'nn_blend_method', text='')
+        layout.prop(self, 'nn_hide', text='Hide')
 
     blend_type: EnumProperty(name="Blend Mode", update=update_blend_type, items=blend_types, options=set())
     source_fact: EnumProperty(name="Source Factor", update=update_source_fact, items=source_facts, options=set())
@@ -522,6 +540,9 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     nn_blend_method: EnumProperty(name="Blend Mode", update=update_nn_blend, items=nn_blend_methods, options=set())
     # okay guys im sorry but im worried about calling it blend method ................
+    last_blend_state: EnumProperty(name="Last Blend", update=update_nn_blend_last, items=nn_blend_methods, options=set())
+
+    nn_hide: BoolProperty(name="Hide", default=False, update=update_nn_hide, options=set())
 
     advanced: BoolProperty(name="Advanced", default=False, options=set())
 
@@ -541,6 +562,7 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         self.alpha_comp0 = self.alpha_comp0s(context)[6][0]
         self.alpha_comp1 = self.alpha_comp1s(context)[7][0]
         self.alpha_op = self.alpha_ops(context)[0][0]
+        self.inputs['Hide'].hide = True
 
 
 class ShaderNodeXNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
@@ -597,6 +619,7 @@ class ShaderNodeXNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
             ('OPAQUE', "Opaque", "Solid"),
             ('BLEND', "Alpha Blend", "Transparent"),
             ('CLIP', "Alpha Clip", "Cutout transparent and non transparent parts"),
+            ('CLIPHIDE', "Hide (internal)", "Hide material uses clip internally"),
         )
         return nn_blend_methods
 
@@ -627,18 +650,35 @@ class ShaderNodeXNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     def update_nn_blend(self, context):
         if not self.nn_blend_method:
             self.nn_blend_method = self.nn_blend_methods(context)[0][0]
-        if self.nn_blend_method == "OPAQUE":
-            _get_material(self).blend_method = "OPAQUE"
-        elif self.nn_blend_method == "BLEND":
-            _get_material(self).blend_method = "BLEND"
-        elif self.nn_blend_method == "CLIP":
-            _get_material(self).blend_method = "CLIP"
+        else:
+            if self.nn_blend_method == "OPAQUE":
+                _get_material(self).blend_method = "OPAQUE"
+            elif self.nn_blend_method == "BLEND":
+                _get_material(self).blend_method = "BLEND"
+            elif self.nn_blend_method == "CLIP":
+                _get_material(self).blend_method = "CLIP"
+            elif self.nn_blend_method == "CLIPHIDE":
+                _get_material(self).blend_method = "CLIP"
+
+    def update_nn_blend_last(self, context):
+        if not self.last_blend_state:
+            self.last_blend_state = self.nn_blend_methods(context)[0][0]
+
+    def update_nn_hide(self, context):
+        if self.nn_hide:
+            self.inputs['Hide'].default_value = True
+            self.last_blend_state = str(self.nn_blend_method)
+            self.nn_blend_method = "CLIPHIDE"
+        else:
+            self.inputs['Hide'].default_value = False
+            self.nn_blend_method = str(self.last_blend_state)
 
     def draw_buttons(self, context, layout):
-        ignore = {'Advanced', "Shader File", "Shader Name", "Blend Mode"}
+        ignore = {'Advanced', "Shader File", "Shader Name", "Blend Mode", "Hide"}
         _shader_ui_common(self, ignore, layout, {5, 8})
 
         layout.prop(self, 'nn_blend_method', text='')
+        layout.prop(self, 'nn_hide', text='Hide')
         row = layout.row(align=True)
         row.label(text='Shader Name:')
         row.prop(self, 'shader_name', text='')
@@ -669,6 +709,10 @@ class ShaderNodeXNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     nn_blend_method: EnumProperty(name="Blend Mode", update=update_nn_blend, items=nn_blend_methods, options=set())
 
+    last_blend_state: EnumProperty(name="Last Blend", update=update_nn_blend_last, items=nn_blend_methods, options=set())
+
+    nn_hide: BoolProperty(name="Hide", default=False, update=update_nn_hide, options=set())
+
     advanced: BoolProperty(name="Advanced", default=False, options=set())
 
     def copy(self, node):
@@ -685,6 +729,7 @@ class ShaderNodeXNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
         self.blend_logic = self.blend_logics(context)[0][0]
         self.z_mode = self.z_modes(context)[3][0]
         self.test_mode = self.test_modes(context)[4][0]
+        self.inputs['Hide'].hide = True
 
 class ShaderNodeLNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     bl_label = "LNO Shader"
@@ -696,26 +741,48 @@ class ShaderNodeLNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
             ('OPAQUE', "Opaque", "Solid"),
             ('BLEND', "Alpha Blend", "Transparent"),
             ('CLIP', "Alpha Clip", "Cutout transparent and non transparent parts"),
+            ('CLIPHIDE', "Hide (internal)", "Hide material uses clip internally"),
         )
         return nn_blend_methods
 
     def update_nn_blend(self, context):
         if not self.nn_blend_method:
             self.nn_blend_method = self.nn_blend_methods(context)[0][0]
-        if self.nn_blend_method == "OPAQUE":
-            _get_material(self).blend_method = "OPAQUE"
-        elif self.nn_blend_method == "BLEND":
-            _get_material(self).blend_method = "BLEND"
-        elif self.nn_blend_method == "CLIP":
-            _get_material(self).blend_method = "CLIP"
+        else:
+            if self.nn_blend_method == "OPAQUE":
+                _get_material(self).blend_method = "OPAQUE"
+            elif self.nn_blend_method == "BLEND":
+                _get_material(self).blend_method = "BLEND"
+            elif self.nn_blend_method == "CLIP":
+                _get_material(self).blend_method = "CLIP"
+            elif self.nn_blend_method == "CLIPHIDE":
+                _get_material(self).blend_method = "CLIP"
+
+    def update_nn_blend_last(self, context):
+        if not self.last_blend_state:
+            self.last_blend_state = self.nn_blend_methods(context)[0][0]
+
+    def update_nn_hide(self, context):
+        if self.nn_hide:
+            self.inputs['Hide'].default_value = True
+            self.last_blend_state = str(self.nn_blend_method)
+            self.nn_blend_method = "CLIPHIDE"
+        else:
+            self.inputs['Hide'].default_value = False
+            self.nn_blend_method = str(self.last_blend_state)
 
     def draw_buttons(self, context, layout):
-        ignore = {'Advanced', "Shader File", "Shader Name", "Blend Mode"}
+        ignore = {'Advanced', "Shader File", "Shader Name", "Blend Mode", "Hide"}
         _shader_ui_common(self, ignore, layout, {5, 8})
 
         layout.prop(self, 'nn_blend_method', text='')
+        layout.prop(self, 'nn_hide', text='Hide')
 
     nn_blend_method: EnumProperty(name="Blend Mode", update=update_nn_blend, items=nn_blend_methods, options=set())
+
+    last_blend_state: EnumProperty(name="Last Blend", update=update_nn_blend_last, items=nn_blend_methods, options=set())
+
+    nn_hide: BoolProperty(name="Hide", default=False, update=update_nn_hide, options=set())
 
     two_sided_lighting: BoolProperty(name="Two Sided Lighting", default=False, options=set())
 

@@ -308,6 +308,7 @@ def material_accurate(self):
             shader.two_sided_lighting = two_sided_lighting
 
         shader.nn_blend_method = m.transparency
+        shader.nn_hide = hide
 
         colour_init.inputs["Material Color"].default_value = m_col.diffuse
         colour_init.inputs["Material Alpha"].default_value = m_col.diffuse[-1]
@@ -341,7 +342,6 @@ def material_accurate(self):
         colour_init.inputs["Specular Level"].default_value = m_col.specular_value
 
         shader.inputs["User"].default_value = m.user
-        shader.inputs["Hide"].default_value = hide
         tree.links.new(end_node.inputs[0], shader.outputs[0])
         last_node = colour_init
 
@@ -1117,7 +1117,7 @@ def get_materials(self):
         user = int(get_value(nn_shader.inputs["User"]))
         callback = get_value(nn_shader.inputs["Callback"])
         dis_fog = get_value(nn_shader.inputs["Disable Fog"])
-        hide = get_value(nn_shader.inputs["Hide"])
+        hide = bool(nn_shader.nn_hide)
         blend_method = nn_shader.nn_blend_method
 
         if self.settings.over_texture:
