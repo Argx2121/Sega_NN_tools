@@ -1119,6 +1119,10 @@ def get_materials(self):
         dis_fog = get_value(nn_shader.inputs["Disable Fog"])
         hide = bool(nn_shader.nn_hide)
         blend_method = nn_shader.nn_blend_method
+        if blend_method not in {'OPAQUE', 'BLEND', 'CLIP'}:
+            blend_method = nn_shader.last_blend_state
+            if blend_method not in {'OPAQUE', 'BLEND', 'CLIP'}:
+                blend_method = 'OPAQUE'
 
         if self.settings.over_texture:
             texture_list = dict()
