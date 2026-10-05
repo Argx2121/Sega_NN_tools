@@ -542,7 +542,7 @@ class ShaderNodeGNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
     # okay guys im sorry but im worried about calling it blend method ................
     last_blend_state: EnumProperty(name="Last Blend", update=update_nn_blend_last, items=nn_blend_methods, options=set())
 
-    nn_hide: BoolProperty(name="Hide", default=False, update=update_nn_hide, options=set())
+    nn_hide: BoolProperty(name="Hide", default=False, update=update_nn_hide)
 
     advanced: BoolProperty(name="Advanced", default=False, options=set())
 
@@ -711,7 +711,7 @@ class ShaderNodeXNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     last_blend_state: EnumProperty(name="Last Blend", update=update_nn_blend_last, items=nn_blend_methods, options=set())
 
-    nn_hide: BoolProperty(name="Hide", default=False, update=update_nn_hide, options=set())
+    nn_hide: BoolProperty(name="Hide", default=False, update=update_nn_hide)
 
     advanced: BoolProperty(name="Advanced", default=False, options=set())
 
@@ -782,7 +782,7 @@ class ShaderNodeLNOShader(CustomNodetreeNodeBaseNN, ShaderNodeCustomGroup):
 
     last_blend_state: EnumProperty(name="Last Blend", update=update_nn_blend_last, items=nn_blend_methods, options=set())
 
-    nn_hide: BoolProperty(name="Hide", default=False, update=update_nn_hide, options=set())
+    nn_hide: BoolProperty(name="Hide", default=False, update=update_nn_hide)
 
     two_sided_lighting: BoolProperty(name="Two Sided Lighting", default=False, options=set())
 
