@@ -175,7 +175,7 @@ def mat_anim_import(filepath, settings):
         if block == expected_block:
             nn = ReadNn(f, file_path, settings.format, settings.debug).read_file()[1]
             if nn.animation:
-                print("Making Material Animations----------------------------")
+                print("Making Material Animations------------------------")
                 message = "Making" + " " + nn.name
                 start_time = console_out_pre(message)
                 Animation(nn, settings).material_animation()
