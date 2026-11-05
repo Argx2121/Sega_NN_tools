@@ -224,11 +224,6 @@ sn_list = (
     # 1.18.56
     # %s Version %s
     # (C) SEGA Corporation Creative Center Graphics Sect.
-    ("SegaSuperstars_S", "Sega Superstars", "Sega Superstars Model | 22 Oct 2004"),
-    # UNKNOWN
-    ("SegaAges2500SeriesVol5GoldenAxe_S", "Sega Ages 2500 Series Vol. 5: Golden Axe",
-     "Sega Ages 2500 Golden Axe Model | 25 Sep 2003"),
-    # UNKNOWN
 
     # Sonic Riders
     # SEGA NN Library for PlayStation2
@@ -236,6 +231,19 @@ sn_list = (
     # 1.18.43
     # %s Version %s
     # (C) SEGA Corporation Creative Center Graphics Sect.
+
+    ("SegaSuperstars_S", "Sega Superstars", "Sega Superstars Model | 22 Oct 2004"),
+    # SEGA NN Library for PlayStation2
+    # nn Ver 1.13.00 Build:Apr 30 2004 11:42:56
+    # 1.13.00
+    # %s Version %s
+    # (C) SEGA Corporation Creative Center Graphics Sect.
+    ("SegaAges2500SeriesVol5GoldenAxe_S", "Sega Ages 2500 Series Vol. 5: Golden Axe",
+     "Sega Ages 2500 Golden Axe Model | 25 Sep 2003"),
+    # SEGA NN Library for PlayStation2
+    # 1.04.03
+    # %s Version %s
+    # (C) SEGA Corporation Library R&D Dept
 )
 
 un_list = (
