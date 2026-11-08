@@ -589,7 +589,7 @@ class Animation:
         for mat in animated_materials:
             material = materials[mat]
             material.node_tree.animation_data_create()
-            action = bpy.data.actions.new(obj_animation_name)
+            action = bpy.data.actions.new(material.name + '.' + obj_animation_name)
             material_actions[mat] = action
             if self.fake_user:
                 action.use_fake_user = True
@@ -695,7 +695,7 @@ class Animation:
         for mat in animated_materials:
             material = materials[mat]
             material.node_tree.animation_data_create()
-            action = bpy.data.actions.new(obj_animation_name)
+            action = bpy.data.actions.new(material.name + '.' + obj_animation_name)
             material_actions[mat] = action
             if self.fake_user:
                 action.use_fake_user = True
