@@ -65,7 +65,6 @@ def custom_reg():
     bpy.types.Light.nn_inner_size = bpy.props.FloatProperty(name="Inner Size", default=0.1)
     # UI
     bpy.types.WindowManager.nn_texture_setups = bpy.props.CollectionProperty(type=NNTextureNodeSetup)
-    bpy.types.Scene.nn_bone_anims = bpy.props.EnumProperty(name="Active Bone Animation", items=active_bone_anims, get=active_bone_anim_get, set=active_bone_anim_set)
 
 
 def custom_unreg():
@@ -111,7 +110,6 @@ def custom_unreg():
     del bpy.types.Light.nn_inner_size
     # UI
     del bpy.types.WindowManager.nn_texture_setups
-    del bpy.types.Scene.nn_bone_anims
 
 
 def update_material_count(self, context):
@@ -234,71 +232,3 @@ def hide_set(self, value):
         obj = self.id_data.parent
     hide_function(obj, self)
     self["nn_hide"] = value
-
-
-def active_bone_anims(self, context):
-    obj = context.object
-    # id_root = ['NODETREE', 'KEY', 'OBJECT'] ?? didnt see arma in 4.1.1
-    action_type = 'OBJECT'
-    action_list = [
-        ("None", "No Anim", "")
-    ]
-    if bpy.data.actions:
-        for action in bpy.data.actions[::]:
-            if action.id_root == action_type:
-                if action.fcurves and action.fcurves[0].data_path.startswith('pose.bones['):
-                    # i made some checks here but blender can use str or ind to refer to bones, too slow
-                    #  also the potential for user confusion - better that they can see its all anims
-                    action_list.append((action.name, action.name, ""))
-    return action_list
-
-
-def active_bone_anim_get(self):
-    obj = bpy.context.active_object
-    if obj.animation_data and obj.animation_data.action:
-        list_of_anims = [a[0] for a in active_bone_anims(self, bpy.context)]
-        return list_of_anims.index(obj.animation_data.action.name)
-    else:
-        return 0
-
-
-def active_bone_anim_set(self, value):
-    obj = bpy.context.active_object
-    the_anim = active_bone_anims(self, bpy.context)[value][0]
-    if the_anim != "None":
-        obj.animation_data_create()
-        obj.animation_data.action = bpy.data.actions[the_anim]
-    elif obj.animation_data:
-        obj.animation_data.action = None
-        # cleanma that i want to use but need to remove for consistency :(
-        """nn_customs = {'nn_hide', 'ser_int', 'er_type', 'r_float'}
-        nn_custom_vars = [a.data_path for a in obj.animation_data.action.fcurves]
-        nn_custom_vars = [a for a in nn_custom_vars if a[-7::] in nn_customs]
-        for data_path in nn_custom_vars:
-            data_path = data_path[11::]
-            if data_path[0] in {'"', "'"}:
-                splitter = data_path[0]
-                split_path = data_path[1::].rsplit(splitter, maxsplit=1)
-                bone_name = split_path[0]
-                bone_custom = split_path[1][2::]
-                if bone_custom in {'nn_hide'}:
-                    setattr(obj.pose.bones[bone_name], bone_custom, False)
-                elif bone_custom in {'nn_user_type'}:
-                    setattr(obj.pose.bones[bone_name], bone_custom, 'nn_user_int')
-                else:
-                    setattr(obj.pose.bones[bone_name], bone_custom, 0)
-
-            else:
-                split_path = data_path.rsplit(']', maxsplit=1)
-                bone_ind = int(split_path[0])
-                bone_custom = split_path[1][1::]
-                if bone_custom in {'nn_hide'}:
-                    setattr(obj.pose.bones[bone_ind], bone_custom, False)
-                elif bone_custom in {'nn_user_type'}:
-                    setattr(obj.pose.bones[bone_ind], bone_custom, 'nn_user_int')
-                else:
-                    setattr(obj.pose.bones[bone_ind], bone_custom, 0)
-        obj.animation_data.action = None
-        identity_matrix = mathutils.Matrix.Identity(4)
-        for bone in obj.pose.bones:
-            bone.matrix_basis = identity_matrix"""
