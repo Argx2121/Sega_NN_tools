@@ -225,28 +225,6 @@ class NN_PT_Export(GENERIC_panel, bpy.types.Panel):
         layout.operator("export.sega_no", text="Model .*no")
 
 
-class NN_PT_Anims(GENERIC_panel, bpy.types.Panel):
-    bl_label = "Animation Setter"
-
-    @classmethod
-    def poll(cls, context):
-        if not bpy.context.active_object:
-            return False
-        if context.object is not None and context.object.type == "ARMATURE":
-            return True
-        return False
-
-    def draw(self, context):
-        layout = self.layout
-        if context.object.type == "ARMATURE":
-            obj = context.object
-            scene = context.scene
-            if bpy.context.active_object.mode == "OBJECT":
-                layout.prop(scene, "nn_bone_anims", text="Bones")
-                # layout.prop(scene, "nn_bone_anims", text="Mats")
-                # layout.prop(scene, "nn_bone_anims", text="Morphs")
-
-
 class NN_PT_Extract(GENERIC_panel, bpy.types.Panel):
     bl_label = "File Extraction"
     bl_options = {"DEFAULT_CLOSED"}

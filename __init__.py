@@ -52,7 +52,7 @@ classes = [
     amb.Sonic4Tools, sfr.ExtractSfrTools, bnk.ExtractBnkTools, pkg.ExtractPkgTools, sms.ExtractSmsTools,
     gosgts.ExtractGosGtsTools,
     srzg.ExtractSrgzTools,
-    panels.NN_PT_Import, panels.NN_PT_Export, panels.NN_PT_Anims,
+    panels.NN_PT_Import, panels.NN_PT_Export,
     panels.NN_PT_FCurve, operators.SetFCurves,
     panels.NN_PT_Data, panels.NN_PT_Material, panels.NN_PT_Texture, panels.NN_PT_Mesh, panels.NN_PT_Ik,
     panels.NN_PT_Extract, panels.NN_PT_ExtraImport,
